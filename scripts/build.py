@@ -5,7 +5,7 @@ R = pathlib.Path(__file__).resolve().parent.parent
 D = R / "dist"; D.mkdir(exist_ok=True); (D / "bando").mkdir(exist_ok=True)
 B = json.loads((R / "data/bandi.json").read_text(encoding="utf-8"))
 oggi = datetime.date.today().isoformat()
-B = [b for b in B if not b["scadenza"] or b["scadenza"] >= oggi]
+for b in B: b["scaduto"] = bool(b["scadenza"] and b["scadenza"] < oggi)
 B.sort(key=lambda b: b["scadenza"] or "9999")
 e = html.escape
 BASE = "https://essedade.github.io/incentiviperte/"
@@ -13,6 +13,8 @@ SITE = "IncentiviPerTe"
 MAIL = "davoglio@mail.grokbot.com"
 FPEF = "https://fogliopef.gumroad.com"
 AGG = max(b["ultimo_controllo"] for b in B)
+ATT = [b for b in B if not b["scaduto"]]
+def dl(b): return ("Scaduto il " + it(b["scadenza"])) if b["scaduto"] else (f"Aperto fino al {it(b['scadenza'])}" if b["scadenza"] else "Senza scadenza indicata: verifica sul sito ufficiale")
 REG = ["Nazionale", "Toscana", "Umbria", "Emilia-Romagna"]
 def it(d): y, m, g = d.split("-"); return f"{g}/{m}/{y}"
 LOGO = '<svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0b5cad"/><path d="M9 22V10m5 12V14m5 8v-5m5 5V8" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>'
@@ -34,12 +36,12 @@ details.menu nav{position:absolute;right:16px;left:16px;top:60px;background:#fff
 main{padding:20px 0 32px}h1{line-height:1.2}h2{font-size:21px;margin:26px 0 10px}
 .note{background:#fff8e6;border:1px solid #f1d9a0;border-radius:10px;padding:10px 14px;font-size:14px;margin:16px 0}
 .filters{display:grid;gap:10px;grid-template-columns:1fr;background:var(--c);border:1px solid var(--l);border-radius:12px;padding:14px;margin:16px 0}
-@media(min-width:700px){.filters{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:700px){.filters{grid-template-columns:repeat(3,1fr)}}.filters .fbar label{display:flex;margin:0;font-weight:400;color:var(--t)}
 .filters label{font-size:13px;font-weight:600;color:var(--m);display:block;margin-bottom:4px}.filters select{width:100%;padding:10px;border:1px solid #b8c2d0;border-radius:8px;font-size:15px;background:#fff}
 .count{font-size:14px;color:var(--m);margin:4px 0 8px}
-.grid{display:grid;gap:14px;grid-template-columns:1fr}@media(min-width:760px){.grid{grid-template-columns:1fr 1fr}}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}@media(max-width:360px){.grid{grid-template-columns:1fr}}
 .card{background:var(--c);border:1px solid var(--l);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column}
-.card[hidden]{display:none}.card h3{font-size:18px;margin:6px 0 6px;line-height:1.3}.card h3 a{text-decoration:none}.card h3 a:hover{text-decoration:underline}
+.card[hidden]{display:none}.badge{align-self:flex-start;font-size:12.5px;font-weight:700;border-radius:999px;padding:3px 10px;background:#e7f5ec;color:var(--ok)}.badge.soon{background:#fde8e7;color:#b42318}.badge.exp{background:#eee;color:#555}.badge.open{background:#e8f0fb;color:var(--bd)}.amt{font-weight:700;color:var(--t)!important;font-size:14.5px!important;margin:0 0 8px!important}.sum{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.tag.area{background:var(--b);color:#fff}.tag:not(.area){background:#fff;border:1px solid #9fb6d6}.tags{margin-bottom:8px}.meta{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--l);padding-top:10px}.ente{font-size:13px;color:#5b6575}.more{font-weight:700;font-size:14px;text-decoration:none;margin-top:4px}.spc{border:2px dashed #9aa7ba;background:#fbfcfe;align-items:flex-start;justify-content:center;gap:10px}.spt{font-size:17px!important;font-weight:700;color:var(--t)!important}.upd{font-size:14px;margin-top:8px!important}.hbtn{background:#fff;color:var(--b);margin-top:14px}.hbtn:hover{background:#e8f0fb;color:var(--bd)}.fbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;grid-column:1/-1}.fbar .count{margin:0;font-weight:600}.chk{font-size:14px;display:flex;gap:6px;align-items:center}#filtri{scroll-margin-top:70px}@media(min-width:900px){.filters{position:sticky;top:61px;z-index:4;box-shadow:0 4px 12px #0001}}.card h3{font-size:18px;margin:6px 0 6px;line-height:1.3}.card h3 a{text-decoration:none}.card h3 a:hover{text-decoration:underline}
 .card p{margin:0 0 10px;color:#2d3748;font-size:15px}.meta{margin-top:auto;font-size:14px;color:var(--m)}
 .tags{display:flex;flex-wrap:wrap;gap:6px}.tag{background:#e8f0fb;color:var(--bd);border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:600}
 .dl{font-weight:700;color:var(--t)}.soon{color:#b42318}
@@ -74,36 +76,47 @@ SP = '<aside class="sp" aria-label="Spazio sponsor"><span class="lab">Sponsorizz
 def sp(pre=""): return SP.replace("{pre}", pre)
 TOOL = f'<aside class="tool" aria-label="Strumenti consigliati"><strong>Strumenti consigliati</strong><br><a href="{FPEF}" rel="noopener" target="_blank">FoglioPEF</a>: modelli finanziari Excel per l&#39;immobiliare. · <a href="https://www.linkedin.com/company/fogliopef" rel="noopener" target="_blank">FoglioPEF su LinkedIn</a> <small>(Progetto dello stesso titolare del sito.)</small></aside>'
 def card(b, pre=""):
-    t = "".join(f'<span class="tag">{e(x)}</span>' for x in [b["regione"]] + b["destinatari"])
-    soon = b["scadenza"] and (datetime.date.fromisoformat(b["scadenza"]) - datetime.date.today()).days <= 14
-    return f'<article class="card" data-reg="{e(b["regione"])}" data-dest="{e("|".join(b["destinatari"]))}" data-scad="{b["scadenza"] or "9999-12-31"}"><div class="tags">{t}</div><h3><a href="{pre}bando/{b["id"]}.html">{e(b["titolo"])}</a></h3><p>{e(b["sintesi"])}</p><div class="meta"><span class="dl{" soon" if soon else ""}">Scadenza: {e(b["nota_scadenza"])}</span><br>{e(b["ente"])}</div></article>'
+    t = f'<span class="tag area">{e(b["regione"])}</span>' + "".join(f'<span class="tag">{e(x)}</span>' for x in b["destinatari"])
+    if b["scaduto"]: badge = '<span class="badge exp">Scaduto</span>'
+    elif b["scadenza"]:
+        g = (datetime.date.fromisoformat(b["scadenza"]) - datetime.date.today()).days
+        badge = f'<span class="badge{" soon" if g <= 14 else ""}">{"Scade oggi" if g == 0 else ("Manca 1 giorno" if g == 1 else f"Mancano {g} giorni")}</span>'
+    else: badge = '<span class="badge open">Sportello aperto</span>'
+    return f'''<article class="card" data-reg="{e(b["regione"])}" data-dest="{e("|".join(b["destinatari"]))}" data-scad="{b["scadenza"] or "9999-12-31"}" data-scaduto="{1 if b["scaduto"] else 0}"{" hidden" if b["scaduto"] else ""}>{badge}<h3><a href="{pre}bando/{b["id"]}.html">{e(b["titolo"])}</a></h3><p class="amt">{e(b["importo"])}</p><div class="tags">{t}</div><p class="sum">{e(b["sintesi"])}</p><div class="meta"><span class="dl">{e(dl(b))}</span><span class="ente">{e(b["ente"])}</span><a class="more" href="{pre}bando/{b["id"]}.html">Vedi la scheda →</a></div></article>'''
+def grid(L, pre=""):
+    out = [card(b, pre) for b in L]
+    sp_card = f'<aside class="card spc" aria-label="Spazio sponsor"><span class="lab">Sponsorizzato</span><p class="spt">Il tuo studio qui: raggiungi PMI che cercano finanziamenti</p><a class="btn" href="{pre}sponsor.html">Diventa sponsor</a></aside>'
+    att = [i for i, b in enumerate(L) if not b["scaduto"]]
+    pos = att[2] + 1 if len(att) >= 3 else len(out)
+    out.insert(pos, sp_card)
+    return '<div class="grid" id="bandi">' + "".join(out) + "</div>"
 dest = sorted({d for b in B for d in b["destinatari"]})
 FILT = f"""<form class="filters" role="search" aria-label="Filtra i bandi" onsubmit="return false">
 <div><label for="r">Area</label><select id="r"><option value="">Tutte le aree</option>{"".join(f"<option>{x}</option>" for x in REG)}</select></div>
 <div><label for="d">Destinatari</label><select id="d"><option value="">Tutti i destinatari</option>{"".join(f"<option>{e(x)}</option>" for x in dest)}</select></div>
-<div><label for="s">Scadenza</label><select id="s"><option value="">Qualsiasi scadenza</option><option value="30">Entro 30 giorni</option><option value="90">Entro 90 giorni</option><option value="none">Senza scadenza fissa</option></select></div></form>
-<p class="count" id="n" aria-live="polite"></p>"""
-JS = """<script>(function(){const R=document.getElementById('r'),Dd=document.getElementById('d'),S=document.getElementById('s'),N=document.getElementById('n'),C=[...document.querySelectorAll('.grid .card')];
-function f(){const r=R.value,d=Dd.value,s=S.value,now=new Date();let k=0;C.forEach(c=>{let ok=(!r||c.dataset.reg==r)&&(!d||c.dataset.dest.split('|').includes(d));const sc=c.dataset.scad;if(s=='none')ok=ok&&sc.startsWith('9999');else if(s)ok=ok&&!sc.startsWith('9999')&&(new Date(sc)-now)/864e5<=+s;c.hidden=!ok;if(ok)k++});N.textContent=k===0?'Nessun bando con questi filtri, prova a modificarli':k===1?'1 bando trovato':k+' bandi trovati'}
-[R,Dd,S].forEach(x=>x.addEventListener('change',f));f()})()</script>"""
+<div><label for="s">Scadenza</label><select id="s"><option value="">Qualsiasi scadenza</option><option value="30">Entro 30 giorni</option><option value="90">Entro 90 giorni</option><option value="none">Senza scadenza fissa</option></select></div>
+<div class="fbar"><p class="count" id="n" aria-live="polite">{len(ATT)} bandi trovati</p><label class="chk"><input type="checkbox" id="x"> Mostra scaduti</label><a href="#" id="z">Azzera filtri</a></div></form>"""
+JS = """<script>(function(){const $=i=>document.getElementById(i),R=$('r'),Dd=$('d'),S=$('s'),X=$('x'),N=$('n'),C=[...document.querySelectorAll('.grid .card:not(.spc)')];
+function f(){const r=R.value,d=Dd.value,s=S.value,now=new Date();let k=0;C.forEach(c=>{let ok=(X.checked||c.dataset.scaduto!=='1')&&(!r||c.dataset.reg==r)&&(!d||c.dataset.dest.split('|').includes(d));const sc=c.dataset.scad;if(s=='none')ok=ok&&sc.startsWith('9999');else if(s)ok=ok&&!sc.startsWith('9999')&&(new Date(sc)-now)/864e5<=+s;c.hidden=!ok;if(ok)k++});N.textContent=k===0?'Nessun bando con questi filtri, prova a modificarli':k===1?'1 bando trovato':k+' bandi trovati'}
+[R,Dd,S,X].forEach(x=>x.addEventListener('change',f));$('z').addEventListener('click',ev=>{ev.preventDefault();R.value=Dd.value=S.value='';X.checked=false;f()});f()})()</script>"""
 ORG = {"@type": "Organization", "name": SITE, "url": BASE, "email": MAIL, "logo": BASE + "favicon.svg"}
 pages = []
 def W(path, html_): (D / path).write_text(html_, encoding="utf-8"); pages.append(path)
-hero = f'<section class="hero"><div class="wrap"><h1>Bandi e incentivi per startup e PMI</h1><p>Raccolta gratuita dei bandi aperti nazionali e regionali, con focus su Toscana, Umbria ed Emilia-Romagna. {len(B)} bandi, ultimo controllo sulle fonti il {it(AGG)}.</p></div></section>'
-W("index.html", page("index.html", "IncentiviPerTe – Bandi e incentivi per startup e PMI", f"{len(B)} bandi e incentivi aperti per startup e PMI: nazionali, Toscana, Umbria ed Emilia-Romagna, con scadenze e link ufficiali.",
-  f'<p class="note">Le schede sono sintesi indicative. Verifica sempre requisiti e scadenze sul sito ufficiale dell&#39;ente.</p>{FILT}{sp()}<div class="grid">{"".join(card(b) for b in B)}</div>{JS}{TOOL}', hero,
+hero = f'<section class="hero"><div class="wrap"><h1>Bandi e incentivi per startup e PMI</h1><p>Raccolta gratuita dei bandi aperti nazionali e regionali, con focus su Toscana, Umbria ed Emilia-Romagna: {len(ATT)} bandi aperti.</p><p class="upd">Aggiornato il {it(AGG)} · fonti ufficiali · gratis</p><p><a class="btn hbtn" href="#filtri">Trova il tuo bando</a></p></div></section>'
+W("index.html", page("index.html", "IncentiviPerTe – Bandi e incentivi per startup e PMI", f"{len(ATT)} bandi e incentivi aperti per startup e PMI: nazionali, Toscana, Umbria ed Emilia-Romagna, con scadenze e link ufficiali.",
+  f'<p class="note">Queste sono sintesi. Prima di fare domanda, controlla requisiti e scadenze sul sito dell&#39;ente.</p><div id="filtri">{FILT}</div>{grid(B)}{JS}{TOOL}', hero,
   {"@context": "https://schema.org", "@graph": [{"@type": "WebSite", "name": SITE, "url": BASE, "inLanguage": "it"}, ORG,
-   {"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": f'{BASE}bando/{b["id"]}.html', "name": b["titolo"]} for i, b in enumerate(B)]}]}))
+   {"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": f'{BASE}bando/{b["id"]}.html', "name": b["titolo"]} for i, b in enumerate(ATT)]}]}))
 for reg in REG[1:]:
-    L = [b for b in B if b["regione"] == reg]; slug = reg.lower() + ".html"
+    L = [b for b in ATT if b["regione"] == reg]; slug = reg.lower() + ".html"
     W(slug, page(slug, f"Bandi {reg}", f"Bandi e incentivi aperti per imprese in {reg}: scadenze, destinatari e link alle fonti ufficiali.",
-      f'<p class="crumb"><a href="index.html">Bandi</a> › {reg}</p><h1>Bandi aperti in {reg}</h1><p>{len(L)} bandi regionali. Per le imprese di {reg} sono rilevanti anche gli <a href="index.html">incentivi nazionali</a> (per esempio Autoimpiego Centro-Nord e Smart&amp;Start Italia).</p><div class="grid">{"".join(card(b) for b in L)}</div>{sp()}{TOOL}',
+      f'<p class="crumb"><a href="index.html">Bandi</a> › {reg}</p><h1>Bandi aperti in {reg}</h1><p>{len(L)} bandi regionali. Per le imprese di {reg} sono rilevanti anche gli <a href="index.html">incentivi nazionali</a> (per esempio Autoimpiego Centro-Nord e Smart&amp;Start Italia).</p>{grid(L)}{TOOL}',
       ld={"@context": "https://schema.org", "@type": "CollectionPage", "name": f"Bandi {reg}", "url": BASE + slug, "inLanguage": "it"}))
 for b in B:
     p = f'bando/{b["id"]}.html'
     body = f'''<p class="crumb"><a href="../index.html">Bandi</a> › <a href="../{b["regione"].lower() + ".html" if b["regione"] != "Nazionale" else "index.html"}">{e(b["regione"])}</a></p>
 <article class="box"><div class="tags">{"".join(f'<span class="tag">{e(x)}</span>' for x in [b["regione"]]+b["destinatari"])}</div><h1>{e(b["titolo"])}</h1>
-<dl class="kv"><dt>Ente</dt><dd>{e(b["ente"])}</dd><dt>Area</dt><dd>{e(b["regione"])}</dd><dt>Destinatari</dt><dd>{e(", ".join(b["destinatari"]))}</dd><dt>Scadenza</dt><dd><strong>{e(b["nota_scadenza"])}</strong></dd><dt>Ultimo controllo</dt><dd>{it(b["ultimo_controllo"])}</dd></dl>
+<dl class="kv"><dt>Ente</dt><dd>{e(b["ente"])}</dd><dt>Area</dt><dd>{e(b["regione"])}</dd><dt>Destinatari</dt><dd>{e(", ".join(b["destinatari"]))}</dd><dt>Importo</dt><dd>{e(b["importo"])}</dd><dt>Scadenza</dt><dd><strong>{e(dl(b))}</strong><br><small>{e(b["nota_scadenza"])}</small></dd><dt>Ultimo controllo</dt><dd>{it(b["ultimo_controllo"])}</dd></dl>
 <p>{e(b["sintesi"])}</p><p><a class="btn" href="{e(b["url"])}" rel="noopener" target="_blank">Vai al bando ufficiale<span class="skip"> (si apre in una nuova scheda)</span></a></p>
 <p class="note">Sintesi indicativa. Fa fede esclusivamente il testo ufficiale pubblicato dall&#39;ente. <a href="../disclaimer.html">Disclaimer</a></p></article>{sp("../")}'''
     W(p, page(p, b["titolo"], f'{b["titolo"]} ({b["ente"]}): {b["sintesi"][:120]}', body, pre="../",
