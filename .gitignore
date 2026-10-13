@@ -1,2 +1,4 @@
 preview.png
 report.txt
+__pycache__/
+*.pyc
