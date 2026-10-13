@@ -63,7 +63,7 @@ def page(path, title, desc, body, hero="", ld=None, pre=""):
     full = title if path == "index.html" else f"{title} – {SITE}"
     return f"""<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{e(full)}</title><meta name="description" content="{e(desc)}"><link rel="canonical" href="{url}">
-<meta property="og:type" content="website"><meta property="og:site_name" content="{SITE}"><meta property="og:title" content="{e(full)}"><meta property="og:description" content="{e(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{BASE}og.svg"><meta property="og:locale" content="it_IT"><meta name="twitter:card" content="summary_large_image">
+<meta property="og:type" content="website"><meta property="og:site_name" content="{SITE}"><meta property="og:title" content="{e(full)}"><meta property="og:description" content="{e(desc)}"><meta property="og:url" content="{url}"><meta property="og:image" content="{BASE}og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="IncentiviPerTe – Bandi e incentivi per startup e PMI"><meta property="og:locale" content="it_IT"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="{BASE}og.png">
 <meta name="theme-color" content="#0b5cad"><link rel="icon" href="{pre}favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="{pre}style.css">{ldj}</head>
 <body><a class="skip" href="#main">Vai al contenuto</a>
 <header class="top"><div class="wrap bar"><a class="brand" href="{pre}index.html" aria-label="{SITE}, home">{LOGO}<span>Incentivi<span style="color:var(--b)">PerTe</span></span></a>
@@ -143,4 +143,5 @@ for pth, (t, d, body) in STAT.items():
 (D / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + "".join(f"<url><loc>{BASE}{'' if p == 'index.html' else p}</loc><lastmod>{AGG}</lastmod></url>" for p in pages) + "</urlset>", encoding="utf-8")
 (D / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {BASE}sitemap.xml\n", encoding="utf-8")
 (D / ".nojekyll").write_text("")
+import shutil; shutil.copy(R / "assets/og.png", D / "og.png")
 print(f"OK: {len(B)} bandi, {len(pages)+1} pagine -> {D}")
