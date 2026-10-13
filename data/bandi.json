@@ -1,13 +1,235 @@
 [
-{"id":"smart-start-italia","titolo":"Smart&Start Italia","ente":"Invitalia / MIMIT","regione":"Nazionale","destinatari":["Startup"],"scadenza":null,"nota_scadenza":"A sportello, senza scadenza","sintesi":"Finanziamento a tasso zero dell'80% delle spese ammissibili (90% in casi previsti) per startup innovative fino a 60 mesi di vita; contributo a fondo perduto del 30% per sede nel Centro-Sud.","url":"https://www.invitalia.it/incentivi-e-strumenti/smartstart-italia","check":"Le domande sono esaminate","ultimo_controllo":"2026-10-13"},
-{"id":"autoimpiego-centro-nord","titolo":"Autoimpiego Centro-Nord","ente":"Invitalia / Min. Lavoro","regione":"Nazionale","destinatari":["Under 35","Nuove imprese"],"scadenza":null,"nota_scadenza":"Attivo dal 15/10/2025, fino a esaurimento risorse","sintesi":"Per under 35 inattivi/disoccupati che avviano un'attività in 12 regioni del Centro-Nord, incluse Toscana e Umbria. Voucher fino a 30.000 € (elevabile a 40.000) o contributo 65%/60% su programmi fino a 200.000 €.","url":"https://www.invitalia.it/incentivi-e-strumenti/autoimpiego-centro-nord","check":"Attivo","ultimo_controllo":"2026-10-13"},
-{"id":"resto-al-sud-2","titolo":"Resto al Sud 2.0","ente":"Invitalia","regione":"Nazionale","destinatari":["Under 35","Nuove imprese"],"scadenza":null,"nota_scadenza":"Aperto dal 15/10/2025, fino a esaurimento risorse","sintesi":"Per under 35 che avviano un'attività nelle 8 regioni del Mezzogiorno (non Toscana/Umbria). Voucher fino a 40.000 € (elevabile a 50.000) o contributo 75%/70% su programmi fino a 200.000 €.","url":"https://www.invitalia.it/incentivi-e-strumenti/resto-al-sud-20","check":"PRESENTA LA DOMANDA","ultimo_controllo":"2026-10-13"},
-{"id":"economia-circolare-privati","titolo":"Bando Economia Circolare – Privati","ente":"Regione Toscana / Sviluppo Toscana","regione":"Toscana","destinatari":["PMI"],"scadenza":"2026-10-23","nota_scadenza":"23/10/2026 ore 12:00","sintesi":"Contributo a fondo perduto in conto capitale per investimenti delle PMI toscane in impianti di riciclaggio e gestione rifiuti (PR FESR 2021-27, Azione 2.6.1.2). Dotazione 15 mln €.","url":"https://www.sviluppo.toscana.it/bando/bando-economia-circolare-privati/","check":"Aperto","ultimo_controllo":"2026-10-13"},
-{"id":"premio-innovazione-toscana-2026","titolo":"Premio Innovazione Toscana \"Amerigo Vespucci\" 2026","ente":"Consiglio Regionale Toscana / Confindustria Toscana","regione":"Toscana","destinatari":["PMI","Startup"],"scadenza":"2026-10-28","nota_scadenza":"28/10/2026 ore 16:00","sintesi":"Premi da 15.000 € e 4.000 € in quattro sezioni (start-up innovative, R&S e innovazione digitale, brevetti, manifattura) più premio speciale Giovani. Dotazione 80.000 €.","url":"https://www.sviluppo.toscana.it/bando/premio-innovazione-toscana-2026/","check":"Aperto","ultimo_controllo":"2026-10-13"},
-{"id":"bando-132-bei-2026","titolo":"Bando 1.3.2 – Sostegno alle PMI (BEI) – ed. 2026","ente":"Regione Toscana / Sviluppo Toscana","regione":"Toscana","destinatari":["PMI"],"scadenza":null,"nota_scadenza":"Aperto dall'11/05/2026; scadenza non indicata sulla scheda","sintesi":"Contributi a fondo perduto per abbattere interessi e costi di garanzia su finanziamenti bancari della linea BEI \"Regione Toscana EU Blending\".","url":"https://www.sviluppo.toscana.it/bando/bando-1-3-2-sostegno-alle-pmi-bei-ed-2026/","check":"Aperto","ultimo_controllo":"2026-10-13"},
-{"id":"bando-132-50k-2026","titolo":"Bando 1.3.2 – Sostegno alle PMI (fino a 50.000 €) – ed. 2026","ente":"Regione Toscana / Sviluppo Toscana","regione":"Toscana","destinatari":["PMI"],"scadenza":null,"nota_scadenza":"Aperto dall'11/05/2026; scadenza non indicata sulla scheda","sintesi":"Contributi per abbattere interessi e commissioni di garanzia su finanziamenti fino a 50.000 € per investimenti produttivi. Dotazione 803.114,53 €.","url":"https://www.sviluppo.toscana.it/bando/bando-1-3-2-sostegno-alle-pmi-fino-a-50-000-e-ed-2026/","check":"Aperto","ultimo_controllo":"2026-10-13"},
-{"id":"step-2026-umbria","titolo":"Avviso STEP 2026","ente":"Regione Umbria / Gepafin","regione":"Umbria","destinatari":["PMI"],"scadenza":"2026-11-30","nota_scadenza":"30/11/2026 ore 12:00","sintesi":"Finanziamento agevolato all'1% (84 mesi) con remissione fino al 50% per investimenti in tecnologie digitali, deep tech, biotech e tecnologie pulite. Investimento minimo 500.000 € (micro/piccole). Dotazione 16 mln €.","url":"https://gepafin.it/servizi/prestiti-diretti/bando-step-2026/","check":"30 novembre 2026","ultimo_controllo":"2026-10-13"},
-{"id":"efficienza-energetica-2026-umbria","titolo":"Bando Efficienza Energetica 2026","ente":"Regione Umbria / Gepafin","regione":"Umbria","destinatari":["PMI","Grandi imprese"],"scadenza":"2026-12-31","nota_scadenza":"31/12/2026 ore 12:00 (salvo proroghe)","sintesi":"Finanziamenti agevolati con remissione parziale per l'efficienza energetica delle unità produttive in Umbria. Spesa 25.000–250.000 € (PMI). Dotazione 8 mln €.","url":"https://gepafin.it/servizi/prestiti-diretti/bando-efficienza-energetica-2026/","check":"31/12/2026","ultimo_controllo":"2026-10-13"},
-{"id":"fonti-rinnovabili-2026-umbria","titolo":"Bando Fonti Rinnovabili 2026","ente":"Regione Umbria / Gepafin","regione":"Umbria","destinatari":["PMI","Professionisti","Grandi imprese"],"scadenza":"2026-12-31","nota_scadenza":"31/12/2026 ore 12:00 (salvo proroghe)","sintesi":"Finanziamenti agevolati con remissione parziale per impianti da fonti rinnovabili di imprese e professionisti in Umbria. Spesa 25.000–350.000 € (PMI/professionisti). Dotazione 17 mln €.","url":"https://gepafin.it/servizi/prestiti-diretti/bando-fonti-rinnovabili-2026/","check":"31/12/2026","ultimo_controllo":"2026-10-13"},
-{"id":"turismo-2026-umbria","titolo":"Bando Turismo 2026","ente":"Regione Umbria / Gepafin","regione":"Umbria","destinatari":["PMI"],"scadenza":"2026-10-15","nota_scadenza":"15/10/2026 ore 12:00 (prorogato)","sintesi":"Finanziamento all'1% pari al 60% dell'investimento (70.000–500.000 €), remissione fino al 50%, per la riqualificazione delle strutture ricettive umbre.","url":"https://gepafin.it/servizi/prestiti-diretti/bando-turismo-2026/","check":"15/10/2026","ultimo_controllo":"2026-10-13"}
+ {
+  "id": "smart-start-italia",
+  "titolo": "Smart&Start Italia",
+  "ente": "Invitalia / MIMIT",
+  "regione": "Nazionale",
+  "destinatari": [
+   "Startup"
+  ],
+  "scadenza": null,
+  "nota_scadenza": "A sportello, senza scadenza",
+  "sintesi": "Finanziamento a tasso zero dell'80% delle spese ammissibili (90% in casi previsti) per startup innovative fino a 60 mesi di vita; contributo a fondo perduto del 30% per sede nel Centro-Sud.",
+  "url": "https://www.invitalia.it/incentivi-e-strumenti/smartstart-italia",
+  "check": "Le domande sono esaminate",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "autoimpiego-centro-nord",
+  "titolo": "Autoimpiego Centro-Nord",
+  "ente": "Invitalia / Min. Lavoro",
+  "regione": "Nazionale",
+  "destinatari": [
+   "Under 35",
+   "Nuove imprese"
+  ],
+  "scadenza": null,
+  "nota_scadenza": "Attivo dal 15/10/2025, fino a esaurimento risorse",
+  "sintesi": "Per under 35 inattivi/disoccupati che avviano un'attività in 12 regioni del Centro-Nord, incluse Toscana, Umbria ed Emilia-Romagna. Voucher fino a 30.000 € (elevabile a 40.000) o contributo 65%/60% su programmi fino a 200.000 €.",
+  "url": "https://www.invitalia.it/incentivi-e-strumenti/autoimpiego-centro-nord",
+  "check": "Attivo",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "resto-al-sud-2",
+  "titolo": "Resto al Sud 2.0",
+  "ente": "Invitalia",
+  "regione": "Nazionale",
+  "destinatari": [
+   "Under 35",
+   "Nuove imprese"
+  ],
+  "scadenza": null,
+  "nota_scadenza": "Aperto dal 15/10/2025, fino a esaurimento risorse",
+  "sintesi": "Per under 35 che avviano un'attività nelle 8 regioni del Mezzogiorno (non Toscana/Umbria). Voucher fino a 40.000 € (elevabile a 50.000) o contributo 75%/70% su programmi fino a 200.000 €.",
+  "url": "https://www.invitalia.it/incentivi-e-strumenti/resto-al-sud-20",
+  "check": "PRESENTA LA DOMANDA",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "economia-circolare-privati",
+  "titolo": "Bando Economia Circolare – Privati",
+  "ente": "Regione Toscana / Sviluppo Toscana",
+  "regione": "Toscana",
+  "destinatari": [
+   "PMI"
+  ],
+  "scadenza": "2026-10-23",
+  "nota_scadenza": "23/10/2026 ore 12:00",
+  "sintesi": "Contributo a fondo perduto in conto capitale per investimenti delle PMI toscane in impianti di riciclaggio e gestione rifiuti (PR FESR 2021-27, Azione 2.6.1.2). Dotazione 15 mln €.",
+  "url": "https://www.sviluppo.toscana.it/bando/bando-economia-circolare-privati/",
+  "check": "Aperto",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "premio-innovazione-toscana-2026",
+  "titolo": "Premio Innovazione Toscana \"Amerigo Vespucci\" 2026",
+  "ente": "Consiglio Regionale Toscana / Confindustria Toscana",
+  "regione": "Toscana",
+  "destinatari": [
+   "PMI",
+   "Startup"
+  ],
+  "scadenza": "2026-10-28",
+  "nota_scadenza": "28/10/2026 ore 16:00",
+  "sintesi": "Premi da 15.000 € e 4.000 € in quattro sezioni (start-up innovative, R&S e innovazione digitale, brevetti, manifattura) più premio speciale Giovani. Dotazione 80.000 €.",
+  "url": "https://www.sviluppo.toscana.it/bando/premio-innovazione-toscana-2026/",
+  "check": "Aperto",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "bando-132-bei-2026",
+  "titolo": "Bando 1.3.2 – Sostegno alle PMI (BEI) – ed. 2026",
+  "ente": "Regione Toscana / Sviluppo Toscana",
+  "regione": "Toscana",
+  "destinatari": [
+   "PMI"
+  ],
+  "scadenza": null,
+  "nota_scadenza": "Aperto dall'11/05/2026; scadenza non indicata sulla scheda",
+  "sintesi": "Contributi a fondo perduto per abbattere interessi e costi di garanzia su finanziamenti bancari della linea BEI \"Regione Toscana EU Blending\".",
+  "url": "https://www.sviluppo.toscana.it/bando/bando-1-3-2-sostegno-alle-pmi-bei-ed-2026/",
+  "check": "Aperto",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "bando-132-50k-2026",
+  "titolo": "Bando 1.3.2 – Sostegno alle PMI (fino a 50.000 €) – ed. 2026",
+  "ente": "Regione Toscana / Sviluppo Toscana",
+  "regione": "Toscana",
+  "destinatari": [
+   "PMI"
+  ],
+  "scadenza": null,
+  "nota_scadenza": "Aperto dall'11/05/2026; scadenza non indicata sulla scheda",
+  "sintesi": "Contributi per abbattere interessi e commissioni di garanzia su finanziamenti fino a 50.000 € per investimenti produttivi. Dotazione 803.114,53 €.",
+  "url": "https://www.sviluppo.toscana.it/bando/bando-1-3-2-sostegno-alle-pmi-fino-a-50-000-e-ed-2026/",
+  "check": "Aperto",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "step-2026-umbria",
+  "titolo": "Avviso STEP 2026",
+  "ente": "Regione Umbria / Gepafin",
+  "regione": "Umbria",
+  "destinatari": [
+   "PMI"
+  ],
+  "scadenza": "2026-11-30",
+  "nota_scadenza": "30/11/2026 ore 12:00",
+  "sintesi": "Finanziamento agevolato all'1% (84 mesi) con remissione fino al 50% per investimenti in tecnologie digitali, deep tech, biotech e tecnologie pulite. Investimento minimo 500.000 € (micro/piccole). Dotazione 16 mln €.",
+  "url": "https://gepafin.it/servizi/prestiti-diretti/bando-step-2026/",
+  "check": "30 novembre 2026",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "efficienza-energetica-2026-umbria",
+  "titolo": "Bando Efficienza Energetica 2026",
+  "ente": "Regione Umbria / Gepafin",
+  "regione": "Umbria",
+  "destinatari": [
+   "PMI",
+   "Grandi imprese"
+  ],
+  "scadenza": "2026-12-31",
+  "nota_scadenza": "31/12/2026 ore 12:00 (salvo proroghe)",
+  "sintesi": "Finanziamenti agevolati con remissione parziale per l'efficienza energetica delle unità produttive in Umbria. Spesa 25.000–250.000 € (PMI). Dotazione 8 mln €.",
+  "url": "https://gepafin.it/servizi/prestiti-diretti/bando-efficienza-energetica-2026/",
+  "check": "31/12/2026",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "fonti-rinnovabili-2026-umbria",
+  "titolo": "Bando Fonti Rinnovabili 2026",
+  "ente": "Regione Umbria / Gepafin",
+  "regione": "Umbria",
+  "destinatari": [
+   "PMI",
+   "Professionisti",
+   "Grandi imprese"
+  ],
+  "scadenza": "2026-12-31",
+  "nota_scadenza": "31/12/2026 ore 12:00 (salvo proroghe)",
+  "sintesi": "Finanziamenti agevolati con remissione parziale per impianti da fonti rinnovabili di imprese e professionisti in Umbria. Spesa 25.000–350.000 € (PMI/professionisti). Dotazione 17 mln €.",
+  "url": "https://gepafin.it/servizi/prestiti-diretti/bando-fonti-rinnovabili-2026/",
+  "check": "31/12/2026",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "turismo-2026-umbria",
+  "titolo": "Bando Turismo 2026",
+  "ente": "Regione Umbria / Gepafin",
+  "regione": "Umbria",
+  "destinatari": [
+   "PMI"
+  ],
+  "scadenza": "2026-10-15",
+  "nota_scadenza": "15/10/2026 ore 12:00 (prorogato)",
+  "sintesi": "Finanziamento all'1% pari al 60% dell'investimento (70.000–500.000 €), remissione fino al 50%, per la riqualificazione delle strutture ricettive umbre.",
+  "url": "https://gepafin.it/servizi/prestiti-diretti/bando-turismo-2026/",
+  "check": "15/10/2026",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "fondo-starter-er-2026",
+  "titolo": "Fondo Multiscopo – sezione StartER (finestra ott.-nov. 2026)",
+  "ente": "Regione Emilia-Romagna",
+  "regione": "Emilia-Romagna",
+  "destinatari": [
+   "Startup",
+   "PMI"
+  ],
+  "scadenza": "2026-11-30",
+  "nota_scadenza": "Dal 12/10 al 30/11/2026, salvo esaurimento risorse",
+  "sintesi": "Finanza agevolata del PR FESR 2021-2027 per l'avvio e il consolidamento di imprese giovani. La nuova finestra del Fondo Multiscopo mette 9 mln € sulla sezione StartER.",
+  "url": "https://www.regione.emilia-romagna.it/notizie/2026/ottobre/sostegno-al-credito-rilancio-investimenti",
+  "check": "StartER",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "fondo-greener-er-2026",
+  "titolo": "Fondo Multiscopo – sezione GreenER (finestra ott.-nov. 2026)",
+  "ente": "Regione Emilia-Romagna",
+  "regione": "Emilia-Romagna",
+  "destinatari": [
+   "PMI"
+  ],
+  "scadenza": "2026-11-30",
+  "nota_scadenza": "Dal 12/10 al 30/11/2026, salvo esaurimento risorse",
+  "sintesi": "Finanza agevolata del PR FESR 2021-2027. La nuova finestra del Fondo Multiscopo mette 13 mln € sulla sezione GreenER (investimenti green).",
+  "url": "https://www.regione.emilia-romagna.it/notizie/2026/ottobre/sostegno-al-credito-rilancio-investimenti",
+  "check": "GreenER",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "trasferimento-tecnologico-er-2026",
+  "titolo": "Bando progetti di trasferimento tecnologico delle PMI",
+  "ente": "Regione Emilia-Romagna (PR FESR)",
+  "regione": "Emilia-Romagna",
+  "destinatari": [
+   "PMI"
+  ],
+  "scadenza": "2026-10-30",
+  "nota_scadenza": "Dal 24/09 al 30/10/2026 (piattaforma Sfinge 2020)",
+  "sintesi": "Contributo a fondo perduto fino a 300.000 € per progetti da almeno 200.000 € di sviluppo sperimentale con prototipo o dimostratore, in collaborazione obbligatoria (min. 40.000 €) con università/enti della Rete Alta Tecnologia.",
+  "url": "https://fesr.regione.emilia-romagna.it/novita/notizie/2026/bando-progetti-trasferimento-tecnologico",
+  "check": "30 ottobre 2026",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "assunzioni-montagna-er-2026",
+  "titolo": "Contributi all'assunzione nei territori montani e nelle aree interne",
+  "ente": "Regione Emilia-Romagna",
+  "regione": "Emilia-Romagna",
+  "destinatari": [
+   "PMI",
+   "Grandi imprese"
+  ],
+  "scadenza": "2026-12-15",
+  "nota_scadenza": "Dal 12/10 al 15/12/2026 ore 14:00, salvo esaurimento risorse",
+  "sintesi": "Contributo a fondo perduto una tantum ai datori di lavoro privati che assumono, in 132 Comuni montani e delle aree interne, persone che hanno perso involontariamente un lavoro a tempo indeterminato. Dotazione 2 mln €.",
+  "url": "https://imprese.regione.emilia-romagna.it/leggi-atti-bandi/tutti-i-bandi/industria-aritigianato-cooperazione/contributi-allassunzione-nei-territori-montani-e-nelle-aree-interne",
+  "check": "15 dicembre 2026",
+  "ultimo_controllo": "2026-10-13"
+ }
 ]
