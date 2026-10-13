@@ -107,10 +107,11 @@ W("index.html", page("index.html", "IncentiviPerTe – Bandi e incentivi per sta
   f'<p class="note">Queste sono sintesi. Prima di fare domanda, controlla requisiti e scadenze sul sito dell&#39;ente.</p><div id="filtri">{FILT}</div>{grid(B)}{JS}{TOOL}', hero,
   {"@context": "https://schema.org", "@graph": [{"@type": "WebSite", "name": SITE, "url": BASE, "inLanguage": "it"}, ORG,
    {"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": f'{BASE}bando/{b["id"]}.html', "name": b["titolo"]} for i, b in enumerate(ATT)]}]}))
+ART = {'Toscana': 'della Toscana', 'Umbria': "dell'Umbria", 'Emilia-Romagna': "dell'Emilia-Romagna"}
 for reg in REG[1:]:
     L = [b for b in ATT if b["regione"] == reg]; slug = reg.lower() + ".html"
     W(slug, page(slug, f"Bandi {reg}", f"Bandi e incentivi aperti per imprese in {reg}: scadenze, destinatari e link alle fonti ufficiali.",
-      f'<p class="crumb"><a href="index.html">Bandi</a> › {reg}</p><h1>Bandi aperti in {reg}</h1><p>{len(L)} bandi regionali. Per le imprese di {reg} sono rilevanti anche gli <a href="index.html">incentivi nazionali</a> (per esempio Autoimpiego Centro-Nord e Smart&amp;Start Italia).</p>{grid(L)}{TOOL}',
+      f'<p class="crumb"><a href="index.html">Bandi</a> › {reg}</p><h1>Bandi aperti in {reg}</h1><p>{len(L)} bandi regionali. Per le imprese {ART[reg]} sono rilevanti anche gli <a href="index.html">incentivi nazionali</a> (per esempio Autoimpiego Centro-Nord e Smart&amp;Start Italia).</p>{grid(L)}{TOOL}',
       ld={"@context": "https://schema.org", "@type": "CollectionPage", "name": f"Bandi {reg}", "url": BASE + slug, "inLanguage": "it"}))
 for b in B:
     p = f'bando/{b["id"]}.html'
