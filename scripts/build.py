@@ -39,7 +39,7 @@ main{padding:20px 0 32px}h1{line-height:1.2}h2{font-size:21px;margin:26px 0 10px
 .count{font-size:14px;color:var(--m);margin:4px 0 8px}
 .grid{display:grid;gap:14px;grid-template-columns:1fr}@media(min-width:760px){.grid{grid-template-columns:1fr 1fr}}
 .card{background:var(--c);border:1px solid var(--l);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column}
-.card h3{font-size:18px;margin:6px 0 6px;line-height:1.3}.card h3 a{text-decoration:none}.card h3 a:hover{text-decoration:underline}
+.card[hidden]{display:none}.card h3{font-size:18px;margin:6px 0 6px;line-height:1.3}.card h3 a{text-decoration:none}.card h3 a:hover{text-decoration:underline}
 .card p{margin:0 0 10px;color:#2d3748;font-size:15px}.meta{margin-top:auto;font-size:14px;color:var(--m)}
 .tags{display:flex;flex-wrap:wrap;gap:6px}.tag{background:#e8f0fb;color:var(--bd);border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:600}
 .dl{font-weight:700;color:var(--t)}.soon{color:#b42318}
@@ -84,7 +84,7 @@ FILT = f"""<form class="filters" role="search" aria-label="Filtra i bandi" onsub
 <div><label for="s">Scadenza</label><select id="s"><option value="">Qualsiasi scadenza</option><option value="30">Entro 30 giorni</option><option value="90">Entro 90 giorni</option><option value="none">Senza scadenza fissa</option></select></div></form>
 <p class="count" id="n" aria-live="polite"></p>"""
 JS = """<script>(function(){const R=document.getElementById('r'),Dd=document.getElementById('d'),S=document.getElementById('s'),N=document.getElementById('n'),C=[...document.querySelectorAll('.grid .card')];
-function f(){const r=R.value,d=Dd.value,s=S.value,now=new Date();let k=0;C.forEach(c=>{let ok=(!r||c.dataset.reg==r)&&(!d||c.dataset.dest.split('|').includes(d));const sc=c.dataset.scad;if(s=='none')ok=ok&&sc.startsWith('9999');else if(s)ok=ok&&!sc.startsWith('9999')&&(new Date(sc)-now)/864e5<=+s;c.hidden=!ok;if(ok)k++});N.textContent=k+' bandi trovati'}
+function f(){const r=R.value,d=Dd.value,s=S.value,now=new Date();let k=0;C.forEach(c=>{let ok=(!r||c.dataset.reg==r)&&(!d||c.dataset.dest.split('|').includes(d));const sc=c.dataset.scad;if(s=='none')ok=ok&&sc.startsWith('9999');else if(s)ok=ok&&!sc.startsWith('9999')&&(new Date(sc)-now)/864e5<=+s;c.hidden=!ok;if(ok)k++});N.textContent=k===0?'Nessun bando con questi filtri, prova a modificarli':k===1?'1 bando trovato':k+' bandi trovati'}
 [R,Dd,S].forEach(x=>x.addEventListener('change',f));f()})()</script>"""
 ORG = {"@type": "Organization", "name": SITE, "url": BASE, "email": MAIL, "logo": BASE + "favicon.svg"}
 pages = []

@@ -9,9 +9,42 @@
   ],
   "scadenza": null,
   "nota_scadenza": "A sportello, senza scadenza",
-  "sintesi": "Finanziamento a tasso zero dell'80% delle spese ammissibili (90% in casi previsti) per startup innovative fino a 60 mesi di vita; contributo a fondo perduto del 30% per sede nel Centro-Sud.",
+  "sintesi": "Startup innovative fino a 60 mesi di vita: finanziamento a tasso zero dell'80% delle spese ammissibili, 90% se la startup è composta interamente da donne e/o under 36 o con un dottore di ricerca rientrato dall'estero. Contributo a fondo perduto del 30% solo per le startup con sede nel Centro-Sud Italia, come indicato da Invitalia: l'ambito territoriale esatto va verificato nella normativa.",
   "url": "https://www.invitalia.it/incentivi-e-strumenti/smartstart-italia",
   "check": "Le domande sono esaminate",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "on-nuove-imprese-tasso-zero",
+  "titolo": "ON – Oltre Nuove imprese a tasso zero",
+  "ente": "Invitalia / MIMIT",
+  "regione": "Nazionale",
+  "destinatari": [
+   "Under 35",
+   "Donne",
+   "Nuove imprese"
+  ],
+  "scadenza": null,
+  "nota_scadenza": "A sportello, senza scadenza",
+  "sintesi": "Per micro e piccole imprese costituite da non più di 60 mesi (o da costituire) con prevalenza di giovani 18-35 anni o di donne. Programmi fino a 1,5 mln € (imprese fino a 36 mesi) o 3 mln € (da 36 a 60 mesi). Fondo perduto esaurito: per le domande dal 1° luglio 2026 solo finanziamento a tasso zero (rimborso in 10 anni). Il 12/10/2026 il MIMIT ha annunciato un rifinanziamento di 59 mln €.",
+  "url": "https://www.invitalia.it/incentivi-e-strumenti/ON-nuove-imprese-tasso-zero",
+  "check": "tasso zero",
+  "ultimo_controllo": "2026-10-13"
+ },
+ {
+  "id": "detrazione-investimenti-startup-innovative",
+  "titolo": "Detrazione IRPEF 65% per chi investe in startup innovative (de minimis)",
+  "ente": "MIMIT",
+  "regione": "Nazionale",
+  "destinatari": [
+   "Investitori",
+   "Startup"
+  ],
+  "scadenza": null,
+  "nota_scadenza": "Misura fiscale, senza scadenza",
+  "sintesi": "Detrazione IRPEF del 65% per le persone fisiche che investono nel capitale di startup innovative, fino a 100.000 € per periodo d'imposta, con l'investimento mantenuto almeno 3 anni. Prima dell'investimento la startup deve presentare istanza sulla piattaforma dedicata. La startup non può ricevere più di 300.000 € in de minimis in tre anni.",
+  "url": "https://www.mimit.gov.it/it/impresa/competitivita-e-nuove-imprese/start-up-innovative/incentivi-de-minimis",
+  "check": "65%",
   "ultimo_controllo": "2026-10-13"
  },
  {
@@ -56,7 +89,7 @@
   ],
   "scadenza": "2026-10-23",
   "nota_scadenza": "23/10/2026 ore 12:00",
-  "sintesi": "Contributo a fondo perduto in conto capitale per investimenti delle PMI toscane in impianti di riciclaggio e gestione rifiuti (PR FESR 2021-27, Azione 2.6.1.2). Dotazione 15 mln €.",
+  "sintesi": "Contributo a fondo perduto in conto capitale per investimenti delle PMI toscane in impianti di riciclaggio e gestione rifiuti (PR FESR 2021-27, Azione 2.6.1.2): fino al 60% per micro e piccole imprese, 50% per le medie. Dotazione 15 mln €.",
   "url": "https://www.sviluppo.toscana.it/bando/bando-economia-circolare-privati/",
   "check": "Aperto",
   "ultimo_controllo": "2026-10-13"
@@ -87,7 +120,7 @@
   ],
   "scadenza": null,
   "nota_scadenza": "Aperto dall'11/05/2026; scadenza non indicata sulla scheda",
-  "sintesi": "Contributi a fondo perduto per abbattere interessi e costi di garanzia su finanziamenti bancari della linea BEI \"Regione Toscana EU Blending\".",
+  "sintesi": "Contributi a fondo perduto per abbattere interessi e costi di garanzia su finanziamenti bancari della linea BEI \"Regione Toscana EU Blending\". Dotazione 1.706.276 €.",
   "url": "https://www.sviluppo.toscana.it/bando/bando-1-3-2-sostegno-alle-pmi-bei-ed-2026/",
   "check": "Aperto",
   "ultimo_controllo": "2026-10-13"
@@ -150,7 +183,7 @@
   ],
   "scadenza": "2026-12-31",
   "nota_scadenza": "31/12/2026 ore 12:00 (salvo proroghe)",
-  "sintesi": "Finanziamenti agevolati con remissione parziale per impianti da fonti rinnovabili di imprese e professionisti in Umbria. Spesa 25.000–350.000 € (PMI/professionisti). Dotazione 17 mln €.",
+  "sintesi": "Finanziamenti agevolati con remissione parziale per impianti da fonti rinnovabili di imprese e professionisti in Umbria. Fotovoltaico: fino all'80% (professionisti, micro e piccole), 65% (medie), 50% (grandi); accumulo: 80% / 60% / 50%. Spesa da 25.000 a 350.000 € (PMI/professionisti). Dotazione 17 mln €.",
   "url": "https://gepafin.it/servizi/prestiti-diretti/bando-fonti-rinnovabili-2026/",
   "check": "31/12/2026",
   "ultimo_controllo": "2026-10-13"
