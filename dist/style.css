@@ -115,6 +115,10 @@ nav.crumb li+li::before{content:"›";color:var(--m);margin:0 6px}
 .launch{font-weight:800;color:#9b1c1c;margin:0}
 .offer .fine{color:var(--m);font-size:15px;margin:0}
 .offer .btn{margin-top:auto}
+.contact-links{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.contact-links a.mail{display:inline-flex;align-items:center;min-height:44px;font-weight:800;overflow-wrap:anywhere}
+.offer .contact-links{margin-top:auto;flex-direction:column;align-items:flex-start;gap:8px}
+.offer .contact-links .btn{margin-top:0}
 .sp{border:2px dashed #5c6b82;border-radius:14px;padding:16px;background:#f8fafc;margin:18px 0}
 footer{background:#111827;color:#e5e7eb;font-size:15px;padding:28px 0}
 footer a{color:#fff}
