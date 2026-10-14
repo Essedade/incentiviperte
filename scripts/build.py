@@ -19,6 +19,7 @@ DATA = R / "data" / "bandi.json"
 BASE = "https://essedade.github.io/incentiviperte/"
 SITE = "IncentiviPerTe"
 LINKEDIN = "https://www.linkedin.com/company/incentiviperte/"
+EMAIL = "incentiviperte.team@gmail.com"
 FPEF = "https://fogliopef.gumroad.com"
 FPEF_LI = "https://www.linkedin.com/company/fogliopef"
 REG = ["Nazionale", "Toscana", "Umbria", "Emilia-Romagna"]
@@ -58,7 +59,7 @@ FAQ = (
     ("La scheda basta per presentare domanda?",
      "No. Ogni scheda è una sintesi. Requisiti, scadenze e importi vanno verificati sul testo dell'ente: il link è nella scheda."),
     ("Come segnalo un bando o un errore?",
-     "Dalla pagina Contatti, con un messaggio alla Pagina LinkedIn IncentiviPerTe. Sul sito non pubblichiamo un indirizzo email."),
+     "Dalla pagina Contatti, con un messaggio alla Pagina LinkedIn IncentiviPerTe o all'indirizzo incentiviperte.team@gmail.com."),
     ("Posso comparire sul sito con il mio studio?",
      "Sì. Uno spazio su IncentiviPerTe parte da 49 € al mese, prezzo di lancio. Importi, regole ed etichetta Sponsorizzato sono sulla pagina Sponsor."),
 )
@@ -234,6 +235,10 @@ def ext(url, label, klass=""):
         f'<a{cls} href="{e(url)}" rel="noopener noreferrer" target="_blank">{label}'
         f'<span class="vh"> (si apre in una nuova scheda)</span></a>'
     )
+
+
+def mail_link():
+    return f'<a class="mail" href="mailto:{EMAIL}">{e(EMAIL)}</a>'
 
 
 def crumbs(items, pre):
@@ -563,7 +568,7 @@ def footer(pre):
 <nav aria-label="Aree"><p><strong>Aree</strong></p><ul id="foot-aree"></ul></nav>
 <nav aria-label="Destinatari"><p><strong>Destinatari</strong></p><ul id="foot-dest"></ul></nav>
 <nav aria-label="Informazioni"><ul>{links}</ul></nav>
-<p>Strumento dello stesso titolare: {ext(FPEF, "FoglioPEF")}, modelli Excel per il piano economico-finanziario immobiliare ({ext(FPEF_LI, "LinkedIn")}). Contatti: {ext(LINKEDIN, "messaggi della Pagina LinkedIn IncentiviPerTe")}. Nessun cookie, nessun tracker.</p>
+<p>Strumento dello stesso titolare: {ext(FPEF, "FoglioPEF")}, modelli Excel per il piano economico-finanziario immobiliare ({ext(FPEF_LI, "LinkedIn")}). Contatti: {ext(LINKEDIN, "messaggi della Pagina LinkedIn IncentiviPerTe")} o {mail_link()}. Nessun cookie, nessun tracker.</p>
 </div></footer>"""
 
 
@@ -696,6 +701,10 @@ nav.crumb li+li::before{content:"›";color:var(--m);margin:0 6px}
 .launch{font-weight:800;color:#9b1c1c;margin:0}
 .offer .fine{color:var(--m);font-size:15px;margin:0}
 .offer .btn{margin-top:auto}
+.contact-links{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.contact-links a.mail{display:inline-flex;align-items:center;min-height:44px;font-weight:800;overflow-wrap:anywhere}
+.offer .contact-links{margin-top:auto;flex-direction:column;align-items:flex-start;gap:8px}
+.offer .contact-links .btn{margin-top:0}
 .sp{border:2px dashed #5c6b82;border-radius:14px;padding:16px;background:#f8fafc;margin:18px 0}
 footer{background:#111827;color:#e5e7eb;font-size:15px;padding:28px 0}
 footer a{color:#fff}
@@ -716,7 +725,9 @@ footer nav{margin-top:8px}
 def static_pages(today):
     li = ext(LINKEDIN, "Pagina LinkedIn IncentiviPerTe")
     li_btn = ext(LINKEDIN, "Contattaci su LinkedIn", "btn")
-    owner = f"Davide Davoglio, Arezzo (Italia) – contattabile tramite i messaggi della {li}."
+    mail = mail_link()
+    contacts = f'<p class="contact-links">{li_btn}{mail}</p>'
+    owner = f"Davide Davoglio, Arezzo (Italia) – contattabile tramite i messaggi della {li} o all'indirizzo {mail}."
     return {
         "chi-siamo.html": (
             "Chi siamo",
@@ -727,7 +738,7 @@ def static_pages(today):
         "contatti.html": (
             "Contatti",
             "Come contattare IncentiviPerTe: segnalazioni di bandi, correzioni e richieste sponsor.",
-            f"<h1>Contatti</h1><div class='box'><p>Per segnalare un bando, una correzione o per informazioni sugli spazi sponsor scrivici tramite i messaggi della Pagina LinkedIn IncentiviPerTe:</p><p>{li_btn}</p><p>Non forniamo consulenza sui singoli bandi: per domande su requisiti e domanda rivolgiti all'ente che gestisce la misura o a un professionista. Gli spazi pubblicitari sono descritti nella pagina <a href='sponsor.html'>Sponsor</a>.</p></div>",
+            f"<h1>Contatti</h1><div class='box'><p>Per segnalare un bando, una correzione o per informazioni sugli spazi sponsor scrivici tramite i messaggi della Pagina LinkedIn IncentiviPerTe oppure all'indirizzo email:</p>{contacts}<p>Non forniamo consulenza sui singoli bandi: per domande su requisiti e domanda rivolgiti all'ente che gestisce la misura o a un professionista. Gli spazi pubblicitari sono descritti nella pagina <a href='sponsor.html'>Sponsor</a>.</p></div>",
             False,
         ),
         "sponsor.html": (
@@ -735,19 +746,19 @@ def static_pages(today):
             "Spazi sponsor su IncentiviPerTe da 49 € al mese, su FoglioPEF da 39 € e su entrambi i siti a 69 €.",
             f"""<h1>Sponsor e pubblicità</h1><div class="box">
 <p>IncentiviPerTe è letto da imprenditori, startup e PMI che cercano finanziamenti. Gli spazi sono per <strong>commercialisti, consulenti di finanza agevolata, banche e software</strong> per le imprese.</p>
-<p>{li_btn}</p>
+{contacts}
 <h2>Cosa include lo spazio su IncentiviPerTe</h2>
 <ul><li>Un posto in <strong>home page</strong></li><li>Un posto nelle <strong>pagine regionali</strong> (Toscana, Umbria, Emilia-Romagna) e nei bandi nazionali</li><li>Un posto nelle <strong>schede dei bandi</strong></li><li>Etichetta <strong>Sponsorizzato</strong> sempre visibile</li></ul>
 <h2 id="prezzi">Prezzi</h2>
 <p>I prezzi qui sotto sono per uno spazio pubblicitario etichettato Sponsorizzato. Non sono il prezzo dei modelli Excel.</p>
 <div class="offers">
-<div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 €</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € per i primi 3 sponsor, poi 79 €, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p>{li_btn}</div>
-<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.gumroad.com")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p>{li_btn}</div>
-<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p>{li_btn}</div>
+<div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 €</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € per i primi 3 sponsor, poi 79 €, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{li_btn}{mail}</div></div>
+<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.gumroad.com")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{li_btn}{mail}</div></div>
+<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{li_btn}{mail}</div></div>
 </div>
 <h2>Regole</h2>
 <ul><li>Ogni contenuto a pagamento è etichettato <strong>Sponsorizzato</strong>.</li><li>Gli sponsor non influenzano quali bandi pubblichiamo né come li descriviamo.</li><li>Nessun tracciamento degli utenti: niente pixel, cookie o script di terze parti.</li></ul>
-<p>Domande? Scrivi a messaggi della {li}.</p>
+<p>Domande? Scrivi a messaggi della {li} o all'indirizzo {mail}.</p>
 </div>""",
             False,
         ),
@@ -772,7 +783,7 @@ def static_pages(today):
         "privacy.html": (
             "Informativa privacy",
             "Informativa privacy di IncentiviPerTe ai sensi del Regolamento UE 2016/679 (GDPR).",
-            f"<h1>Informativa privacy</h1><div class='box'><p>Ai sensi degli artt. 13-14 del Regolamento UE 2016/679 (GDPR).</p><h2>Titolare del trattamento</h2><p>{owner}</p><h2>Dati trattati</h2><ul><li><strong>Navigazione</strong>: il sito non usa cookie, analytics o tracker. L'hosting (GitHub Pages, GitHub Inc.) può registrare dati tecnici come l'indirizzo IP nei log di server per sicurezza e funzionamento, secondo la propria informativa; base giuridica: legittimo interesse (art. 6.1.f).</li><li><strong>Email</strong>: se ci scrivi trattiamo indirizzo e contenuto del messaggio solo per rispondere; base giuridica: misure su richiesta dell'interessato / legittimo interesse. Conservazione: il tempo necessario a gestire la richiesta e comunque non oltre 24 mesi.</li></ul><h2>Trasferimenti</h2><p>GitHub Inc. ha sede negli USA; i trasferimenti avvengono secondo le garanzie previste dal GDPR (es. EU-US Data Privacy Framework o clausole contrattuali standard) indicate dal fornitore.</p><h2>Diritti</h2><p>Puoi chiedere accesso, rettifica, cancellazione, limitazione, opposizione e portabilità (artt. 15-22) scrivendo al titolare, e proporre reclamo al Garante per la protezione dei dati personali (garanteprivacy.it).</p><p>Nessuna newsletter è attiva: se verrà introdotta, sarà con consenso esplicito e informativa dedicata.</p><p><small>Ultimo aggiornamento: {it_date(today.isoformat())}.</small></p></div>",
+            f"<h1>Informativa privacy</h1><div class='box'><p>Ai sensi degli artt. 13-14 del Regolamento UE 2016/679 (GDPR).</p><h2>Titolare del trattamento</h2><p>{owner}</p><h2>Dati trattati</h2><ul><li><strong>Navigazione</strong>: il sito non usa cookie, analytics o tracker. L'hosting (GitHub Pages, GitHub Inc.) può registrare dati tecnici come l'indirizzo IP nei log di server per sicurezza e funzionamento, secondo la propria informativa; base giuridica: legittimo interesse (art. 6.1.f).</li><li><strong>Email</strong>: se ci scrivi trattiamo indirizzo e contenuto del messaggio solo per rispondere; base giuridica: misure su richiesta dell'interessato / legittimo interesse. Conservazione: il tempo necessario a gestire la richiesta e comunque non oltre 24 mesi.</li></ul><h2>Trasferimenti</h2><p>GitHub Inc. ha sede negli USA; i trasferimenti avvengono secondo le garanzie previste dal GDPR (es. EU-US Data Privacy Framework o clausole contrattuali standard) indicate dal fornitore.</p><h2>Diritti</h2><p>Puoi chiedere accesso, rettifica, cancellazione, limitazione, opposizione e portabilità (artt. 15-22) scrivendo al titolare tramite i messaggi della {li} o all'indirizzo {mail}, e proporre reclamo al Garante per la protezione dei dati personali (garanteprivacy.it).</p><p>Nessuna newsletter è attiva: se verrà introdotta, sarà con consenso esplicito e informativa dedicata.</p><p><small>Ultimo aggiornamento: {it_date(today.isoformat())}.</small></p></div>",
             False,
         ),
     }
@@ -814,6 +825,19 @@ def cleanup(written):
             path.unlink()
 
 
+def reject_emails_in_cards(html_text, name):
+    """Le schede bando non pubblicano indirizzi email, neanche quello del brand."""
+    for fragment in re.findall(r'<article class="card\b.*?</article>', html_text, re.S):
+        if "mailto:" in fragment.lower() or EMAIL_RE.search(fragment):
+            raise ValueError(f"{name}: indirizzo email nella scheda bando")
+
+
+def foreign_email(text):
+    """Vero se resta un indirizzo diverso da quello del brand."""
+    cleaned = text.replace(f"mailto:{EMAIL}", "").replace(EMAIL, "")
+    return "mailto:" in cleaned.lower() or EMAIL_RE.search(cleaned) is not None
+
+
 def self_check(written):
     htmls = [p for p in written if p.endswith(".html")]
     for rel in htmls:
@@ -829,7 +853,9 @@ def self_check(written):
         for token in TRACKERS:
             if token in low:
                 raise ValueError(f"{name}: riferimento a tracker ({token})")
-        if "mailto:" in low or EMAIL_RE.search(text):
+        reject_emails_in_cards(text, name)
+        # L'email del brand è nel footer e nelle pagine di contatto. Ogni altro indirizzo resta vietato.
+        if foreign_email(text):
             raise ValueError(f"{name}: indirizzo email")
         for match in re.finditer(r'<script type="application/ld\+json">(.*?)</script>', text, re.S):
             json.loads(match.group(1))

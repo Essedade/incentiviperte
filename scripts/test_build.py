@@ -3,6 +3,7 @@
 import datetime
 import json
 import pathlib
+import re
 import sys
 import unittest
 import xml.etree.ElementTree as ET
@@ -137,6 +138,70 @@ class Sito(unittest.TestCase):
             if path.name in ("privacy.html", "note-legali.html"):
                 continue
             self.assertNotIn("Davoglio", path.read_text(encoding="utf-8"))
+
+    def test_email_brand_consentita_e_vietata_nelle_schede(self):
+        mailto = f'href="mailto:{build.EMAIL}"'
+        linkedin = build.LINKEDIN
+        with self.assertRaises(ValueError) as altro:
+            build.validate([sample(sintesi="Scrivi a ufficio@example.com per info sul bando lungo")])
+        self.assertIn("contiene un indirizzo email", str(altro.exception))
+        with self.assertRaises(ValueError):
+            build.validate([sample(importo=f"10.000 €, {build.EMAIL}")])
+        with self.assertRaises(ValueError):
+            build.reject_emails_in_cards(
+                f'<article class="card"><a href="mailto:{build.EMAIL}">{build.EMAIL}</a></article>',
+                "index.html",
+            )
+        build.reject_emails_in_cards(
+            '<article class="card"><p>Scheda senza contatti</p></article>'
+            f'<footer><a href="mailto:{build.EMAIL}">{build.EMAIL}</a></footer>',
+            "index.html",
+        )
+
+        privacy = (DIST / "privacy.html").read_text(encoding="utf-8")
+        titolare = privacy.split("<h2>Titolare del trattamento</h2>", 1)[1].split("<h2>", 1)[0]
+        diritti = privacy.split("<h2>Diritti</h2>", 1)[1].split("</p>", 1)[0]
+        self.assertIn("artt. 15-22", diritti)
+        for fragment in (titolare, diritti):
+            self.assertIn(mailto, fragment)
+            self.assertIn(linkedin, fragment)
+        self.assertIn("Davide Davoglio, Arezzo (Italia)", titolare)
+        self.assertNotIn("Davide", diritti)
+
+        note = (DIST / "note-legali.html").read_text(encoding="utf-8")
+        titolare_note = note.split("<h2>Titolare del sito</h2>", 1)[1].split("<h2>", 1)[0]
+        self.assertIn(mailto, titolare_note)
+        self.assertIn(linkedin, titolare_note)
+        self.assertIn("Davide Davoglio, Arezzo (Italia)", titolare_note)
+
+        for rel in ("contatti.html", "sponsor.html"):
+            text = (DIST / rel).read_text(encoding="utf-8")
+            main = text.split("<footer>", 1)[0]
+            self.assertIn(mailto, main)
+            self.assertIn(linkedin, main)
+            self.assertIn("Contattaci su LinkedIn", main)
+            self.assertNotIn("Davide", main)
+            self.assertNotIn("Davoglio", main)
+
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        footer = home.split("<footer>", 1)[1]
+        self.assertIn(mailto, footer)
+        self.assertIn("messaggi della Pagina LinkedIn IncentiviPerTe", footer)
+        self.assertNotIn("Davide", home)
+        self.assertNotIn("Davoglio", home)
+        cards = re.findall(r'<article class="card\b.*?</article>', home, re.S)
+        self.assertGreaterEqual(len(cards), 1)
+        for card in cards:
+            self.assertNotIn("mailto:", card.lower())
+            self.assertIsNone(build.EMAIL_RE.search(card))
+        self.assertFalse(build.foreign_email(home))
+        self.assertFalse(build.foreign_email(privacy))
+        self.assertTrue(build.foreign_email(home + " segreteria@example.com"))
+
+        scheda = (DIST / "bando" / "smart-start-italia.html").read_text(encoding="utf-8")
+        self.assertNotIn("mailto:", scheda.split("<footer>", 1)[0].lower())
+        self.assertIn(mailto, scheda.split("<footer>", 1)[1])
+        self.assertIn("49 €", (DIST / "sponsor.html").read_text(encoding="utf-8"))
 
     def test_accessibilita_e_prestazioni(self):
         css = (DIST / "style.css").read_text(encoding="utf-8")
