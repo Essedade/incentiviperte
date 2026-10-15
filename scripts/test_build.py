@@ -131,6 +131,23 @@ class Sito(unittest.TestCase):
         for price in ("49 €", "39 €", "69 €", "79 €", "99 €"):
             self.assertIn(price, sponsor)
         self.assertIn("Prezzo di lancio: 3 posti, poi 79 €", sponsor)
+        self.assertIn(f'href="mailto:{build.FPEF_EMAIL}"', sponsor)
+        self.assertIn(
+            "Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € al mese)",
+            sponsor,
+        )
+        foglio = sponsor.split("<h3>FoglioPEF</h3>", 1)[1].split("<h3>", 1)[0]
+        entrambi = sponsor.split("<h3>Entrambi i siti</h3>", 1)[1].split("<h2>", 1)[0]
+        ipt = sponsor.split("<h3>IncentiviPerTe</h3>", 1)[1].split("<h3>", 1)[0]
+        self.assertIn(build.EMAIL, foglio)
+        self.assertIn(build.FPEF_EMAIL, foglio)
+        self.assertIn("Contatto per FoglioPEF:", foglio)
+        self.assertIn(build.EMAIL, entrambi)
+        self.assertIn(build.FPEF_EMAIL, entrambi)
+        self.assertIn("Contatto per entrambi i siti:", entrambi)
+        self.assertIn(build.EMAIL, ipt)
+        self.assertNotIn(build.FPEF_EMAIL, ipt)
+        self.assertNotIn(build.FPEF_EMAIL, sponsor.split("<footer>", 1)[1])
         for rel in ("privacy.html", "note-legali.html"):
             text = (DIST / rel).read_text(encoding="utf-8")
             self.assertIn("Davide Davoglio, Arezzo (Italia)", text)
@@ -182,6 +199,13 @@ class Sito(unittest.TestCase):
             self.assertIn("Contattaci su LinkedIn", main)
             self.assertNotIn("Davide", main)
             self.assertNotIn("Davoglio", main)
+        sponsor_main = (DIST / "sponsor.html").read_text(encoding="utf-8").split("<footer>", 1)[0]
+        contatti_main = (DIST / "contatti.html").read_text(encoding="utf-8").split("<footer>", 1)[0]
+        self.assertIn(f'href="mailto:{build.FPEF_EMAIL}"', sponsor_main)
+        self.assertLess(sponsor_main.find(build.EMAIL), sponsor_main.find(build.FPEF_EMAIL))
+        self.assertNotIn(build.FPEF_EMAIL, contatti_main)
+        self.assertFalse(build.foreign_email(sponsor_main))
+        self.assertTrue(build.foreign_email(sponsor_main + " segreteria@example.com"))
 
         home = (DIST / "index.html").read_text(encoding="utf-8")
         footer = home.split("<footer>", 1)[1]
@@ -196,7 +220,10 @@ class Sito(unittest.TestCase):
             self.assertIsNone(build.EMAIL_RE.search(card))
         self.assertFalse(build.foreign_email(home))
         self.assertFalse(build.foreign_email(privacy))
+        self.assertNotIn(build.FPEF_EMAIL, home)
+        self.assertNotIn(build.FPEF_EMAIL, privacy)
         self.assertTrue(build.foreign_email(home + " segreteria@example.com"))
+        self.assertFalse(build.foreign_email("Contatto " + build.FPEF_EMAIL))
 
         scheda = (DIST / "bando" / "smart-start-italia.html").read_text(encoding="utf-8")
         self.assertNotIn("mailto:", scheda.split("<footer>", 1)[0].lower())
