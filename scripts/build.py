@@ -20,6 +20,7 @@ BASE = "https://essedade.github.io/incentiviperte/"
 SITE = "IncentiviPerTe"
 LINKEDIN = "https://www.linkedin.com/company/incentiviperte/"
 EMAIL = "incentiviperte.team@gmail.com"
+FPEF_EMAIL = "foglioPEF.team@gmail.com"
 FPEF = "https://fogliopef.gumroad.com"
 FPEF_LI = "https://www.linkedin.com/company/fogliopef"
 REG = ["Nazionale", "Toscana", "Umbria", "Emilia-Romagna"]
@@ -237,8 +238,9 @@ def ext(url, label, klass=""):
     )
 
 
-def mail_link():
-    return f'<a class="mail" href="mailto:{EMAIL}">{e(EMAIL)}</a>'
+def mail_link(address=None):
+    address = EMAIL if address is None else address
+    return f'<a class="mail" href="mailto:{address}">{e(address)}</a>'
 
 
 def crumbs(items, pre):
@@ -703,6 +705,7 @@ nav.crumb li+li::before{content:"›";color:var(--m);margin:0 6px}
 .offer .btn{margin-top:auto}
 .contact-links{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
 .contact-links a.mail{display:inline-flex;align-items:center;min-height:44px;font-weight:800;overflow-wrap:anywhere}
+.contact-links .for{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 6px;min-height:44px}
 .offer .contact-links{margin-top:auto;flex-direction:column;align-items:flex-start;gap:8px}
 .offer .contact-links .btn{margin-top:0}
 .sp{border:2px dashed #5c6b82;border-radius:14px;padding:16px;background:#f8fafc;margin:18px 0}
@@ -726,7 +729,15 @@ def static_pages(today):
     li = ext(LINKEDIN, "Pagina LinkedIn IncentiviPerTe")
     li_btn = ext(LINKEDIN, "Contattaci su LinkedIn", "btn")
     mail = mail_link()
+    fpef_mail = mail_link(FPEF_EMAIL)
     contacts = f'<p class="contact-links">{li_btn}{mail}</p>'
+    sponsor_contacts = (
+        f'<p class="contact-links">{li_btn}{mail}{fpef_mail}</p>'
+        f"<p>Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti "
+        f"(69 € al mese) scrivi a {fpef_mail}.</p>"
+    )
+    fpef_space = f'<span class="for">Contatto per FoglioPEF: {fpef_mail}</span>'
+    fpef_pack = f'<span class="for">Contatto per entrambi i siti: {fpef_mail}</span>'
     owner = f"Davide Davoglio, Arezzo (Italia) – contattabile tramite i messaggi della {li} o all'indirizzo {mail}."
     return {
         "chi-siamo.html": (
@@ -746,19 +757,19 @@ def static_pages(today):
             "Spazi sponsor su IncentiviPerTe da 49 € al mese, su FoglioPEF da 39 € e su entrambi i siti a 69 €.",
             f"""<h1>Sponsor e pubblicità</h1><div class="box">
 <p>IncentiviPerTe è letto da imprenditori, startup e PMI che cercano finanziamenti. Gli spazi sono per <strong>commercialisti, consulenti di finanza agevolata, banche e software</strong> per le imprese.</p>
-{contacts}
+{sponsor_contacts}
 <h2>Cosa include lo spazio su IncentiviPerTe</h2>
 <ul><li>Un posto in <strong>home page</strong></li><li>Un posto nelle <strong>pagine regionali</strong> (Toscana, Umbria, Emilia-Romagna) e nei bandi nazionali</li><li>Un posto nelle <strong>schede dei bandi</strong></li><li>Etichetta <strong>Sponsorizzato</strong> sempre visibile</li></ul>
 <h2 id="prezzi">Prezzi</h2>
 <p>I prezzi qui sotto sono per uno spazio pubblicitario etichettato Sponsorizzato. Non sono il prezzo dei modelli Excel.</p>
 <div class="offers">
 <div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 €</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € per i primi 3 sponsor, poi 79 €, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{li_btn}{mail}</div></div>
-<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.gumroad.com")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{li_btn}{mail}</div></div>
-<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{li_btn}{mail}</div></div>
+<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.gumroad.com")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{li_btn}{mail}{fpef_space}</div></div>
+<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{li_btn}{mail}{fpef_pack}</div></div>
 </div>
 <h2>Regole</h2>
 <ul><li>Ogni contenuto a pagamento è etichettato <strong>Sponsorizzato</strong>.</li><li>Gli sponsor non influenzano quali bandi pubblichiamo né come li descriviamo.</li><li>Nessun tracciamento degli utenti: niente pixel, cookie o script di terze parti.</li></ul>
-<p>Domande? Scrivi a messaggi della {li} o all'indirizzo {mail}.</p>
+<p>Domande? Scrivi a messaggi della {li} o all'indirizzo {mail}. Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € al mese): {fpef_mail}.</p>
 </div>""",
             False,
         ),
@@ -833,8 +844,10 @@ def reject_emails_in_cards(html_text, name):
 
 
 def foreign_email(text):
-    """Vero se resta un indirizzo diverso da quello del brand."""
-    cleaned = text.replace(f"mailto:{EMAIL}", "").replace(EMAIL, "")
+    """Vero se resta un indirizzo diverso da quelli consentiti del brand."""
+    cleaned = text
+    for address in (EMAIL, FPEF_EMAIL):
+        cleaned = cleaned.replace(f"mailto:{address}", "").replace(address, "")
     return "mailto:" in cleaned.lower() or EMAIL_RE.search(cleaned) is not None
 
 
@@ -854,9 +867,12 @@ def self_check(written):
             if token in low:
                 raise ValueError(f"{name}: riferimento a tracker ({token})")
         reject_emails_in_cards(text, name)
-        # L'email del brand è nel footer e nelle pagine di contatto. Ogni altro indirizzo resta vietato.
+        # L'email del brand è nel footer e nelle pagine di contatto.
+        # foglioPEF.team@gmail.com sta solo sulla pagina sponsor. Ogni altro indirizzo resta vietato.
         if foreign_email(text):
             raise ValueError(f"{name}: indirizzo email")
+        if rel != "sponsor.html" and FPEF_EMAIL.lower() in low:
+            raise ValueError(f"{name}: email FoglioPEF fuori dalla pagina sponsor")
         for match in re.finditer(r'<script type="application/ld\+json">(.*?)</script>', text, re.S):
             json.loads(match.group(1))
         if name == "404.html":
@@ -882,6 +898,8 @@ def self_check(written):
     for price in ("49 €", "39 €", "69 €", "79 €", "99 €"):
         if price not in sponsor:
             raise ValueError(f"prezzo mancante sulla pagina sponsor: {price}")
+    if f"mailto:{FPEF_EMAIL}" not in sponsor:
+        raise ValueError("pagina sponsor: manca il contatto FoglioPEF")
     home = (D / "index.html").read_text(encoding="utf-8")
     if FPEF not in home or "stesso titolare" not in home.lower():
         raise ValueError("home: manca il rimando a FoglioPEF con la disclosure")
