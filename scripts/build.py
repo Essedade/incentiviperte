@@ -39,8 +39,8 @@ TRACKERS = (
 AFFILIATE_HINTS = ("affiliate", "awin.", "shareasale", "tradedoubler", "tradetracker")
 DEST_ORDER = ["Startup", "PMI", "Nuove imprese", "Under 35", "Donne", "Investitori", "Professionisti", "Grandi imprese"]
 INTRO_REG = {
-    "Nazionale": "Incentivi nazionali per avviare e far crescere l'impresa: finanziamenti a tasso zero e contributi a fondo perduto per nuove imprese, startup innovative e investimenti, insieme alle misure di MIMIT e del Ministero del Lavoro. Molte valgono anche per le imprese di Toscana, Umbria ed Emilia-Romagna; altre, come Resto al Sud 2.0, riguardano solo il Mezzogiorno.",
-    "Toscana": "Bandi della Regione Toscana, di Sviluppo Toscana e della Camera di Commercio di Arezzo-Siena. Per un'impresa toscana restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord e Smart&Start Italia.",
+    "Nazionale": "Incentivi nazionali per avviare e far crescere l'impresa: finanziamenti a tasso zero e contributi a fondo perduto per nuove imprese, startup innovative e investimenti, insieme alle misure di MIMIT e del Ministero del Lavoro. Molte valgono anche per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna; altre, come Resto al Sud 2.0, riguardano solo il Mezzogiorno.",
+    "Toscana": "Tutta la Toscana: bandi regionali e delle Camere di Commercio toscane, in tutte le province. Per un'impresa toscana restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord e Smart&Start Italia.",
     "Umbria": "Bandi della Regione Umbria gestiti da Gepafin. Per un'impresa umbra restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord.",
     "Emilia-Romagna": "Bandi della Regione Emilia-Romagna, comprese le finestre del Fondo Multiscopo. Per un'impresa emiliano-romagnola restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord.",
 }
@@ -64,7 +64,7 @@ FAQ = (
     ("Posso comparire sul sito con il mio studio?",
      "Sì. Uno spazio su IncentiviPerTe parte da 49 € al mese, prezzo di lancio. Importi, regole ed etichetta Sponsorizzato sono sulla pagina Sponsor."),
     ("Che cos'è il Check-up Bandi?",
-     "È un controllo personalizzato di quali bandi regionali e nazionali sono adatti alla tua impresa: Toscana, compresa la Camera di Commercio di Arezzo-Siena, Umbria, Emilia-Romagna e incentivi nazionali per avviare e far crescere l'impresa. Ricevi una relazione scritta. Per richiederlo usa la pagina Contatti."),
+     "È un controllo personalizzato di quali bandi regionali e nazionali sono adatti alla tua impresa: tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali per avviare e far crescere l'impresa. Ricevi una relazione scritta. Per richiederlo usa la pagina Contatti."),
 )
 NAV = (
     ("index.html", "Bandi"),
@@ -333,7 +333,7 @@ def checkup_section(pre):
         '<section class="checkup" aria-labelledby="checkup-title"><div class="box">'
         "<h2 id=\"checkup-title\">Check-up Bandi</h2>"
         "<p>Controllo personalizzato di quali bandi regionali e nazionali sono adatti alla tua impresa: "
-        "Toscana (compresa la Camera di Commercio di Arezzo-Siena), Umbria, Emilia-Romagna e incentivi nazionali "
+        "tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali "
         "per avviare e far crescere l'impresa, tra cui finanziamenti a tasso zero e contributi a fondo perduto "
         "per nuove imprese, startup innovative e investimenti. Il risultato è una relazione scritta.</p>"
         f'<p><a class="btn" href="{pre}contatti.html">Richiedi il Check-up Bandi</a></p>'
@@ -595,7 +595,7 @@ def footer(pre):
     )
     links = "".join(f'<li><a href="{pre}{href}">{label}</a></li>' for href, label in info)
     return f"""<footer><div class="wrap">
-<p><strong>{SITE}</strong> · raccolta gratuita e indipendente di bandi per startup e PMI, da Arezzo, per le imprese di Toscana, Umbria ed Emilia-Romagna, più gli incentivi nazionali. Le schede sono sintesi: fa fede solo il bando ufficiale.</p>
+<p><strong>{SITE}</strong> · raccolta gratuita e indipendente di bandi per startup e PMI, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali. Le schede sono sintesi: fa fede solo il bando ufficiale.</p>
 <nav aria-label="Aree"><p><strong>Aree</strong></p><ul id="foot-aree"></ul></nav>
 <nav aria-label="Destinatari"><p><strong>Destinatari</strong></p><ul id="foot-dest"></ul></nav>
 <nav aria-label="Informazioni"><ul>{links}</ul></nav>
@@ -773,11 +773,11 @@ def static_pages(today):
     return {
         "chi-siamo.html": (
             "Chi siamo",
-            "IncentiviPerTe, da Arezzo, per le imprese di Toscana, Umbria ed Emilia-Romagna e per gli incentivi nazionali: metodo, team e Check-up Bandi.",
+            "IncentiviPerTe, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna e per gli incentivi nazionali: metodo, team e Check-up Bandi.",
             "<h1>Chi siamo</h1><div class='box'>"
-            "<p>IncentiviPerTe è una raccolta gratuita e indipendente di bandi e incentivi per startup e PMI, da Arezzo, per le imprese di Toscana, Umbria ed Emilia-Romagna, più gli incentivi nazionali. In Toscana sono compresi i bandi della Regione e della Camera di Commercio di Arezzo-Siena.</p>"
+            "<p>IncentiviPerTe è una raccolta gratuita e indipendente di bandi e incentivi per startup e PMI, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali. In Toscana la copertura è tutta la regione: bandi regionali e delle Camere di Commercio toscane.</p>"
             "<p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>"
-            "<h2>Metodo</h2><p>Ogni scheda è redatta partendo dalla fonte ufficiale (ministeri, Regioni, Sviluppo Toscana, Camera di Commercio di Arezzo-Siena, Gepafin e altri enti) e riporta il link al bando e la data dell'ultimo controllo. Le pagine ufficiali vengono ricontrollate periodicamente e ogni anomalia è verificata a mano. I bandi scaduti vengono rimossi.</p>"
+            "<h2>Metodo</h2><p>Ogni scheda è redatta partendo dalla fonte ufficiale (ministeri, Regioni, Sviluppo Toscana, Camere di Commercio toscane, Gepafin e altri enti) e riporta il link al bando e la data dell'ultimo controllo. Le pagine ufficiali vengono ricontrollate periodicamente e ogni anomalia è verificata a mano. I bandi scaduti vengono rimossi.</p>"
             "<h2>Indipendenza</h2><p>Non siamo un ente pubblico né siamo affiliati agli enti citati. Le schede gratuite sono sintesi informative e non sostituiscono il testo del bando. Il sito si sostiene con spazi sponsor sempre etichettati come <em>Sponsorizzato</em>, che non influenzano la selezione dei bandi.</p>"
             "<p>Per gli spazi pubblicitari vedi <a href='sponsor.html'>Sponsor e pubblicità</a>. Per segnalare un bando, una correzione o per il Check-up Bandi, <a href='contatti.html'>Contatti</a>.</p></div>"
             + checkup_section(""),
@@ -825,7 +825,7 @@ def static_pages(today):
         "disclaimer.html": (
             "Disclaimer",
             "Avvertenze sull'uso delle informazioni pubblicate da IncentiviPerTe.",
-            "<h1>Disclaimer</h1><div class='box'><ul><li>IncentiviPerTe è un servizio informativo <strong>gratuito e indipendente</strong>, non affiliato ad alcun ente pubblico o gestore delle misure. Copre i bandi regionali di Toscana (compresa la Camera di Commercio di Arezzo-Siena), Umbria ed Emilia-Romagna, più gli incentivi nazionali.</li><li>Le schede sono <strong>sintesi indicative</strong>: possono contenere errori, omissioni o non essere aggiornate. Requisiti, scadenze e dotazioni possono cambiare o esaurirsi in qualsiasi momento.</li><li><strong>Fa fede esclusivamente</strong> il testo del bando e degli atti pubblicati dall'ente competente. Prima di presentare una domanda verifica sempre la fonte ufficiale.</li><li>Le schede pubblicate <strong>non costituiscono consulenza</strong> fiscale, legale o finanziaria.</li><li>Il <strong>Check-up Bandi</strong> è un servizio distinto: una relazione scritta su quali bandi regionali e nazionali sono adatti all'impresa. Non sostituisce il testo ufficiale del bando.</li><li>Nei limiti consentiti dalla legge, il titolare non risponde di danni derivanti dall'uso delle informazioni del sito.</li><li>I contenuti a pagamento sono sempre etichettati <strong>Sponsorizzato</strong>; il link a FoglioPEF riguarda un progetto dello stesso titolare.</li></ul></div>",
+            "<h1>Disclaimer</h1><div class='box'><ul><li>IncentiviPerTe è un servizio informativo <strong>gratuito e indipendente</strong>, non affiliato ad alcun ente pubblico o gestore delle misure. Copre tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), l'Umbria, l'Emilia-Romagna e gli incentivi nazionali.</li><li>Le schede sono <strong>sintesi indicative</strong>: possono contenere errori, omissioni o non essere aggiornate. Requisiti, scadenze e dotazioni possono cambiare o esaurirsi in qualsiasi momento.</li><li><strong>Fa fede esclusivamente</strong> il testo del bando e degli atti pubblicati dall'ente competente. Prima di presentare una domanda verifica sempre la fonte ufficiale.</li><li>Le schede pubblicate <strong>non costituiscono consulenza</strong> fiscale, legale o finanziaria.</li><li>Il <strong>Check-up Bandi</strong> è un servizio distinto: una relazione scritta su quali bandi regionali e nazionali sono adatti all'impresa. Non sostituisce il testo ufficiale del bando.</li><li>Nei limiti consentiti dalla legge, il titolare non risponde di danni derivanti dall'uso delle informazioni del sito.</li><li>I contenuti a pagamento sono sempre etichettati <strong>Sponsorizzato</strong>; il link a FoglioPEF riguarda un progetto dello stesso titolare.</li></ul></div>",
             False,
         ),
         "privacy.html": (
@@ -941,6 +941,10 @@ def self_check(written):
                 raise ValueError(f"{name}: testo non pubblicabile ({banned})")
         if re.search(r"invitalia", without_urls(text), re.I):
             raise ValueError(f"{name}: la parola Invitalia compare fuori dai link ufficiali")
+        for match in re.finditer("Arezzo-Siena", text):
+            window = text[max(0, match.start() - 80):match.start()]
+            if "<dt>Ente</dt><dd>" not in window:
+                raise ValueError(f"{name}: Arezzo-Siena compare come limite di copertura")
     sponsor = (D / "sponsor.html").read_text(encoding="utf-8")
     for price in ("49 €", "39 €", "69 €", "79 €", "99 €"):
         if price not in sponsor:
@@ -950,8 +954,10 @@ def self_check(written):
     about = (D / "chi-siamo.html").read_text(encoding="utf-8")
     if "Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale." not in about:
         raise ValueError("chi siamo: manca la descrizione del team")
-    if "Check-up Bandi" not in about or "Camera di Commercio di Arezzo-Siena" not in about:
+    if "Check-up Bandi" not in about or "tutta la Toscana" not in about or "Camere di Commercio toscane" not in about:
         raise ValueError("chi siamo: copertura o Check-up Bandi mancanti")
+    if "Arezzo-Siena" in about:
+        raise ValueError("chi siamo: Arezzo-Siena resta come limite di copertura")
     home = (D / "index.html").read_text(encoding="utf-8")
     if "Check-up Bandi" not in home or 'href="contatti.html">Richiedi il Check-up Bandi</a>' not in home:
         raise ValueError("home: manca la sezione Check-up Bandi")
@@ -992,14 +998,14 @@ def build(today=None):
     hero = (
         '<section class="hero"><div class="wrap">'
         "<h1>Bandi e incentivi per startup e PMI</h1>"
-        f"<p>Raccolta gratuita, da Arezzo, per le imprese di Toscana, Umbria ed Emilia-Romagna, più gli incentivi nazionali: {len(att)} bandi aperti, con scadenza e link alla fonte ufficiale.</p>"
+        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: {len(att)} bandi aperti, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
         '<a class="btn ghost" href="sponsor.html">Spazi per professionisti</a></p>'
         "</div></section>"
     )
     home_desc = clip(
-        f"{len(att)} bandi aperti per startup e PMI, da Arezzo: Toscana, Umbria, Emilia-Romagna e incentivi nazionali, con scadenze e link ufficiali."
+        f"{len(att)} bandi aperti per startup e PMI, da Arezzo: tutta la Toscana, Umbria, Emilia-Romagna e incentivi nazionali, con scadenze e link ufficiali."
     )
     home_ld = {
         "@context": "https://schema.org",

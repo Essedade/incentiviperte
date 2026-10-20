@@ -266,7 +266,10 @@ class Sito(unittest.TestCase):
             "Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.",
             about,
         )
-        self.assertIn("Camera di Commercio di Arezzo-Siena", (DIST / "toscana.html").read_text(encoding="utf-8"))
+        toscana = (DIST / "toscana.html").read_text(encoding="utf-8")
+        self.assertIn("Tutta la Toscana: bandi regionali e delle Camere di Commercio toscane", toscana)
+        self.assertNotIn("Arezzo-Siena", toscana)
+        self.assertIn("da Arezzo", home)
         self.assertIn("Check-up Bandi", (DIST / "contatti.html").read_text(encoding="utf-8"))
         self.assertNotIn("focus iniziale", about)
         enti = {
@@ -285,7 +288,7 @@ class Sito(unittest.TestCase):
             if not path.is_file() or path.suffix not in {".html", ".css", ".svg", ".txt", ".xml"}:
                 continue
             text = path.read_text(encoding="utf-8")
-            for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe"):
+            for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe", "Arezzo-Siena"):
                 self.assertNotIn(banned, text, path.as_posix())
             visible = build.without_urls(text)
             self.assertIsNone(re.search(r"invitalia", visible, re.I), path.as_posix())

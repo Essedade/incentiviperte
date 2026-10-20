@@ -1,6 +1,6 @@
 # IncentiviPerTe
 
-Sito statico gratuito con bandi e incentivi per startup e PMI, da Arezzo, per le imprese di Toscana (compresa la Camera di Commercio di Arezzo-Siena), Umbria ed Emilia-Romagna, più gli incentivi nazionali per avviare e far crescere l'impresa.
+Sito statico gratuito con bandi e incentivi per startup e PMI, da Arezzo, per le imprese di tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali per avviare e far crescere l'impresa.
 
 Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.
 
