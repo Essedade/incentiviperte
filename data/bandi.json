@@ -201,22 +201,6 @@
   "importo": "Fino all'80% dell'intervento · spesa da 25.000 a 350.000 €"
  },
  {
-  "id": "turismo-2026-umbria",
-  "titolo": "Bando Turismo 2026",
-  "ente": "Regione Umbria / Gepafin",
-  "regione": "Umbria",
-  "destinatari": [
-   "PMI"
-  ],
-  "scadenza": "2026-10-15",
-  "nota_scadenza": "15/10/2026 ore 12:00 (prorogato)",
-  "sintesi": "Finanziamento all'1% pari al 60% dell'investimento (70.000–500.000 €), remissione fino al 50%, per la riqualificazione delle strutture ricettive umbre.",
-  "url": "https://gepafin.it/servizi/prestiti-diretti/bando-turismo-2026/",
-  "check": "15/10/2026",
-  "ultimo_controllo": "2026-10-15",
-  "importo": "Finanziamento del 60% su investimenti da 70.000 a 500.000 €"
- },
- {
   "id": "fondo-starter-er-2026",
   "titolo": "Fondo Multiscopo – sezione StartER (finestra ott.-nov. 2026)",
   "ente": "Regione Emilia-Romagna",
