@@ -23,6 +23,21 @@ EMAIL = "incentiviperte.team@gmail.com"
 FPEF_EMAIL = "fogliopef.team@gmail.com"
 FPEF = "https://fogliopef.pages.dev"
 FPEF_LI = "https://www.linkedin.com/company/fogliopef"
+FPEF_DESC = "FoglioPEF: modelli Excel per business plan, immobiliare e finanza d'impresa."
+CHECKUP_BASE = "report di circa 3-4 pagine, entro 5 giorni lavorativi dalla ricezione dei dati completi"
+CHECKUP_EXTRA = (
+    "requisiti punto per punto",
+    "cumulo e de minimis",
+    "documenti da preparare",
+    "priorità motivata",
+    "stima indicativa dell'agevolazione (non garantita)",
+    "scadenzario",
+    "call di 30 minuti",
+)
+CHECKUP_COMPLETO = (
+    "report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi, "
+    "con tutto il Base più " + ", ".join(CHECKUP_EXTRA[:-1]) + " e " + CHECKUP_EXTRA[-1]
+)
 REG = ["Nazionale", "Toscana", "Umbria", "Emilia-Romagna"]
 REQUIRED = (
     "id", "titolo", "ente", "regione", "destinatari", "scadenza", "nota_scadenza",
@@ -41,7 +56,7 @@ DEST_ORDER = ["Startup", "PMI", "Nuove imprese", "Under 35", "Donne", "Investito
 INTRO_REG = {
     "Nazionale": "Incentivi nazionali per avviare e far crescere l'impresa: finanziamenti a tasso zero e contributi a fondo perduto per nuove imprese, startup innovative e investimenti, insieme alle misure di MIMIT e del Ministero del Lavoro. Molte valgono anche per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna; altre, come Resto al Sud 2.0, riguardano solo il Mezzogiorno.",
     "Toscana": "Tutta la Toscana: bandi regionali e delle Camere di Commercio toscane, in tutte le province. Per un'impresa toscana restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord e Smart&Start Italia.",
-    "Umbria": "Bandi della Regione Umbria gestiti da Gepafin. Per un'impresa umbra restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord.",
+    "Umbria": "Bandi della Regione Umbria gestiti da Gepafin e Sviluppumbria. Per un'impresa umbra restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord.",
     "Emilia-Romagna": "Bandi della Regione Emilia-Romagna, comprese le finestre del Fondo Multiscopo. Per un'impresa emiliano-romagnola restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord.",
 }
 INTRO_DEST = {
@@ -210,6 +225,10 @@ def validate(bandi):
             slugs[slug] = d
         if b["scadenza"] is not None:
             parse_date(b["scadenza"], "scadenza", bid)
+        if "apertura" in b and b["apertura"] is not None:
+            parse_date(b["apertura"], "apertura", bid)
+            if b["scadenza"] is not None and b["apertura"] > b["scadenza"]:
+                raise ValueError(f"{bid}: apertura successiva alla scadenza")
         parse_date(b["ultimo_controllo"], "ultimo_controllo", bid)
         for field in ("titolo", "ente", "sintesi", "importo", "nota_scadenza", "check"):
             val = b[field]
@@ -237,14 +256,19 @@ def prepare(bandi, today):
         b = dict(src)
         b["destinatari"] = list(src["destinatari"])
         b["scaduto"] = bool(b["scadenza"] and b["scadenza"] < iso)
+        b["in_arrivo"] = bool(b.get("apertura") and b["apertura"] > iso)
+        if b["in_arrivo"]:
+            b["scaduto"] = False
         out.append(b)
     out.sort(key=lambda b: b["scadenza"] or "9999-12-31")
     return out
 
 
 def deadline_text(b):
-    if b["scaduto"]:
+    if b.get("scaduto"):
         return "Scaduto il " + it_date(b["scadenza"])
+    if b.get("in_arrivo") and b.get("apertura"):
+        return "Apre il " + it_date(b["apertura"])
     if b["scadenza"]:
         return f"Aperto fino al {it_date(b['scadenza'])}"
     return "Senza scadenza indicata: verifica sul sito ufficiale"
@@ -263,28 +287,64 @@ def badge(b, today):
     resta la data; un bando già scaduto in generazione mostra Scaduto.
     """
     del today
+    apre = f' data-apre="{b["apertura"]}"' if b.get("apertura") else ""
+    if b.get("in_arrivo") and b.get("apertura"):
+        scad = f' data-scadenza="{b["scadenza"]}"' if b.get("scadenza") else ""
+        return f'<span class="badge open"{apre}{scad}>Apre il {it_date(b["apertura"])}</span>'
     if not b["scadenza"]:
-        return '<span class="badge open">Sportello aperto</span>'
+        return f'<span class="badge open"{apre}>Sportello aperto</span>'
     iso = b["scadenza"]
-    if b["scaduto"]:
-        return f'<span class="badge exp" data-scadenza="{iso}">Scaduto</span>'
-    return f'<span class="badge" data-scadenza="{iso}">Scade il {it_date(iso)}</span>'
+    if b.get("scaduto"):
+        return f'<span class="badge exp" data-scadenza="{iso}"{apre}>Scaduto</span>'
+    return f'<span class="badge" data-scadenza="{iso}"{apre}>Scade il {it_date(iso)}</span>'
 
 
 BADGE_JS = r"""<script>
 (function () {
-  var nodes = document.querySelectorAll(".badge[data-scadenza]");
-  if (!nodes.length) return;
-  var now = new Date();
-  var start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  function startOfToday() {
+    var now = window.INCENTIVI_OGGI ? new Date(window.INCENTIVI_OGGI) : new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+  function parts(iso) {
+    var p = (iso || "").split("-");
+    if (p.length !== 3 || p[0].length !== 4) return null;
+    if (isNaN(+p[0]) || isNaN(+p[1]) || isNaN(+p[2])) return null;
+    return p;
+  }
+  function daysLeft(iso, start) {
+    var p = parts(iso);
+    if (!p) return null;
+    var target = new Date(+p[0], +p[1] - 1, +p[2]);
+    return Math.round((target - start) / 864e5);
+  }
+  function itDate(p) {
+    var d = p[2].length < 2 ? "0" + p[2] : p[2];
+    var m = p[1].length < 2 ? "0" + p[1] : p[1];
+    return d + "/" + m + "/" + p[0];
+  }
+  var start = startOfToday();
+  var nodes = document.querySelectorAll(".badge[data-scadenza], .badge[data-apre]");
   for (var i = 0; i < nodes.length; i++) {
     var el = nodes[i];
-    var p = (el.getAttribute("data-scadenza") || "").split("-");
-    if (p.length !== 3) continue;
-    var target = new Date(+p[0], +p[1] - 1, +p[2]);
-    var left = Math.round((target - start) / 864e5);
     var card = el.closest("article");
+    var apre = el.getAttribute("data-apre") || (card && card.getAttribute("data-apre")) || "";
+    var pOpen = parts(apre);
     el.classList.remove("soon", "exp", "open");
+    if (pOpen && daysLeft(apre, start) > 0) {
+      el.textContent = "Apre il " + itDate(pOpen);
+      el.classList.add("open");
+      if (card) card.setAttribute("data-scaduto", "0");
+      continue;
+    }
+    var iso = el.getAttribute("data-scadenza") || "";
+    var p = parts(iso);
+    if (!p) {
+      el.textContent = "Sportello aperto";
+      el.classList.add("open");
+      if (card) card.setAttribute("data-scaduto", "0");
+      continue;
+    }
+    var left = daysLeft(iso, start);
     if (left < 0) {
       el.textContent = "Scaduto";
       el.classList.add("exp");
@@ -300,6 +360,33 @@ BADGE_JS = r"""<script>
       if (left <= 14) el.classList.add("soon");
     }
   }
+  var deadlines = document.querySelectorAll("[data-deadline]");
+  for (var j = 0; j < deadlines.length; j++) {
+    var node = deadlines[j];
+    var apreD = node.getAttribute("data-apre") || "";
+    var pOpenD = parts(apreD);
+    var isoD = node.getAttribute("data-deadline") || "";
+    var pD = parts(isoD);
+    if (pOpenD && daysLeft(apreD, start) > 0) {
+      node.textContent = "Apre il " + itDate(pOpenD);
+      continue;
+    }
+    if (!pD) continue;
+    if (daysLeft(isoD, start) < 0) node.textContent = "Scaduto il " + itDate(pD);
+    else if (pOpenD) node.textContent = "Aperto fino al " + itDate(pD);
+  }
+  var list = document.getElementById("elenco");
+  if (!list) return;
+  var cards = list.querySelectorAll("article.card");
+  var expired = [];
+  for (var k = 0; k < cards.length; k++) {
+    if (cards[k].getAttribute("data-scaduto") === "1") expired.push(cards[k]);
+  }
+  for (var n = 0; n < expired.length; n++) list.appendChild(expired[n]);
+  var open = cards.length - expired.length;
+  var label = open === 1 ? "1 bando aperto" : open + " bandi aperti";
+  var counts = document.querySelectorAll("[data-aperti]");
+  for (var c = 0; c < counts.length; c++) counts[c].textContent = label;
 })();
 </script>"""
 
@@ -355,13 +442,17 @@ def card(b, pre, today):
     ]).split())
     hidden = " hidden" if b["scaduto"] else ""
     href = site_href(f'bando/{b["id"]}.html')
+    when = f' data-deadline="{b["scadenza"]}"' if b["scadenza"] else ""
+    if b.get("apertura"):
+        when += f' data-apre="{b["apertura"]}"'
     return (
         f'<article class="card" data-reg="{e(b["regione"])}" '
         f'data-dest="{e("|".join(b["destinatari"]))}" data-scad="{b["scadenza"] or "9999-12-31"}" '
+        f'data-apre="{e(b.get("apertura") or "")}" '
         f'data-scaduto="{1 if b["scaduto"] else 0}" data-search="{e(search)}"{hidden}>'
         f'{badge(b, today)}<h3><a class="cardlink" href="{href}">{e(b["titolo"])}</a></h3>'
         f'<p class="amt">{e(b["importo"])}</p><div class="tags">{tags}</div>'
-        f'<p class="sum">{e(b["sintesi"])}</p><div class="meta"><span class="dl">{e(deadline_text(b))}</span>'
+        f'<p class="sum">{e(b["sintesi"])}</p><div class="meta"><span class="dl"{when}>{e(deadline_text(b))}</span>'
         f'<span class="ente">{e(b["ente"])}</span></div></article>'
     )
 
@@ -371,7 +462,7 @@ def sponsor_card(pre):
         '<aside class="card spc" aria-label="Spazio sponsor"><span class="lab">Sponsorizzato</span>'
         '<p class="spt">Il tuo studio qui, tra chi cerca un finanziamento</p>'
         '<p class="spp">Da 49 € al mese · prezzo di lancio</p>'
-        f'<a class="btn" href="{site_href("sponsor.html")}">Sponsor</a></aside>'
+        f'<a class="btn outline" href="{site_href("sponsor.html")}">Scopri gli spazi sponsor</a></aside>'
     )
 
 
@@ -385,11 +476,22 @@ def grid(items, pre, today):
 
 def official_bando_link(url):
     host = urllib.parse.urlparse(url).netloc.removeprefix("www.")
-    if "invitalia" in host.lower():
-        label = "Vai al bando ufficiale"
-    else:
-        label = f"Vai al bando ufficiale su {e(host)}"
-    return ext(url, label, "btn")
+    return (
+        '<div class="official">'
+        + ext(url, "Vai al bando ufficiale", "btn")
+        + f'<small class="host">{e(host)}</small></div>'
+    )
+
+
+def checkup_ask():
+    return (
+        '<aside class="checkup-ask" aria-labelledby="checkup-scheda">'
+        '<h2 id="checkup-scheda">Richiedi il Check-up</h2>'
+        "<p>Relazione scritta sui bandi regionali e nazionali adatti alla tua impresa: "
+        "Base, circa 3-4 pagine; Completo, 6-10 pagine.</p>"
+        f'<p><a class="btn outline" href="{site_href("check-up.html")}">Richiedi il Check-up</a></p>'
+        "</aside>"
+    )
 
 
 def checkup_section(pre):
@@ -410,9 +512,9 @@ def fpef_box():
         '<aside class="fpef" aria-label="FoglioPEF, progetto dello stesso titolare">'
         '<p class="lab">Progetto dello stesso titolare</p>'
         '<h2>Numeri in ordine per un investimento immobiliare</h2>'
-        '<p>FoglioPEF è un foglio Excel per ricavi, costi e cassa. Serve a preparare un piano economico-finanziario immobiliare: non presenta la domanda e non sostituisce il bando.</p>'
+        f"<p>{FPEF_DESC}</p>"
         '<p class="row">'
-        f'{ext(FPEF, "Apri FoglioPEF", "btn")}'
+        f'{ext(FPEF, "Apri FoglioPEF", "btn outline")}'
         f'{ext(FPEF_LI, "FoglioPEF su LinkedIn")}'
         '</p></aside>'
     )
@@ -668,7 +770,7 @@ def footer(pre):
 <nav aria-label="Aree"><p><strong>Aree</strong></p><ul id="foot-aree"></ul></nav>
 <nav aria-label="Destinatari"><p><strong>Destinatari</strong></p><ul id="foot-dest"></ul></nav>
 <nav aria-label="Informazioni"><ul>{links}</ul></nav>
-<p>Strumento dello stesso titolare: {ext(FPEF, "FoglioPEF")}: modelli Excel per business plan, immobiliare e finanza d'impresa ({ext(FPEF_LI, "LinkedIn")}). Contatti: {ext(LINKEDIN, "messaggi della Pagina LinkedIn IncentiviPerTe")} o {mail_link()}. Nessun cookie, nessun tracker.</p>
+<p>Strumento dello stesso titolare: {FPEF_DESC.replace("FoglioPEF", ext(FPEF, "FoglioPEF"), 1)} ({ext(FPEF_LI, "LinkedIn")}). Contatti: {ext(LINKEDIN, "messaggi della Pagina LinkedIn IncentiviPerTe")} o {mail_link()}. Nessun cookie, nessun tracker.</p>
 </div></footer>"""
 
 
@@ -720,7 +822,7 @@ details.menu[open] .when-open{display:inline}
 details.menu[open] summary{border-color:var(--b);color:var(--b)}
 details.menu nav{position:absolute;z-index:6;left:0;right:0;top:100%;background:#fff;border:1px solid var(--l);border-radius:12px;padding:8px;box-shadow:0 8px 24px #0002;max-height:min(70vh,520px);overflow:auto}
 details.menu nav ul{flex-direction:column}
-@media(min-width:1180px){.dnav{display:flex;flex:1;min-width:0}details.menu{display:none}.head-cta{display:none}}
+@media(min-width:1180px){.dnav{display:flex;flex:1;min-width:0}details.menu{display:none}a.btn.head-cta{display:none}}
 .hero{background:linear-gradient(135deg,#0A5A44,#0F7A5C);color:#fff;padding:36px 0 32px}
 .hero h1{font-size:clamp(1.7rem,4.5vw,2.5rem);line-height:1.15;margin:0 0 10px;color:#fff}
 .hero p{margin:0;color:#fff;max-width:42rem}
@@ -749,7 +851,7 @@ button.link{background:none;border:0;padding:8px 0;min-height:44px;font:inherit;
 .card h3{font-size:1.15rem;margin:8px 0;line-height:1.3}
 .card h3 a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px}
 .card h3 a::after{content:"";position:absolute;inset:0}
-.amt{font-weight:800;margin:0 0 8px}
+.amt{font-weight:800;margin:0 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sum{margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card .meta{margin-top:auto;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--l);padding-top:10px;font-size:14px;color:var(--m)}
 .ente{color:var(--m)}
@@ -764,6 +866,7 @@ button.link{background:none;border:0;padding:8px 0;min-height:44px;font:inherit;
 a.tag:hover{background:#E7F4EE}
 .tag.area{background:var(--b);color:#fff;border-color:var(--b)}
 a.tag.area:hover{background:var(--bd);color:#fff}
+.card .tag{background:#E7F4EE;border:0;color:var(--bd)}
 .spc{border:2px dashed #8b95a5;background:#f8fafc}
 .spt{font-size:1.05rem;font-weight:800;margin:8px 0}
 .spp{font-weight:800;color:var(--b);margin:0 0 8px}
@@ -774,8 +877,10 @@ a.tag.area:hover{background:var(--bd);color:#fff}
 .fpef h2,.offer h3{margin-top:0}
 .fpef .row,.hero-actions{align-items:center}
 .fpef .row{display:flex;flex-wrap:wrap;gap:12px 16px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;background:var(--b);color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:800}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;background:var(--b);color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font:inherit;font-weight:800;border:0;cursor:pointer}
 .btn:hover{background:var(--bd);color:#fff}
+.btn.outline{background:transparent;color:var(--b);border:2px solid var(--b)}
+.btn.outline:hover{background:#E7F4EE;color:var(--bd)}
 .hero .btn{background:#fff;color:var(--bd)}
 .hero .btn:hover{background:#E7F4EE;color:var(--bd)}
 .btn.ghost,.hero .btn.ghost{background:transparent;color:#fff;border:2px solid #fff}
@@ -787,6 +892,10 @@ a.tag.area:hover{background:var(--bd);color:#fff}
 .faq details{background:#fff;border:1px solid var(--l);border-radius:12px;padding:4px 14px;margin:8px 0}
 .faq summary{cursor:pointer;font-weight:800;min-height:44px;display:flex;align-items:center}
 .box{background:#fff;border:1px solid var(--l);border-radius:14px;padding:18px}
+.official{display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin:12px 0}
+.official small{color:var(--m);font-size:13px;line-height:1.3}
+.checkup-ask{background:#F4FAF7;border:1px solid var(--b);border-radius:14px;padding:16px 18px;margin:18px 0}
+.checkup-ask h2{margin-top:0}
 dl.kv{display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:8px 16px;margin:12px 0}
 dl.kv dt{font-weight:800;color:var(--m)}
 dl.kv dd{margin:0}
@@ -829,7 +938,10 @@ footer nav{margin-top:8px}
 .checkup-form{display:grid;gap:12px;margin-top:16px}
 .checkup-form label,.checkup-form legend{font-weight:800}
 .checkup-form label{display:block;margin:0 0 4px}
-.checkup-form input[type="text"],.checkup-form input:not([type]),.checkup-form select{width:100%;min-height:44px;padding:8px 10px;border:1px solid #5c6b82;border-radius:8px;font:inherit;font-size:16px;background:#fff;color:var(--t)}
+.checkup-form input[type="text"],.checkup-form input:not([type]),.checkup-form select,.checkup-form textarea{width:100%;min-height:44px;padding:8px 10px;border:1px solid #5c6b82;border-radius:8px;font:inherit;font-size:16px;background:#fff;color:var(--t)}
+.checkup-form textarea{min-height:8rem}
+#checkup-fallback{display:grid;gap:8px;margin-top:12px}
+#checkup-fallback[hidden]{display:none}
 .checkup-form fieldset{border:1px solid var(--l);border-radius:12px;margin:0;padding:8px 12px 12px}
 .checkup-form legend{padding:0 4px}
 .livelli{display:flex;flex-wrap:wrap;gap:8px 16px}
@@ -839,15 +951,13 @@ footer nav{margin-top:8px}
 
 
 def checkup_service():
-    base = "entro 5 giorni lavorativi dalla ricezione dei dati completi"
-    completo = "entro 7-10 giorni lavorativi dalla ricezione dei dati completi"
     return {
         "@type": "Service",
         "name": "Check-up Bandi",
         "serviceType": "Relazione scritta sui bandi adatti all'impresa",
         "description": (
             "Relazione scritta sui bandi adatti all'impresa. "
-            f"Base, 49 €: {base}. Completo, 79 €: {completo}."
+            f"Base, 49 €: {CHECKUP_BASE}. Completo, 79 €: {CHECKUP_COMPLETO}."
         ),
         "url": public_url("check-up.html"),
         "provider": org_ld(),
@@ -857,14 +967,14 @@ def checkup_service():
                 "name": "Base",
                 "price": "49",
                 "priceCurrency": "EUR",
-                "description": f"Base, 49 €: {base}.",
+                "description": f"Base, 49 €: {CHECKUP_BASE}.",
             },
             {
                 "@type": "Offer",
                 "name": "Completo",
                 "price": "79",
                 "priceCurrency": "EUR",
-                "description": f"Completo, 79 €: {completo}.",
+                "description": f"Completo, 79 €: {CHECKUP_COMPLETO}.",
             },
         ],
     }
@@ -878,12 +988,13 @@ def checkup_body():
     stadi = ("Da costituire", "Appena costituita", "In attività", "In crescita")
     tipo_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in tipi)
     stadio_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in stadi)
+    extra = "".join(f"<li>{e(item)}</li>" for item in CHECKUP_EXTRA)
     return f"""<h1>Check-up Bandi</h1><div class="box">
 <p>Ricevi una relazione scritta sui bandi adatti alla tua impresa: tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali per avviare e far crescere l'impresa.</p>
-<h2>Prezzi e tempi</h2>
+<h2>Livelli del servizio</h2>
 <ul>
-<li><strong>Base</strong>, 49 €: entro 5 giorni lavorativi dalla ricezione dei dati completi.</li>
-<li><strong>Completo</strong>, 79 €: entro 7-10 giorni lavorativi dalla ricezione dei dati completi.</li>
+<li><strong>Base</strong>, 49 €: {e(CHECKUP_BASE)}.</li>
+<li><strong>Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi. Include tutto il Base, più:<ul>{extra}</ul></li>
 </ul>
 <h2>Chi lo prepara</h2>
 <p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>
@@ -899,11 +1010,22 @@ def checkup_body():
 <button type="submit" class="btn">Invia richiesta</button>
 </form>
 <p>Il pulsante apre il programma di posta con oggetto e testo già compilati.</p>
+<div id="checkup-fallback" hidden>
+<p>Se non si apre un'app di posta, copia il testo e invialo a {mail_link()}.</p>
+<label for="checkup-text">Testo della richiesta</label>
+<textarea id="checkup-text" readonly></textarea>
+<button type="button" class="btn outline" id="checkup-copy">Copia</button>
+<p id="checkup-copied" role="status" hidden>Testo copiato.</p>
+</div>
 </div>
 <script>
 (function () {{
   var form = document.getElementById("checkup-form");
-  if (!form) return;
+  var fallback = document.getElementById("checkup-fallback");
+  var area = document.getElementById("checkup-text");
+  var copy = document.getElementById("checkup-copy");
+  var status = document.getElementById("checkup-copied");
+  if (!form || !fallback || !area || !copy) return;
   form.addEventListener("submit", function (ev) {{
     ev.preventDefault();
     var data = new FormData(form);
@@ -914,7 +1036,21 @@ def checkup_body():
       "Importo indicativo: " + (data.get("importo") || ""),
       "Livello: " + (data.get("livello") || "")
     ].join("\\n");
+    area.value = body;
+    fallback.hidden = false;
     location.href = "mailto:{EMAIL}?subject=" + encodeURIComponent("Richiesta Check-up Bandi") + "&body=" + encodeURIComponent(body);
+  }});
+  copy.addEventListener("click", function () {{
+    var text = area.value;
+    var done = function () {{ if (status) status.hidden = false; }};
+    var manual = function () {{
+      area.focus();
+      area.select();
+      try {{ document.execCommand("copy"); }} catch (err) {{}}
+      done();
+    }};
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, manual);
+    else manual();
   }});
 }})();
 </script>"""
@@ -922,9 +1058,11 @@ def checkup_body():
 
 def static_pages(today):
     li = ext(LINKEDIN, "Pagina LinkedIn IncentiviPerTe")
-    li_btn = ext(LINKEDIN, "Contattaci su LinkedIn", "btn")
+    li_btn = ext(LINKEDIN, "Contattaci su LinkedIn", "btn outline")
     mail = mail_link()
     fpef_mail = mail_link(FPEF_EMAIL)
+    ipt_btn = f'<a class="btn" href="mailto:{EMAIL}">Scrivi a IncentiviPerTe</a>'
+    fpef_btn = f'<a class="btn" href="mailto:{FPEF_EMAIL}">Scrivi a FoglioPEF</a>'
     contacts = f'<p class="contact-links">{li_btn}{mail}</p>'
     sponsor_contacts = (
         f'<p class="contact-links">{li_btn}{mail}{fpef_mail}</p>'
@@ -964,9 +1102,9 @@ def static_pages(today):
 <h2 id="prezzi">Prezzi</h2>
 <p>I prezzi qui sotto sono per uno spazio pubblicitario etichettato Sponsorizzato. Non sono il prezzo dei modelli Excel.</p>
 <div class="offers">
-<div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 €</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € per i primi 3 sponsor, poi 79 €, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{li_btn}{mail}</div></div>
-<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.pages.dev")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{li_btn}{mail}{fpef_space}</div></div>
-<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{li_btn}{mail}{fpef_pack}</div></div>
+<div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 €</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € per i primi 3 sponsor, poi 79 €, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{ipt_btn}{li_btn}{mail}</div></div>
+<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.pages.dev")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{li_btn}{mail}{fpef_space}</div></div>
+<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{fpef_btn}{li_btn}{mail}{fpef_pack}</div></div>
 </div>
 <h2>Regole</h2>
 <ul><li>Ogni contenuto a pagamento è etichettato <strong>Sponsorizzato</strong>.</li><li>Gli sponsor non influenzano quali bandi pubblichiamo né come li descriviamo.</li><li>Nessun tracciamento degli utenti: niente pixel, cookie o script di terze parti.</li></ul>
@@ -1056,7 +1194,8 @@ def foreign_email(text):
 
 def without_urls(text):
     text = re.sub(r'href="[^"]*"', "", text, flags=re.I)
-    return re.sub(r'"https?://[^"]*"', "", text, flags=re.I)
+    text = re.sub(r'"https?://[^"]*"', "", text, flags=re.I)
+    return re.sub(r'<small class="host">[^<]*</small>', "", text, flags=re.I)
 
 
 def self_check(written):
@@ -1108,7 +1247,7 @@ def self_check(written):
             raise ValueError(f"{name}: nome personale fuori dalle pagine legali")
         if rel in ("privacy.html", "note-legali.html") and "Davide Davoglio, Arezzo (Italia)" not in text:
             raise ValueError(f"{name}: dati del titolare mancanti")
-        for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe"):
+        for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe", "Myself Plus"):
             if banned in text:
                 raise ValueError(f"{name}: testo non pubblicabile ({banned})")
         if re.search(r"invitalia", without_urls(text), re.I):
@@ -1129,6 +1268,12 @@ def self_check(written):
             raise ValueError(f"prezzo mancante sulla pagina sponsor: {price}")
     if f"mailto:{FPEF_EMAIL}" not in sponsor:
         raise ValueError("pagina sponsor: manca il contatto FoglioPEF")
+    for title, end in (("FoglioPEF", "<h3>"), ("Entrambi i siti", "<h2>")):
+        chunk = sponsor.split(f"<h3>{title}</h3>", 1)[1].split(end, 1)[0]
+        if f'<a class="btn" href="mailto:{FPEF_EMAIL}">' not in chunk:
+            raise ValueError(f"pagina sponsor: il pulsante di {title} non apre {FPEF_EMAIL}")
+        if f'<a class="btn" href="mailto:{EMAIL}">' in chunk:
+            raise ValueError(f"pagina sponsor: il pulsante pieno di {title} apre l'email di IncentiviPerTe")
     about = (D / "chi-siamo.html").read_text(encoding="utf-8")
     if "Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale." not in about:
         raise ValueError("chi siamo: manca la descrizione del team")
@@ -1160,6 +1305,18 @@ def self_check(written):
     css = (D / "style.css").read_text(encoding="utf-8")
     if re.search(r"#0b5cad", css, re.I):
         raise ValueError("css: resta #0B5CAD")
+    if "a.btn.head-cta{display:none}" not in css:
+        raise ValueError("css: il Check-up in header non si nasconde sopra i 1180px")
+    if ".btn.outline{background:transparent;color:var(--b);border:2px solid var(--b)}" not in css:
+        raise ValueError("css: manca il pulsante outline")
+    if ".card .tag{background:#E7F4EE;border:0;color:var(--bd)}" not in css:
+        raise ValueError("css: le chip delle card sembrano ancora cliccabili")
+    for rel in htmls:
+        text = (D / rel).read_text(encoding="utf-8")
+        if "FoglioPEF è un foglio Excel" in text:
+            raise ValueError(f"{rel}: descrizione vecchia di FoglioPEF")
+        if 'class="fpef"' in text and FPEF_DESC not in text:
+            raise ValueError(f"{rel}: il riquadro FoglioPEF non usa la descrizione unica")
     for rel in ("robots.txt", "sitemap.xml"):
         blob = (D / rel).read_text(encoding="utf-8")
         if "essedade.github.io" in blob:
@@ -1187,7 +1344,7 @@ def build(today=None):
     hero = (
         '<section class="hero"><div class="wrap">'
         "<h1>Bandi e incentivi per startup e PMI</h1>"
-        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: {qty(len(att), 'bando aperto', 'bandi aperti')}, con scadenza e link alla fonte ufficiale.</p>"
+        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(len(att), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
         '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>'
@@ -1238,7 +1395,7 @@ def build(today=None):
         h1_fix = "Bandi nazionali aperti" if reg == "Nazionale" else f"Bandi aperti in {reg}"
         body = (
             crumbs([("index.html", "Bandi"), ("", label)], "")
-            + f"<h1>{e(h1_fix)}</h1><p>{e(INTRO_REG[reg])} In elenco: {qty(len(rows), 'bando aperto', 'bandi aperti')}.</p>"
+            + f"<h1>{e(h1_fix)}</h1><p>{e(INTRO_REG[reg])} In elenco: <span data-aperti>{qty(len(rows), 'bando aperto', 'bandi aperti')}</span>.</p>"
             + f'<p><a href="{site_href("index.html", urllib.parse.urlencode({"area": reg}), "filtri")}">Trova il tuo bando</a></p>'
             + listing
             + (f'<section aria-labelledby="dest-qui"><h2 id="dest-qui">Destinatari</h2>{sector_pills}</section>' if sector_pills else "")
@@ -1268,7 +1425,7 @@ def build(today=None):
         body = (
             crumbs([("index.html", "Bandi"), ("", name)], "../")
             + f"<h1>Bandi aperti per {e(name)}</h1>"
-            + f"<p>{e(intro)} In elenco: {qty(len(rows), 'bando aperto', 'bandi aperti')}, aree {e(where)}.</p>"
+            + f"<p>{e(intro)} In elenco: <span data-aperti>{qty(len(rows), 'bando aperto', 'bandi aperti')}</span>, aree {e(where)}.</p>"
             + f'<p><a href="{site_href("index.html", urllib.parse.urlencode({"dest": name}), "filtri")}">Trova il tuo bando</a></p>'
             + listing
             + '<section aria-labelledby="altre-aree"><h2 id="altre-aree">Aree</h2>'
@@ -1306,26 +1463,31 @@ def build(today=None):
         tags = f'<a class="tag area" href="{site_href(area_href)}">{e(b["regione"])}</a>' + "".join(
             f'<a class="tag" href="{site_href(sector_path(d))}">{e(d)}</a>' for d in b["destinatari"]
         )
+        when = f' data-deadline="{b["scadenza"]}"' if b["scadenza"] else ""
+        if b.get("apertura"):
+            when += f' data-apre="{b["apertura"]}"'
         body = (
             crumbs([("index.html", "Bandi"), (area_href, area_label), ("", b["titolo"])], "../")
-            + f'<article class="box"><div class="tags">{tags}</div><h1>{e(b["titolo"])}</h1>'
+            + f'<article class="box">{badge(b, today)}<div class="tags">{tags}</div><h1>{e(b["titolo"])}</h1>'
             + "<dl class=\"kv\">"
             + f"<dt>Ente</dt><dd>{e(b['ente'])}</dd>"
             + f'<dt>Area</dt><dd><a href="{site_href(area_href)}">{e(b["regione"])}</a></dd>'
             + f"<dt>Destinatari</dt><dd>{dest_html}</dd>"
             + f"<dt>Importo</dt><dd>{e(b['importo'])}</dd>"
-            + f"<dt>Scadenza</dt><dd><strong>{e(deadline_text(b))}</strong><br><small>{e(b['nota_scadenza'])}</small></dd>"
+            + f"<dt>Scadenza</dt><dd><strong{when}>{e(deadline_text(b))}</strong><br><small>{e(b['nota_scadenza'])}</small></dd>"
             + f"<dt>Ultimo controllo</dt><dd>{it_date(b['ultimo_controllo'])}</dd>"
             + "</dl>"
             + f"<p>{e(b['sintesi'])}</p>"
-            + f"<p>{official_bando_link(b['url'])}</p>"
+            + official_bando_link(b["url"])
+            + checkup_ask()
             + '<p class="note">Sintesi indicativa. Fa fede esclusivamente il testo ufficiale pubblicato dall&#39;ente. <a href="/disclaimer">Disclaimer</a></p></article>'
             + related_html
             + '<aside class="sp" aria-label="Spazio sponsor"><span class="lab">Sponsorizzato</span>'
             + '<p class="spt">Spazio disponibile per commercialisti, consulenti, banche e software</p>'
             + '<p class="spp">Da 49 € al mese · prezzo di lancio</p>'
-            + '<p><a class="btn" href="/sponsor">Sponsor</a></p></aside>'
+            + '<p><a class="btn outline" href="/sponsor">Scopri gli spazi sponsor</a></p></aside>'
             + fpef_box()
+            + BADGE_JS
         )
         desc = clip(f"{b['titolo']} ({b['ente']}): {b['sintesi']}")
         grant = {

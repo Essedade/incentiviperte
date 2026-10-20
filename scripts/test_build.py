@@ -79,6 +79,30 @@ class Validazione(unittest.TestCase):
         self.assertEqual(build.qty(1, "bando aperto", "bandi aperti"), "1 bando aperto")
         self.assertEqual(build.qty(0, "bando", "bandi"), "0 bandi")
 
+    def test_apertura_facoltativa(self):
+        build.validate([sample(apertura="2026-11-02")])
+        with self.assertRaises(ValueError):
+            build.validate([sample(apertura="02/12/2026")])
+        with self.assertRaises(ValueError):
+            build.validate([sample(apertura="2026-12-02", scadenza="2026-12-01")])
+        futuro = build.prepare(
+            [sample(id="in-arrivo", apertura="2026-12-02", scadenza="2027-03-31", nota_scadenza="Dal 02/12/2026")],
+            TODAY,
+        )[0]
+        self.assertTrue(futuro["in_arrivo"])
+        self.assertFalse(futuro["scaduto"])
+        self.assertEqual(build.deadline_text(futuro), "Apre il 02/12/2026")
+        self.assertIn("Apre il 02/12/2026", build.badge(futuro, TODAY))
+        self.assertIn('data-apre="2026-12-02"', build.badge(futuro, TODAY))
+        self.assertIn('data-scadenza="2027-03-31"', build.badge(futuro, TODAY))
+        self.assertNotIn("Aperto fino al", build.deadline_text(futuro))
+        gia = build.prepare(
+            [sample(id="gia-aperto", apertura="2026-10-01", scadenza="2026-12-01")],
+            TODAY,
+        )[0]
+        self.assertFalse(gia["in_arrivo"])
+        self.assertIn("Aperto fino al 01/12/2026", build.deadline_text(gia))
+
 
 class Sito(unittest.TestCase):
     @classmethod
@@ -293,6 +317,8 @@ class Sito(unittest.TestCase):
         toscana = (DIST / "toscana.html").read_text(encoding="utf-8")
         self.assertIn("Tutta la Toscana: bandi regionali e delle Camere di Commercio toscane", toscana)
         self.assertNotIn("Arezzo-Siena", toscana)
+        umbria = (DIST / "umbria.html").read_text(encoding="utf-8")
+        self.assertIn("gestiti da Gepafin e Sviluppumbria", umbria)
         self.assertIn("da Arezzo", home)
         self.assertIn("Check-up Bandi", (DIST / "contatti.html").read_text(encoding="utf-8"))
         self.assertNotIn("focus iniziale", about)
@@ -312,7 +338,7 @@ class Sito(unittest.TestCase):
             if not path.is_file() or path.suffix not in {".html", ".css", ".svg", ".txt", ".xml"}:
                 continue
             text = path.read_text(encoding="utf-8")
-            for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe", "Arezzo-Siena"):
+            for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe", "Arezzo-Siena", "Myself Plus"):
                 self.assertNotIn(banned, text, path.as_posix())
             visible = build.without_urls(text)
             self.assertIsNone(re.search(r"invitalia", visible, re.I), path.as_posix())
@@ -405,8 +431,18 @@ class Sito(unittest.TestCase):
         page = (DIST / "check-up.html").read_text(encoding="utf-8")
         self.assertIn('rel="canonical" href="https://incentiviperte.pages.dev/check-up"', page)
         self.assertIn("una relazione scritta sui bandi adatti", page)
-        self.assertIn("Base</strong>, 49 €: entro 5 giorni lavorativi dalla ricezione dei dati completi.", page)
-        self.assertIn("Completo</strong>, 79 €: entro 7-10 giorni lavorativi dalla ricezione dei dati completi.", page)
+        self.assertIn(
+            "Base</strong>, 49 €: report di circa 3-4 pagine, entro 5 giorni lavorativi dalla ricezione dei dati completi.",
+            page,
+        )
+        self.assertIn("Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi", page)
+        self.assertIn("Livelli del servizio", page)
+        for item in build.CHECKUP_EXTRA:
+            self.assertIn(item, page)
+        self.assertIn('id="checkup-fallback"', page)
+        self.assertIn('id="checkup-text"', page)
+        self.assertIn('id="checkup-copy">Copia<', page)
+        self.assertIn("Se non si apre un'app di posta", page)
         self.assertIn("team di esperti professionisti con esperienza pluriennale", page)
         self.assertIn(">Invia richiesta<", page)
         self.assertIn("Regione (comprende la provincia)", page)
@@ -425,7 +461,13 @@ class Sito(unittest.TestCase):
         self.assertEqual(offers["Base"]["price"], "49")
         self.assertEqual(offers["Completo"]["price"], "79")
         self.assertIn("entro 5 giorni lavorativi", offers["Base"]["description"])
+        self.assertIn("3-4 pagine", offers["Base"]["description"])
+        self.assertIn(build.CHECKUP_BASE, offers["Base"]["description"])
         self.assertIn("entro 7-10 giorni lavorativi", offers["Completo"]["description"])
+        self.assertIn("6-10 pagine", offers["Completo"]["description"])
+        self.assertIn(build.CHECKUP_COMPLETO, offers["Completo"]["description"])
+        for item in build.CHECKUP_EXTRA:
+            self.assertIn(item, offers["Completo"]["description"])
         self.assertEqual(services[0]["url"], "https://incentiviperte.pages.dev/check-up")
         privacy = (DIST / "privacy.html").read_text(encoding="utf-8")
         cookie = (DIST / "cookie.html").read_text(encoding="utf-8")
@@ -449,6 +491,248 @@ class Sito(unittest.TestCase):
             desc = re.search(r'<meta name="description" content="([^"]*)"', text).group(1)
             self.assertNotRegex(title + " " + desc, r"\d+ bandi aperti")
             self.assertIsNone(re.search(r'''(?:href|src)="(?!https?:|mailto:)[^"]*\.html''', text), path.name)
+
+    def test_descrizione_fogliopef_e_mailto_sponsor(self):
+        old = "FoglioPEF è un foglio Excel"
+        boxed = 0
+        for path in DIST.rglob("*.html"):
+            text = path.read_text(encoding="utf-8")
+            self.assertNotIn(old, text, path.as_posix())
+            if 'class="fpef"' in text:
+                boxed += 1
+                box = text.split('class="fpef"', 1)[1].split("</aside>", 1)[0]
+                self.assertIn(build.FPEF_DESC, box, path.as_posix())
+                footer = text.split("<footer>", 1)[1]
+                self.assertIn(build.FPEF_DESC.split(": ", 1)[1], footer, path.as_posix())
+        self.assertGreaterEqual(boxed, 1)
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        about = (DIST / "chi-siamo.html").read_text(encoding="utf-8")
+        self.assertIn('class="fpef"', home)
+        self.assertIn('class="fpef"', about)
+        for name in ("nazionale.html", "toscana.html", "umbria.html", "emilia-romagna.html"):
+            self.assertIn('class="fpef"', (DIST / name).read_text(encoding="utf-8"))
+        sponsor = (DIST / "sponsor.html").read_text(encoding="utf-8")
+        for title, end in (("FoglioPEF", "<h3>"), ("Entrambi i siti", "<h2>")):
+            chunk = sponsor.split(f"<h3>{title}</h3>", 1)[1].split(end, 1)[0]
+            self.assertIn(f'<a class="btn" href="mailto:{build.FPEF_EMAIL}">Scrivi a FoglioPEF</a>', chunk)
+            self.assertNotIn(f'<a class="btn" href="mailto:{build.EMAIL}">', chunk)
+            self.assertIn('class="btn outline"', chunk)
+        ipt = sponsor.split("<h3>IncentiviPerTe</h3>", 1)[1].split("<h3>", 1)[0]
+        self.assertIn(f'<a class="btn" href="mailto:{build.EMAIL}">Scrivi a IncentiviPerTe</a>', ipt)
+        self.assertNotIn(f'<a class="btn" href="mailto:{build.FPEF_EMAIL}">', ipt)
+
+    def test_scaduti_fra_un_build_e_laltro(self):
+        pages = [
+            DIST / "index.html",
+            DIST / "toscana.html",
+            DIST / "settore" / "pmi.html",
+        ]
+        for path in pages:
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("<span data-aperti>", text, path.name)
+            self.assertIn('open === 1 ? "1 bando aperto"', text, path.name)
+            self.assertIn('open + " bandi aperti"', text, path.name)
+            self.assertIn("list.appendChild", text, path.name)
+            self.assertIn('node.textContent = "Scaduto il "', text, path.name)
+        scheda = (DIST / "bando" / "economia-circolare-privati.html").read_text(encoding="utf-8")
+        visible = re.sub(r"<script\b.*?</script>", "", scheda, flags=re.S)
+        self.assertIn("Aperto fino al 23/10/2026", visible)
+        self.assertIn(">Scade il 23/10/2026<", visible)
+        self.assertNotIn(">Scaduto il 23/10/2026<", visible)
+        self.assertIn('data-deadline="2026-10-23"', scheda)
+        self.assertIn('data-scadenza="2026-10-23"', scheda)
+        script = re.search(r"<script>\s*(\(function \(\) \{.*?startOfToday.*?\}\)\(\);)\s*</script>", scheda, re.S)
+        self.assertIsNotNone(script)
+        runner = r"""
+const fs = require("fs");
+const script = fs.readFileSync(process.argv[2], "utf8");
+function has(node, cls) {
+  return (" " + ((node.attrs && node.attrs.class) || "") + " ").indexOf(" " + cls + " ") >= 0;
+}
+function match(node, sel) {
+  if (!node || !node.attrs) return false;
+  if (sel === ".badge[data-scadenza]") return has(node, "badge") && node.getAttribute("data-scadenza");
+  if (sel === "[data-deadline]") return !!node.getAttribute("data-deadline");
+  if (sel === "[data-aperti]") return node.getAttribute("data-aperti") !== null;
+  if (sel === "article.card") return node.tag === "article" && has(node, "card");
+  if (sel === "article") return node.tag === "article";
+  return false;
+}
+function walk(node, fn) {
+  fn(node);
+  (node.children || []).forEach(function (child) { walk(child, fn); });
+}
+function h(tag, attrs, text) {
+  const node = { tag: tag, attrs: Object.assign({}, attrs), children: [], parent: null, _text: text || "" };
+  node.getAttribute = function (name) {
+    return Object.prototype.hasOwnProperty.call(node.attrs, name) ? node.attrs[name] : null;
+  };
+  node.setAttribute = function (name, value) { node.attrs[name] = String(value); };
+  node.classList = {
+    add: function () {
+      const set = (node.attrs.class || "").split(/\s+/).filter(Boolean);
+      for (let i = 0; i < arguments.length; i++) if (set.indexOf(arguments[i]) < 0) set.push(arguments[i]);
+      node.attrs.class = set.join(" ");
+    },
+    remove: function () {
+      const drop = Array.prototype.slice.call(arguments);
+      node.attrs.class = (node.attrs.class || "").split(/\s+/).filter(function (c) {
+        return c && drop.indexOf(c) < 0;
+      }).join(" ");
+    }
+  };
+  Object.defineProperty(node, "textContent", {
+    get: function () { return node._text; },
+    set: function (value) { node._text = String(value); }
+  });
+  node.appendChild = function (child) {
+    if (child.parent) {
+      const i = child.parent.children.indexOf(child);
+      if (i >= 0) child.parent.children.splice(i, 1);
+    }
+    child.parent = node;
+    node.children.push(child);
+  };
+  node.querySelectorAll = function (sel) {
+    const parts = sel.split(",");
+    const out = [];
+    walk(node, function (n) {
+      if (n === node) return;
+      for (let i = 0; i < parts.length; i++) if (match(n, parts[i].trim())) { out.push(n); return; }
+    });
+    return out;
+  };
+  node.closest = function (sel) {
+    let cur = node;
+    while (cur) {
+      if (match(cur, sel)) return cur;
+      cur = cur.parent;
+    }
+    return null;
+  };
+  return node;
+}
+function mount(children) {
+  const document = h("document", {}, "");
+  children.forEach(function (child) { document.appendChild(child); });
+  document.getElementById = function (id) {
+    let found = null;
+    walk(document, function (n) { if (n.attrs && n.attrs.id === id) found = n; });
+    return found;
+  };
+  var window = { INCENTIVI_OGGI: "2026-10-20T12:00:00" };
+  eval(script);
+  return document;
+}
+function card(id, iso, openText) {
+  const article = h("article", { class: "card", id: id, "data-scaduto": "0" }, "");
+  article.appendChild(h("span", { class: "badge", "data-scadenza": iso }, openText));
+  article.appendChild(h("span", { class: "dl", "data-deadline": iso }, "Aperto fino al " + iso));
+  return article;
+}
+function run(cards) {
+  const count = h("span", { "data-aperti": "" }, "99 bandi aperti");
+  const list = h("div", { id: "elenco" }, "");
+  cards.forEach(function (item) { list.appendChild(item); });
+  list.appendChild(h("aside", { class: "card spc", id: "sponsor" }, ""));
+  const document = mount([count, list]);
+  return {
+    label: count.textContent,
+    order: list.children.map(function (child) { return child.attrs.id; }),
+    cards: cards.map(function (item) {
+      return {
+        id: item.attrs.id,
+        scaduto: item.getAttribute("data-scaduto"),
+        badge: item.children[0].textContent,
+        cls: item.children[0].attrs.class,
+        dl: item.children[1].textContent
+      };
+    })
+  };
+}
+const one = run([card("vecchio", "2020-01-01", "Scade il 01/01/2020"), card("aperto", "2026-12-01", "Scade il 01/12/2026")]);
+const two = run([card("a", "2026-12-01", "Scade il 01/12/2026"), card("b", "2026-12-15", "Scade il 15/12/2026")]);
+const zero = run([card("a", "2020-01-01", "Scade il 01/01/2020"), card("b", "2020-02-01", "Scade il 01/02/2020")]);
+const detailBadge = h("span", { class: "badge", "data-scadenza": "2020-01-01" }, "Scade il 01/01/2020");
+const detailWhen = h("strong", { "data-deadline": "2020-01-01" }, "Aperto fino al 01/01/2020");
+const article = h("article", { class: "box" }, "");
+article.appendChild(detailBadge);
+article.appendChild(detailWhen);
+mount([article]);
+process.stdout.write(JSON.stringify({
+  one: one,
+  two: two.label,
+  zero: zero.label,
+  detail: { badge: detailBadge.textContent, cls: detailBadge.attrs.class, when: detailWhen.textContent }
+}));
+"""
+        script_path = DIST / "_scadenze.js"
+        runner_path = DIST / "_scadenze_runner.js"
+        script_path.write_text(script.group(1), encoding="utf-8")
+        runner_path.write_text(runner, encoding="utf-8")
+        try:
+            import subprocess
+            out = subprocess.run(
+                ["node", str(runner_path), str(script_path)],
+                check=True, capture_output=True, text=True,
+            )
+        finally:
+            script_path.unlink(missing_ok=True)
+            runner_path.unlink(missing_ok=True)
+        data = json.loads(out.stdout)
+        self.assertEqual(data["one"]["label"], "1 bando aperto")
+        self.assertEqual(data["one"]["order"], ["aperto", "sponsor", "vecchio"])
+        vecchio = data["one"]["cards"][0]
+        aperto = data["one"]["cards"][1]
+        self.assertEqual(vecchio["badge"], "Scaduto")
+        self.assertEqual(vecchio["scaduto"], "1")
+        self.assertIn("exp", vecchio["cls"].split())
+        self.assertEqual(vecchio["dl"], "Scaduto il 01/01/2020")
+        self.assertEqual(aperto["badge"], "Mancano 42 giorni")
+        self.assertEqual(aperto["scaduto"], "0")
+        self.assertEqual(aperto["dl"], "Aperto fino al 2026-12-01")
+        self.assertEqual(data["two"], "2 bandi aperti")
+        self.assertEqual(data["zero"], "0 bandi aperti")
+        self.assertEqual(data["detail"]["badge"], "Scaduto")
+        self.assertIn("exp", data["detail"]["cls"].split())
+        self.assertEqual(data["detail"]["when"], "Scaduto il 01/01/2020")
+
+    def test_revisione_ux_pulsanti(self):
+        css = (DIST / "style.css").read_text(encoding="utf-8")
+        self.assertIn(
+            "@media(min-width:1180px){.dnav{display:flex;flex:1;min-width:0}details.menu{display:none}a.btn.head-cta{display:none}}",
+            css,
+        )
+        btn = css.split(".btn{", 1)[1].split("}", 1)[0]
+        self.assertIn("font:inherit", btn)
+        self.assertIn("border:0", btn)
+        self.assertIn("cursor:pointer", btn)
+        self.assertIn(".btn.outline{background:transparent;color:var(--b);border:2px solid var(--b)}", css)
+        self.assertIn(".card .tag{background:#E7F4EE;border:0;color:var(--bd)}", css)
+        self.assertIn("white-space:nowrap", css)
+        self.assertIn("text-overflow:ellipsis", css)
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        aside = re.search(r'<aside class="card spc".*?</aside>', home, re.S).group(0)
+        self.assertIn(">Scopri gli spazi sponsor<", aside)
+        self.assertIn('class="btn outline"', aside)
+        self.assertNotIn('class="btn"', aside.replace('class="btn outline"', ""))
+        self.assertRegex(home, r'class="btn outline"[^>]*>Apri FoglioPEF')
+        sponsor = (DIST / "sponsor.html").read_text(encoding="utf-8")
+        self.assertRegex(sponsor, r'class="btn outline"[^>]*>Contattaci su LinkedIn')
+        scheda = (DIST / "bando" / "smart-start-italia.html").read_text(encoding="utf-8")
+        self.assertRegex(scheda, r'class="btn"[^>]*>Vai al bando ufficiale<span')
+        self.assertIn('class="host">', scheda)
+        self.assertNotIn("Vai al bando ufficiale su ", scheda)
+        self.assertLess(scheda.find("Vai al bando ufficiale"), scheda.find('class="checkup-ask"'))
+        self.assertIn('class="checkup-ask"', scheda)
+        self.assertIn('href="/check-up"', scheda.split('class="checkup-ask"', 1)[1].split("</aside>", 1)[0])
+        self.assertIn(">Scopri gli spazi sponsor<", scheda)
+        for path in (DIST / "bando").glob("*.html"):
+            text = path.read_text(encoding="utf-8")
+            self.assertIn(">Vai al bando ufficiale<", text, path.name)
+            self.assertNotIn("Vai al bando ufficiale su ", text, path.name)
+            self.assertIn('class="host">', text, path.name)
+            self.assertIn('class="checkup-ask"', text, path.name)
 
 
 class Update(unittest.TestCase):
