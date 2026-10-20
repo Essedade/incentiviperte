@@ -15,7 +15,7 @@ import update
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 TODAY = datetime.date(2026, 10, 13)
-BASE = "https://essedade.github.io/incentiviperte/"
+BASE = build.BASE
 
 
 def sample(**over):
@@ -244,8 +244,11 @@ class Sito(unittest.TestCase):
         page = (DIST / "404.html").read_text(encoding="utf-8")
         self.assertIn("noindex", page)
         self.assertNotIn('rel="canonical"', page)
-        self.assertIn('href="/incentiviperte/style.css"', page)
-        self.assertIn('href="/incentiviperte/settore/startup.html"', page)
+        self.assertIn('href="/style.css"', page)
+        self.assertIn('href="/settore/startup.html"', page)
+        self.assertIn('href="mailto:incentiviperte.team@gmail.com"', page)
+        self.assertNotIn("/mailto:", page)
+        self.assertIsNone(re.search(r'''\b(?:href|src)\s*=\s*["']/incentiviperte/''', page))
 
     def test_jsonld(self):
         for path in DIST.rglob("*.html"):
@@ -292,6 +295,47 @@ class Sito(unittest.TestCase):
                 self.assertNotIn(banned, text, path.as_posix())
             visible = build.without_urls(text)
             self.assertIsNone(re.search(r"invitalia", visible, re.I), path.as_posix())
+
+    def test_dominio_cloudflare_e_niente_vecchio_percorso(self):
+        self.assertEqual(build.BASE, "https://incentiviperte.pages.dev/")
+        self.assertIn("https://incentiviperte.pages.dev/", (DIST / "index.html").read_text(encoding="utf-8"))
+        self.assertIn("Sitemap: https://incentiviperte.pages.dev/sitemap.xml", (DIST / "robots.txt").read_text(encoding="utf-8"))
+        for path in DIST.rglob("*"):
+            if not path.is_file():
+                continue
+            raw = path.read_bytes()
+            self.assertNotIn(b"essedade.github.io", raw, path.as_posix())
+            if path.suffix.lower() not in {".html", ".css", ".svg", ".txt", ".xml"}:
+                continue
+            text = raw.decode("utf-8")
+            self.assertIsNone(
+                re.search(r'''\b(?:href|src)\s*=\s*["']/incentiviperte/''', text),
+                path.as_posix(),
+            )
+
+    def test_rimando_gh_pages(self):
+        import build_redirect
+
+        n = build_redirect.generate()
+        out = ROOT / "dist-redirect"
+        htmls = list(DIST.rglob("*.html"))
+        self.assertEqual(n, len(htmls))
+        self.assertTrue((out / ".nojekyll").is_file())
+        self.assertEqual((out / ".nojekyll").read_text(encoding="utf-8"), "")
+        for src in htmls:
+            rel = src.relative_to(DIST).as_posix()
+            page = (out / rel).read_text(encoding="utf-8")
+            self.assertNotIn("essedade.github.io", page, rel)
+            self.assertIn('http-equiv="refresh"', page, rel)
+            self.assertIn('rel="canonical"', page, rel)
+            self.assertIn("location.replace(", page, rel)
+            if rel == "404.html":
+                url = "https://incentiviperte.pages.dev/"
+            else:
+                url = "https://incentiviperte.pages.dev/" + rel
+            self.assertIn(f'content="0; url={url}"', page, rel)
+            self.assertIn(f'rel="canonical" href="{url}"', page, rel)
+            self.assertIn(f'location.replace("{url}")', page, rel)
 
 
 class Update(unittest.TestCase):

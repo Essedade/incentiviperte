@@ -16,7 +16,7 @@ import urllib.parse
 R = pathlib.Path(__file__).resolve().parent.parent
 D = R / "dist"
 DATA = R / "data" / "bandi.json"
-BASE = "https://essedade.github.io/incentiviperte/"
+BASE = "https://incentiviperte.pages.dev/"
 SITE = "IncentiviPerTe"
 LINKEDIN = "https://www.linkedin.com/company/incentiviperte/"
 EMAIL = "incentiviperte.team@gmail.com"
@@ -941,6 +941,10 @@ def self_check(written):
                 raise ValueError(f"{name}: testo non pubblicabile ({banned})")
         if re.search(r"invitalia", without_urls(text), re.I):
             raise ValueError(f"{name}: la parola Invitalia compare fuori dai link ufficiali")
+        if "essedade.github.io" in text:
+            raise ValueError(f"{name}: vecchio indirizzo GitHub Pages")
+        if re.search(r'''\b(?:href|src)\s*=\s*["']/incentiviperte/''', text):
+            raise ValueError(f"{name}: link assoluto del vecchio percorso GitHub Pages")
         for match in re.finditer("Arezzo-Siena", text):
             window = text[max(0, match.start() - 80):match.start()]
             if "<dt>Ente</dt><dd>" not in window:
@@ -975,6 +979,10 @@ def self_check(written):
     sitemap = (D / "sitemap.xml").read_text(encoding="utf-8")
     if "<loc>" not in sitemap or "404.html" in sitemap:
         raise ValueError("sitemap non valida")
+    for rel in ("robots.txt", "sitemap.xml"):
+        blob = (D / rel).read_text(encoding="utf-8")
+        if "essedade.github.io" in blob:
+            raise ValueError(f"{rel}: vecchio indirizzo GitHub Pages")
 
 
 def build(today=None):
@@ -1181,14 +1189,21 @@ def build(today=None):
         priority = "0.8" if path == "sponsor.html" else "0.3"
         emit(path, page(path, title, desc, body, ld=ld), agg, freq, priority)
 
+    # La 404 può essere servita da qualsiasi percorso: i link partono dalla radice.
+    # Gli schemi (mailto:, https:) restano intatti.
     not_found = fill_footer(page(
         "404.html",
         "Pagina non trovata",
         "La pagina richiesta non esiste.",
-        '<div class="box"><h1>Pagina non trovata</h1><p>La pagina che cerchi non esiste o è stata spostata. Il bando potrebbe essere scaduto e non essere più in elenco.</p><p><a class="btn" href="/incentiviperte/index.html">Torna ai bandi</a></p></div>',
+        '<div class="box"><h1>Pagina non trovata</h1><p>La pagina che cerchi non esiste o è stata spostata. Il bando potrebbe essere scaduto e non essere più in elenco.</p><p><a class="btn" href="/index.html">Torna ai bandi</a></p></div>',
         robots="noindex",
-    ), bandi, "/incentiviperte/")
-    not_found = re.sub(r'href="(?!https?:|/|#)([^"]+)"', r'href="/incentiviperte/\1"', not_found)
+    ), bandi, "/")
+    not_found = re.sub(
+        r'\b(href|src)="(?![a-z][a-z0-9+.-]*:|/|#)([^"]*)"',
+        r'\1="/\2"',
+        not_found,
+        flags=re.I,
+    )
     (D / "404.html").write_text(not_found, encoding="utf-8")
     written.add("404.html")
 
