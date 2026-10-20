@@ -362,7 +362,7 @@ class Sito(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
             for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe", "Arezzo-Siena", "Myself Plus"):
                 self.assertNotIn(banned, text, path.as_posix())
-            visible = build.without_urls(text)
+            visible = build.visible_text(text)
             self.assertIsNone(re.search(r"invitalia", visible, re.I), path.as_posix())
 
     def test_bandi_20_ottobre_e_conto_alla_rovescia(self):
@@ -787,6 +787,33 @@ process.stdout.write(JSON.stringify({
             self.assertNotIn("Vai al bando ufficiale su ", text, path.name)
             self.assertIn('class="host">', text, path.name)
             self.assertIn('class="checkup-ask"', text, path.name)
+
+    def test_invitalia_assente_dal_testo_visibile(self):
+        nazionali = (
+            "smart-start-italia.html",
+            "on-nuove-imprese-tasso-zero.html",
+            "autoimpiego-centro-nord.html",
+            "resto-al-sud-2.html",
+            "italia-economia-sociale.html",
+        )
+        for name in nazionali:
+            page = (DIST / "bando" / name).read_text(encoding="utf-8")
+            self.assertIn("https://www.invitalia.it/", page, name)
+            self.assertIn("sito ufficiale dell'ente gestore", page, name)
+            self.assertIsNone(re.search(r"invitalia", build.visible_text(page), re.I), name)
+        for path in DIST.rglob("*.html"):
+            text = path.read_text(encoding="utf-8")
+            visible = build.visible_text(text)
+            self.assertIsNone(
+                re.search(r"invitalia", visible, re.I),
+                path.as_posix(),
+            )
+        sample = (
+            '<a href="https://www.invitalia.it/bando">Vai al bando ufficiale</a>'
+            '<small class="host">invitalia.it</small>'
+            '<script type="application/ld+json">{"url":"https://www.invitalia.it/bando"}</script>'
+        )
+        self.assertIsNotNone(re.search(r"invitalia", build.visible_text(sample), re.I))
 
 
 class Update(unittest.TestCase):

@@ -477,10 +477,12 @@ def grid(items, pre, today):
 
 def official_bando_link(url):
     host = urllib.parse.urlparse(url).netloc.removeprefix("www.")
+    if "invitalia" in host.lower():
+        host = "sito ufficiale dell'ente gestore"
     return (
         '<div class="official">'
         + ext(url, "Vai al bando ufficiale", "btn")
-        + f'<small class="host">{e(host)}</small></div>'
+        + f'<small class="host">{html.escape(host, quote=False)}</small></div>'
     )
 
 
@@ -1195,8 +1197,18 @@ def foreign_email(text):
 
 def without_urls(text):
     text = re.sub(r'href="[^"]*"', "", text, flags=re.I)
-    text = re.sub(r'"https?://[^"]*"', "", text, flags=re.I)
-    return re.sub(r'<small class="host">[^<]*</small>', "", text, flags=re.I)
+    return re.sub(r'"https?://[^"]*"', "", text, flags=re.I)
+
+
+def visible_text(text):
+    """Testo visibile: via gli href e il JSON-LD, resta il dominio sotto il pulsante."""
+    text = re.sub(
+        r'<script type="application/ld\+json">.*?</script>',
+        "",
+        text,
+        flags=re.I | re.S,
+    )
+    return re.sub(r'\bhref="[^"]*"', "", text, flags=re.I)
 
 
 def self_check(written):
@@ -1251,8 +1263,8 @@ def self_check(written):
         for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe", "Myself Plus"):
             if banned in text:
                 raise ValueError(f"{name}: testo non pubblicabile ({banned})")
-        if re.search(r"invitalia", without_urls(text), re.I):
-            raise ValueError(f"{name}: la parola Invitalia compare fuori dai link ufficiali")
+        if re.search(r"invitalia", visible_text(text), re.I):
+            raise ValueError(f"{name}: la parola Invitalia compare nel testo visibile")
         if "essedade.github.io" in text:
             raise ValueError(f"{name}: vecchio indirizzo GitHub Pages")
         if "fogliopef.gumroad.com" in text:
