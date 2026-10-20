@@ -41,7 +41,7 @@ DEST_ORDER = ["Startup", "PMI", "Nuove imprese", "Under 35", "Donne", "Investito
 INTRO_REG = {
     "Nazionale": "Incentivi nazionali per avviare e far crescere l'impresa: finanziamenti a tasso zero e contributi a fondo perduto per nuove imprese, startup innovative e investimenti, insieme alle misure di MIMIT e del Ministero del Lavoro. Molte valgono anche per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna; altre, come Resto al Sud 2.0, riguardano solo il Mezzogiorno.",
     "Toscana": "Tutta la Toscana: bandi regionali e delle Camere di Commercio toscane, in tutte le province. Per un'impresa toscana restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord e Smart&Start Italia.",
-    "Umbria": "Bandi della Regione Umbria gestiti da Gepafin. Per un'impresa umbra restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord.",
+    "Umbria": "Bandi della Regione Umbria gestiti da Gepafin e Sviluppumbria. Per un'impresa umbra restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord.",
     "Emilia-Romagna": "Bandi della Regione Emilia-Romagna, comprese le finestre del Fondo Multiscopo. Per un'impresa emiliano-romagnola restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord.",
 }
 INTRO_DEST = {
@@ -174,6 +174,10 @@ def validate(bandi):
             slugs[slug] = d
         if b["scadenza"] is not None:
             parse_date(b["scadenza"], "scadenza", bid)
+        if "apertura" in b and b["apertura"] is not None:
+            parse_date(b["apertura"], "apertura", bid)
+            if b["scadenza"] is not None and b["apertura"] > b["scadenza"]:
+                raise ValueError(f"{bid}: apertura successiva alla scadenza")
         parse_date(b["ultimo_controllo"], "ultimo_controllo", bid)
         for field in ("titolo", "ente", "sintesi", "importo", "nota_scadenza", "check"):
             val = b[field]
@@ -201,14 +205,20 @@ def prepare(bandi, today):
         b = dict(src)
         b["destinatari"] = list(src["destinatari"])
         b["scaduto"] = bool(b["scadenza"] and b["scadenza"] < iso)
+        # apertura è facoltativa: se è nel futuro la scheda non è ancora aperta.
+        b["in_arrivo"] = bool(b.get("apertura") and b["apertura"] > iso)
+        if b["in_arrivo"]:
+            b["scaduto"] = False
         out.append(b)
     out.sort(key=lambda b: b["scadenza"] or "9999-12-31")
     return out
 
 
 def deadline_text(b):
-    if b["scaduto"]:
+    if b.get("scaduto"):
         return "Scaduto il " + it_date(b["scadenza"])
+    if b.get("in_arrivo") and b.get("apertura"):
+        return "Apre il " + it_date(b["apertura"])
     if b["scadenza"]:
         return f"Aperto fino al {it_date(b['scadenza'])}"
     return "Senza scadenza indicata: verifica sul sito ufficiale"
@@ -221,8 +231,10 @@ def days_left(b, today):
 
 
 def badge(b, today):
-    if b["scaduto"]:
+    if b.get("scaduto"):
         return '<span class="badge exp">Scaduto</span>'
+    if b.get("in_arrivo") and b.get("apertura"):
+        return f'<span class="badge open">Apre il {it_date(b["apertura"])}</span>'
     if not b["scadenza"]:
         return '<span class="badge open">Sportello aperto</span>'
     g = days_left(b, today)
@@ -293,6 +305,7 @@ def card(b, pre, today):
     return (
         f'<article class="card" data-reg="{e(b["regione"])}" '
         f'data-dest="{e("|".join(b["destinatari"]))}" data-scad="{b["scadenza"] or "9999-12-31"}" '
+        f'data-apre="{e(b.get("apertura") or "")}" '
         f'data-scaduto="{1 if b["scaduto"] else 0}" data-search="{e(search)}"{hidden}>'
         f'{badge(b, today)}<h3><a href="{href}">{e(b["titolo"])}</a></h3>'
         f'<p class="amt">{e(b["importo"])}</p><div class="tags">{tags}</div>'
@@ -311,12 +324,76 @@ def sponsor_card(pre):
     )
 
 
+DEADLINE_JS = r"""<script>
+(function () {
+  function daysUntil(iso) {
+    var p = (iso || "").split("-");
+    if (p.length !== 3) return null;
+    var target = new Date(+p[0], +p[1] - 1, +p[2]);
+    if (isNaN(target.getTime())) return null;
+    var now = new Date();
+    var start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((target - start) / 864e5);
+  }
+  function itDate(iso) {
+    var p = iso.split("-");
+    return p[2] + "/" + p[1] + "/" + p[0];
+  }
+  function refreshCountdowns() {
+    var cards = document.querySelectorAll("#elenco .card:not(.spc)");
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var badge = card.querySelector(".badge");
+      var dl = card.querySelector(".dl");
+      if (!badge) continue;
+      var apre = card.getAttribute("data-apre") || "";
+      var leftOpen = apre ? daysUntil(apre) : null;
+      if (leftOpen !== null && leftOpen > 0) {
+        badge.className = "badge open";
+        badge.textContent = "Apre il " + itDate(apre);
+        if (dl) dl.textContent = "Apre il " + itDate(apre);
+        card.setAttribute("data-scaduto", "0");
+        card.hidden = false;
+        continue;
+      }
+      var iso = card.getAttribute("data-scad") || "";
+      if (!iso || iso.indexOf("9999") === 0) {
+        badge.className = "badge open";
+        badge.textContent = "Sportello aperto";
+        if (dl) dl.textContent = "Senza scadenza indicata: verifica sul sito ufficiale";
+        card.setAttribute("data-scaduto", "0");
+        card.hidden = false;
+        continue;
+      }
+      var left = daysUntil(iso);
+      if (left === null) continue;
+      if (left < 0) {
+        badge.className = "badge exp";
+        badge.textContent = "Scaduto";
+        if (dl) dl.textContent = "Scaduto il " + itDate(iso);
+        card.setAttribute("data-scaduto", "1");
+        card.hidden = true;
+        continue;
+      }
+      var label = left === 0 ? "Scade oggi" : (left === 1 ? "Manca 1 giorno" : ("Mancano " + left + " giorni"));
+      badge.className = left <= 14 ? "badge soon" : "badge";
+      badge.textContent = label;
+      if (dl) dl.textContent = "Aperto fino al " + itDate(iso);
+      card.setAttribute("data-scaduto", "0");
+      card.hidden = false;
+    }
+  }
+  refreshCountdowns();
+})();
+</script>"""
+
+
 def grid(items, pre, today):
     blocks = [card(b, pre, today) for b in items]
     active = [i for i, b in enumerate(items) if not b["scaduto"]]
     pos = active[2] + 1 if len(active) >= 3 else len(blocks)
     blocks.insert(pos, sponsor_card(pre))
-    return '<div class="grid" id="elenco">' + "".join(blocks) + "</div>"
+    return '<div class="grid" id="elenco">' + "".join(blocks) + "</div>" + DEADLINE_JS
 
 
 def official_bando_link(url):
@@ -936,7 +1013,7 @@ def self_check(written):
             raise ValueError(f"{name}: nome personale fuori dalle pagine legali")
         if rel in ("privacy.html", "note-legali.html") and "Davide Davoglio, Arezzo (Italia)" not in text:
             raise ValueError(f"{name}: dati del titolare mancanti")
-        for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe"):
+        for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe", "Myself Plus"):
             if banned in text:
                 raise ValueError(f"{name}: testo non pubblicabile ({banned})")
         if re.search(r"invitalia", without_urls(text), re.I):
@@ -967,6 +1044,8 @@ def self_check(written):
     home = (D / "index.html").read_text(encoding="utf-8")
     if "Check-up Bandi" not in home or 'href="contatti.html">Richiedi il Check-up Bandi</a>' not in home:
         raise ValueError("home: manca la sezione Check-up Bandi")
+    if "refreshCountdowns" not in home or 'getAttribute("data-scad")' not in home:
+        raise ValueError("home: il conto alla rovescia non viene dalle date dei bandi")
     if 'value="Umbria"' not in home or 'value="Emilia-Romagna"' not in home or 'value="Toscana"' not in home:
         raise ValueError("home: filtri di area incompleti")
     if "focus iniziale" in home or "focus iniziale" in about:

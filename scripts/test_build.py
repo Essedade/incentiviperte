@@ -69,6 +69,28 @@ class Validazione(unittest.TestCase):
         self.assertIn("Scaduto il 01/01/2020", build.deadline_text(rows[0]))
         self.assertIn("Sportello aperto", build.badge(rows[2], TODAY))
 
+    def test_apertura_facoltativa(self):
+        build.validate([sample(apertura="2026-11-02")])
+        with self.assertRaises(ValueError):
+            build.validate([sample(apertura="02/12/2026")])
+        with self.assertRaises(ValueError):
+            build.validate([sample(apertura="2026-12-02", scadenza="2026-12-01")])
+        futuro = build.prepare(
+            [sample(id="in-arrivo", apertura="2026-12-02", scadenza="2027-03-31", nota_scadenza="Dal 02/12/2026")],
+            TODAY,
+        )[0]
+        self.assertTrue(futuro["in_arrivo"])
+        self.assertFalse(futuro["scaduto"])
+        self.assertEqual(build.deadline_text(futuro), "Apre il 02/12/2026")
+        self.assertIn("Apre il 02/12/2026", build.badge(futuro, TODAY))
+        self.assertNotIn("Aperto fino al", build.deadline_text(futuro))
+        gia = build.prepare(
+            [sample(id="gia-aperto", apertura="2026-10-01", scadenza="2026-12-01")],
+            TODAY,
+        )[0]
+        self.assertFalse(gia["in_arrivo"])
+        self.assertIn("Aperto fino al 01/12/2026", build.deadline_text(gia))
+
 
 class Sito(unittest.TestCase):
     @classmethod
@@ -280,6 +302,8 @@ class Sito(unittest.TestCase):
         toscana = (DIST / "toscana.html").read_text(encoding="utf-8")
         self.assertIn("Tutta la Toscana: bandi regionali e delle Camere di Commercio toscane", toscana)
         self.assertNotIn("Arezzo-Siena", toscana)
+        umbria = (DIST / "umbria.html").read_text(encoding="utf-8")
+        self.assertIn("gestiti da Gepafin e Sviluppumbria", umbria)
         self.assertIn("da Arezzo", home)
         self.assertIn("Check-up Bandi", (DIST / "contatti.html").read_text(encoding="utf-8"))
         self.assertNotIn("focus iniziale", about)
@@ -299,10 +323,39 @@ class Sito(unittest.TestCase):
             if not path.is_file() or path.suffix not in {".html", ".css", ".svg", ".txt", ".xml"}:
                 continue
             text = path.read_text(encoding="utf-8")
-            for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe", "Arezzo-Siena"):
+            for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe", "Arezzo-Siena", "Myself Plus"):
                 self.assertNotIn(banned, text, path.as_posix())
             visible = build.without_urls(text)
             self.assertIsNone(re.search(r"invitalia", visible, re.I), path.as_posix())
+
+    def test_bandi_20_ottobre_e_conto_alla_rovescia(self):
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        self.assertIn("Aggiornato il 20/10/2026", home)
+        self.assertNotIn("Aggiornato il 15/10/2026", home)
+        self.assertIn("refreshCountdowns", home)
+        self.assertIn('getAttribute("data-scad")', home)
+        self.assertIn('getAttribute("data-apre")', home)
+        self.assertIn('data-scad="2026-10-23"', home)
+        giorni = (datetime.date(2026, 10, 23) - TODAY).days
+        self.assertGreater(giorni, 0)
+        self.assertIn(f"Mancano {giorni} giorni", home)
+        self.assertNotIn("Myself Plus", home)
+        smart = (DIST / "bando" / "smart-start-italia.html").read_text(encoding="utf-8")
+        self.assertIn("non è previsto in Toscana, Umbria ed Emilia-Romagna", smart)
+        self.assertIn("fondo perduto solo nel Mezzogiorno", smart)
+        on_page = (DIST / "bando" / "on-nuove-imprese-tasso-zero.html").read_text(encoding="utf-8")
+        self.assertIn("Solo finanziamento a tasso zero dal 01/07/2026", on_page)
+        self.assertIn("solo un finanziamento a tasso zero", on_page)
+        arezzo = (DIST / "bando" / "cciaa-arezzo-siena-certificazioni-2026.html").read_text(encoding="utf-8")
+        self.assertIn("Camera di Commercio di Arezzo e Siena", arezzo)
+        self.assertNotIn("Arezzo-Siena", arezzo)
+        data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
+        self.assertEqual(len(data), 29)
+        aree = {}
+        for row in data:
+            aree[row["regione"]] = aree.get(row["regione"], 0) + 1
+        self.assertEqual(aree, {"Nazionale": 8, "Toscana": 10, "Umbria": 4, "Emilia-Romagna": 7})
+        self.assertTrue(all(row["ultimo_controllo"] == "2026-10-20" for row in data))
 
     def test_dominio_cloudflare_e_niente_vecchio_percorso(self):
         self.assertEqual(build.BASE, "https://incentiviperte.pages.dev/")
