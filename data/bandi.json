@@ -2,14 +2,14 @@
  {
   "id": "smart-start-italia",
   "titolo": "Smart&Start Italia",
-  "ente": "Invitalia / MIMIT",
+  "ente": "MIMIT",
   "regione": "Nazionale",
   "destinatari": [
    "Startup"
   ],
   "scadenza": null,
   "nota_scadenza": "A sportello, senza scadenza",
-  "sintesi": "Startup innovative fino a 60 mesi di vita: finanziamento a tasso zero dell'80% delle spese ammissibili, 90% se la startup è composta interamente da donne e/o under 36 o con un dottore di ricerca rientrato dall'estero. Contributo a fondo perduto del 30% solo per le startup con sede nel Centro-Sud Italia, come indicato da Invitalia: l'ambito territoriale esatto va verificato nella normativa.",
+  "sintesi": "Startup innovative fino a 60 mesi di vita: finanziamento a tasso zero dell'80% delle spese ammissibili, 90% se la startup è composta interamente da donne e/o under 36 o con un dottore di ricerca rientrato dall'estero. Contributo a fondo perduto del 30% solo per le startup con sede nel Centro-Sud Italia: l'ambito territoriale esatto va verificato nella normativa.",
   "url": "https://www.invitalia.it/incentivi-e-strumenti/smartstart-italia",
   "check": "Le domande sono esaminate",
   "ultimo_controllo": "2026-10-15",
@@ -18,7 +18,7 @@
  {
   "id": "on-nuove-imprese-tasso-zero",
   "titolo": "ON – Oltre Nuove imprese a tasso zero",
-  "ente": "Invitalia / MIMIT",
+  "ente": "MIMIT",
   "regione": "Nazionale",
   "destinatari": [
    "Under 35",
@@ -53,7 +53,7 @@
  {
   "id": "autoimpiego-centro-nord",
   "titolo": "Autoimpiego Centro-Nord",
-  "ente": "Invitalia / Min. Lavoro",
+  "ente": "Ministero del Lavoro",
   "regione": "Nazionale",
   "destinatari": [
    "Under 35",
@@ -70,7 +70,7 @@
  {
   "id": "resto-al-sud-2",
   "titolo": "Resto al Sud 2.0",
-  "ente": "Invitalia",
+  "ente": "Ministero del Lavoro",
   "regione": "Nazionale",
   "destinatari": [
    "Under 35",
@@ -269,7 +269,7 @@
  {
   "id": "italia-economia-sociale",
   "titolo": "Italia Economia Sociale",
-  "ente": "MIMIT / Invitalia",
+  "ente": "MIMIT",
   "regione": "Nazionale",
   "destinatari": [
    "Nuove imprese",

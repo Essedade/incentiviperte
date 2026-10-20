@@ -53,6 +53,10 @@ class Validazione(unittest.TestCase):
             build.validate([sample(destinatari=[])])
         with self.assertRaises(ValueError):
             build.validate([sample(sintesi="Scrivi a ufficio@example.com per info sul bando lungo")])
+        with self.assertRaises(ValueError):
+            build.validate([sample(ente="Invitalia")])
+        with self.assertRaises(ValueError):
+            build.validate([sample(sintesi="Misura curata da Sorbolini per le imprese.")])
 
     def test_scaduto_e_ordinamento(self):
         rows = build.prepare(
@@ -248,6 +252,43 @@ class Sito(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
             for chunk in text.split('<script type="application/ld+json">')[1:]:
                 json.loads(chunk.split("</script>", 1)[0])
+
+    def test_team_checkup_filtri_e_niente_nomi(self):
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        about = (DIST / "chi-siamo.html").read_text(encoding="utf-8")
+        self.assertIn('value="Umbria"', home)
+        self.assertIn('value="Emilia-Romagna"', home)
+        self.assertIn('value="Toscana"', home)
+        self.assertIn("Check-up Bandi", home)
+        self.assertIn('href="contatti.html">Richiedi il Check-up Bandi</a>', home)
+        self.assertIn("incentivi nazionali per avviare e far crescere l'impresa", home)
+        self.assertIn(
+            "Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.",
+            about,
+        )
+        self.assertIn("Camera di Commercio di Arezzo-Siena", (DIST / "toscana.html").read_text(encoding="utf-8"))
+        self.assertIn("Check-up Bandi", (DIST / "contatti.html").read_text(encoding="utf-8"))
+        self.assertNotIn("focus iniziale", about)
+        enti = {
+            "smart-start-italia.html": "MIMIT",
+            "on-nuove-imprese-tasso-zero.html": "MIMIT",
+            "autoimpiego-centro-nord.html": "Ministero del Lavoro",
+            "resto-al-sud-2.html": "Ministero del Lavoro",
+            "italia-economia-sociale.html": "MIMIT",
+        }
+        for name, ente in enti.items():
+            page = (DIST / "bando" / name).read_text(encoding="utf-8")
+            self.assertIn(f"<dd>{ente}</dd>", page)
+            self.assertIn("https://www.invitalia.it/", page)
+            self.assertIn(">Vai al bando ufficiale<", page)
+        for path in DIST.rglob("*"):
+            if not path.is_file() or path.suffix not in {".html", ".css", ".svg", ".txt", ".xml"}:
+                continue
+            text = path.read_text(encoding="utf-8")
+            for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe"):
+                self.assertNotIn(banned, text, path.as_posix())
+            visible = build.without_urls(text)
+            self.assertIsNone(re.search(r"invitalia", visible, re.I), path.as_posix())
 
 
 class Update(unittest.TestCase):
