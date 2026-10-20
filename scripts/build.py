@@ -256,6 +256,7 @@ def prepare(bandi, today):
         b = dict(src)
         b["destinatari"] = list(src["destinatari"])
         b["scaduto"] = bool(b["scadenza"] and b["scadenza"] < iso)
+        # apertura è facoltativa: se è nel futuro la scheda non è ancora aperta.
         b["in_arrivo"] = bool(b.get("apertura") and b["apertura"] > iso)
         if b["in_arrivo"]:
             b["scaduto"] = False
@@ -1284,6 +1285,10 @@ def self_check(written):
     home = (D / "index.html").read_text(encoding="utf-8")
     if "Check-up Bandi" not in home or 'href="/check-up">Richiedi il Check-up</a>' not in home:
         raise ValueError("home: manca la sezione Check-up Bandi")
+    if 'getAttribute("data-scadenza")' not in home or 'getAttribute("data-apre")' not in home:
+        raise ValueError("home: il conto alla rovescia non viene dalle date dei bandi")
+    if 'data-scad="2026-10-23"' not in home:
+        raise ValueError("home: manca la scadenza letta dai dati")
     if 'value="Umbria"' not in home or 'value="Emilia-Romagna"' not in home or 'value="Toscana"' not in home:
         raise ValueError("home: filtri di area incompleti")
     if "focus iniziale" in home or "focus iniziale" in about:
