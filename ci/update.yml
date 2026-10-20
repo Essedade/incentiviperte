@@ -22,4 +22,5 @@ jobs:
           git add data/bandi.json report.txt dist
           git commit -m "Aggiornamento bandi $(date -u +%F)" || echo "Nessuna modifica"
           git push
-# Pubblicazione: collegare il repo a Cloudflare Pages (output dir: dist) oppure GitHub Pages.
+# Pubblicazione del sito: wrangler pages deploy dist --project-name=incentiviperte --branch=main
+# Il branch gh-pages tiene solo il rimando generato da scripts/build_redirect.py.
