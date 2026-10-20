@@ -20,8 +20,10 @@ NEW = "https://incentiviperte.pages.dev/"
 
 
 def destination(rel):
-    if rel == "404.html":
+    if rel in ("404.html", "index.html"):
         return NEW
+    if rel.endswith(".html"):
+        rel = rel[: -len(".html")]
     return NEW + rel
 
 

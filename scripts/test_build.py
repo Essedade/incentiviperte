@@ -68,6 +68,16 @@ class Validazione(unittest.TestCase):
         self.assertFalse(rows[1]["scaduto"])
         self.assertIn("Scaduto il 01/01/2020", build.deadline_text(rows[0]))
         self.assertIn("Sportello aperto", build.badge(rows[2], TODAY))
+        futuro = build.prepare([sample(scadenza="2026-12-01")], TODAY)[0]
+        prima = build.badge(futuro, datetime.date(2026, 10, 13))
+        dopo = build.badge(futuro, datetime.date(2026, 10, 20))
+        self.assertEqual(prima, dopo)
+        self.assertIn('data-scadenza="2026-12-01"', prima)
+        self.assertIn("Scade il 01/12/2026", prima)
+        self.assertNotIn("Mancano", prima)
+        self.assertIn(">Scaduto<", build.badge(rows[0], TODAY))
+        self.assertEqual(build.qty(1, "bando aperto", "bandi aperti"), "1 bando aperto")
+        self.assertEqual(build.qty(0, "bando", "bandi"), "0 bandi")
 
 
 class Sito(unittest.TestCase):
@@ -94,12 +104,13 @@ class Sito(unittest.TestCase):
         self.assertNotIn("Disallow: /", robots)
         ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
         locs = [el.text for el in ET.parse(DIST / "sitemap.xml").findall("s:url/s:loc", ns)]
-        for loc in (BASE, BASE + "nazionale.html", BASE + "toscana.html", BASE + "settore/startup.html", BASE + "settore/pmi.html", BASE + "sponsor.html"):
+        for loc in (BASE, BASE + "nazionale", BASE + "toscana", BASE + "settore/startup", BASE + "settore/pmi", BASE + "sponsor", BASE + "check-up"):
             self.assertIn(loc, locs)
-        self.assertNotIn(BASE + "404.html", locs)
+        self.assertNotIn(".html", "\n".join(locs))
         for loc in locs:
-            rel = "index.html" if loc == BASE else loc.removeprefix(BASE)
-            self.assertTrue((DIST / rel).is_file(), rel)
+            rel = loc.removeprefix(BASE)
+            file_rel = "index.html" if rel == "" else rel + ".html"
+            self.assertTrue((DIST / file_rel).is_file(), file_rel)
 
     def test_home_filtri_conversione_e_link(self):
         home = (DIST / "index.html").read_text(encoding="utf-8")
@@ -121,8 +132,8 @@ class Sito(unittest.TestCase):
         self.assertIn(">fogliopef.pages.dev<", sponsor)
         self.assertIn("stesso titolare", home.lower())
         self.assertNotIn("link affiliato", home.lower())
-        self.assertIn('href="settore/startup.html"', home)
-        self.assertIn('href="nazionale.html"', home)
+        self.assertIn('href="/settore/startup"', home)
+        self.assertIn('href="/nazionale"', home)
         self.assertIn("Domande frequenti", home)
         self.assertIn("MonetaryGrant", (DIST / "bando" / "smart-start-italia.html").read_text(encoding="utf-8"))
         self.assertNotIn("<script src=", home)
@@ -132,7 +143,7 @@ class Sito(unittest.TestCase):
     def test_scheda_collegamenti_e_sponsor(self):
         page = (DIST / "bando" / "smart-start-italia.html").read_text(encoding="utf-8")
         self.assertIn("Bandi collegati", page)
-        self.assertIn('href="../settore/startup.html"', page)
+        self.assertIn('href="/settore/startup"', page)
         self.assertIn(">Sponsorizzato<", page)
         self.assertIn('rel="noopener noreferrer"', page)
         self.assertIn("si apre in una nuova scheda", page)
@@ -253,7 +264,9 @@ class Sito(unittest.TestCase):
         self.assertIn("noindex", page)
         self.assertNotIn('rel="canonical"', page)
         self.assertIn('href="/style.css"', page)
-        self.assertIn('href="/settore/startup.html"', page)
+        self.assertIn('href="/settore/startup"', page)
+        self.assertIn('href="/"', page)
+        self.assertNotIn(".html", page)
         self.assertIn('href="mailto:incentiviperte.team@gmail.com"', page)
         self.assertNotIn("/mailto:", page)
         self.assertIsNone(re.search(r'''\b(?:href|src)\s*=\s*["']/incentiviperte/''', page))
@@ -271,7 +284,7 @@ class Sito(unittest.TestCase):
         self.assertIn('value="Emilia-Romagna"', home)
         self.assertIn('value="Toscana"', home)
         self.assertIn("Check-up Bandi", home)
-        self.assertIn('href="contatti.html">Richiedi il Check-up Bandi</a>', home)
+        self.assertIn('href="/check-up">Richiedi il Check-up</a>', home)
         self.assertIn("incentivi nazionali per avviare e far crescere l'impresa", home)
         self.assertIn(
             "Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.",
@@ -338,13 +351,104 @@ class Sito(unittest.TestCase):
             self.assertIn('http-equiv="refresh"', page, rel)
             self.assertIn('rel="canonical"', page, rel)
             self.assertIn("location.replace(", page, rel)
-            if rel == "404.html":
+            if rel == "404.html" or rel == "index.html":
                 url = "https://incentiviperte.pages.dev/"
+            elif rel.endswith(".html"):
+                url = "https://incentiviperte.pages.dev/" + rel[: -len(".html")]
             else:
                 url = "https://incentiviperte.pages.dev/" + rel
             self.assertIn(f'content="0; url={url}"', page, rel)
             self.assertIn(f'rel="canonical" href="{url}"', page, rel)
             self.assertIn(f'location.replace("{url}")', page, rel)
+
+
+    def test_checkup_loghi_verde_e_url(self):
+        css = (DIST / "style.css").read_text(encoding="utf-8")
+        self.assertIsNone(re.search(r"#0b5cad", css, re.I))
+        for color in ("#0F7A5C", "#0A5A44", "#E7F4EE", "#F4FAF7"):
+            self.assertIn(color, css)
+        self.assertIn("-webkit-line-clamp:2", css)
+        self.assertIn("border:2px dashed #8b95a5", css)
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        self.assertIn('alt="IncentiviPerTe"', home)
+        self.assertIn("logo-header.svg", home)
+        self.assertIn('height="40"', home)
+        for icon in ("favicon.svg", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png", "favicon-512.png"):
+            self.assertIn(icon, home)
+            self.assertTrue((DIST / icon).is_file(), icon)
+        self.assertIn('content="#0F7A5C"', home)
+        self.assertIn('class="cta" href="/check-up">Check-up</a>', home)
+        self.assertNotIn("Spazi per professionisti", home)
+        self.assertIn('href="/check-up">Richiedi il Check-up</a>', home)
+        self.assertIn(">Sponsor</a>", home.split("<footer>", 1)[1])
+        self.assertNotIn("Sponsor e pubblicità", home.split("<footer>", 1)[1])
+        self.assertIn("modelli Excel per business plan, immobiliare e finanza d'impresa", home)
+        self.assertIn('content="IncentiviPerTe – Bandi e incentivi per la tua impresa"', home)
+        og = (DIST / "og.png").read_bytes()
+        self.assertEqual(og[16:24], (1200).to_bytes(4, "big") + (630).to_bytes(4, "big"))
+        visible = re.sub(r"<script\b.*?</script>", "", home, flags=re.S)
+        self.assertNotIn("Mancano", visible)
+        self.assertIn('data-scadenza="2026-10-23"', home)
+        self.assertIn("Scade il 23/10/2026", home)
+        self.assertIn("data-scadenza", home)
+        self.assertIn("Mancano ", home)
+        cards = re.findall(r'<article class="card\b.*?</article>', home, re.S)
+        self.assertGreaterEqual(len(cards), 6)
+        for card in cards:
+            self.assertIn('class="cardlink"', card)
+            self.assertIsNone(re.search(r'<a[^>]*class="tag"', card))
+        blocks = re.findall(r'<article class="card\b.*?</article>|<aside class="card spc\b.*?</aside>', home, re.S)
+        sponsor_at = next(i for i, block in enumerate(blocks) if block.startswith("<aside"))
+        aperti = sum(1 for block in blocks[:sponsor_at] if 'data-scaduto="0"' in block)
+        self.assertEqual(aperti, 6)
+        self.assertNotIn("1 bandi", visible)
+        page = (DIST / "check-up.html").read_text(encoding="utf-8")
+        self.assertIn('rel="canonical" href="https://incentiviperte.pages.dev/check-up"', page)
+        self.assertIn("una relazione scritta sui bandi adatti", page)
+        self.assertIn("Base</strong>, 49 €: entro 5 giorni lavorativi dalla ricezione dei dati completi.", page)
+        self.assertIn("Completo</strong>, 79 €: entro 7-10 giorni lavorativi dalla ricezione dei dati completi.", page)
+        self.assertIn("team di esperti professionisti con esperienza pluriennale", page)
+        self.assertIn(">Invia richiesta<", page)
+        self.assertIn("Regione (comprende la provincia)", page)
+        self.assertIn("Tipo di impresa", page)
+        self.assertIn(">Stadio<", page)
+        self.assertIn("Importo indicativo", page)
+        self.assertIn('name="livello" value="Base"', page)
+        self.assertIn('name="livello" value="Completo"', page)
+        self.assertIn("mailto:incentiviperte.team@gmail.com", page)
+        self.assertNotIn('href="/contatti">Richiedi il Check-up', page)
+        raw = page.split('<script type="application/ld+json">', 1)[1].split("</script>", 1)[0]
+        data = json.loads(raw)
+        services = [node for node in data["@graph"] if node["@type"] == "Service"]
+        self.assertEqual(len(services), 1)
+        offers = {item["name"]: item for item in services[0]["offers"]}
+        self.assertEqual(offers["Base"]["price"], "49")
+        self.assertEqual(offers["Completo"]["price"], "79")
+        self.assertIn("entro 5 giorni lavorativi", offers["Base"]["description"])
+        self.assertIn("entro 7-10 giorni lavorativi", offers["Completo"]["description"])
+        self.assertEqual(services[0]["url"], "https://incentiviperte.pages.dev/check-up")
+        privacy = (DIST / "privacy.html").read_text(encoding="utf-8")
+        cookie = (DIST / "cookie.html").read_text(encoding="utf-8")
+        for text in (privacy, cookie):
+            self.assertIn("Cloudflare Pages (Cloudflare, Inc.)", text)
+            self.assertIn("https://www.cloudflare.com/privacypolicy/", text)
+            self.assertNotIn("GitHub", text)
+        sponsor = (DIST / "sponsor.html").read_text(encoding="utf-8")
+        self.assertIn("fogliopef.team@gmail.com", sponsor)
+        self.assertNotIn("foglioPEF.team", sponsor)
+        self.assertIn("Domande? Scrivici a", sponsor)
+        self.assertIn("o in un messaggio alla", sponsor)
+        self.assertIn("nostra pagina LinkedIn", sponsor)
+        self.assertNotIn("Scrivi a messaggi della", sponsor)
+        donne = (DIST / "settore" / "donne.html").read_text(encoding="utf-8")
+        self.assertIn("1 bando aperto", donne)
+        self.assertNotIn("1 bandi", donne)
+        for path in DIST.rglob("*.html"):
+            text = path.read_text(encoding="utf-8")
+            title = re.search(r"<title>(.*?)</title>", text).group(1)
+            desc = re.search(r'<meta name="description" content="([^"]*)"', text).group(1)
+            self.assertNotRegex(title + " " + desc, r"\d+ bandi aperti")
+            self.assertIsNone(re.search(r'''(?:href|src)="(?!https?:|mailto:)[^"]*\.html''', text), path.name)
 
 
 class Update(unittest.TestCase):
