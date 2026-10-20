@@ -1,6 +1,10 @@
 # IncentiviPerTe
 
-Sito statico gratuito con bandi e incentivi per startup e PMI: nazionali, Toscana, Umbria ed Emilia-Romagna.
+Sito statico gratuito con bandi e incentivi per startup e PMI, da Arezzo, per le imprese di Toscana (compresa la Camera di Commercio di Arezzo-Siena), Umbria ed Emilia-Romagna, più gli incentivi nazionali per avviare e far crescere l'impresa.
+
+Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.
+
+Il Check-up Bandi è un controllo personalizzato di quali bandi regionali e nazionali sono adatti all'impresa, consegnato come relazione scritta. Si richiede dai contatti già indicati sul sito.
 
 - `python3 scripts/build.py` valida `data/bandi.json` e genera `dist/` (zero dipendenze, zero tracker).
 - `python3 scripts/test_build.py` controlla etichette sponsor, prezzi, SEO, accessibilità di base e la rimozione delle pagine obsolete.
