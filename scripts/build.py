@@ -21,7 +21,7 @@ SITE = "IncentiviPerTe"
 LINKEDIN = "https://www.linkedin.com/company/incentiviperte/"
 EMAIL = "incentiviperte.team@gmail.com"
 FPEF_EMAIL = "foglioPEF.team@gmail.com"
-FPEF = "https://fogliopef.gumroad.com"
+FPEF = "https://fogliopef.pages.dev"
 FPEF_LI = "https://www.linkedin.com/company/fogliopef"
 REG = ["Nazionale", "Toscana", "Umbria", "Emilia-Romagna"]
 REQUIRED = (
@@ -801,7 +801,7 @@ def static_pages(today):
 <p>I prezzi qui sotto sono per uno spazio pubblicitario etichettato Sponsorizzato. Non sono il prezzo dei modelli Excel.</p>
 <div class="offers">
 <div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 €</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € per i primi 3 sponsor, poi 79 €, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{li_btn}{mail}</div></div>
-<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.gumroad.com")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{li_btn}{mail}{fpef_space}</div></div>
+<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.pages.dev")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{li_btn}{mail}{fpef_space}</div></div>
 <div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{li_btn}{mail}{fpef_pack}</div></div>
 </div>
 <h2>Regole</h2>
@@ -943,6 +943,8 @@ def self_check(written):
             raise ValueError(f"{name}: la parola Invitalia compare fuori dai link ufficiali")
         if "essedade.github.io" in text:
             raise ValueError(f"{name}: vecchio indirizzo GitHub Pages")
+        if "fogliopef.gumroad.com" in text:
+            raise ValueError(f"{name}: rimando FoglioPEF ancora su Gumroad")
         if re.search(r'''\b(?:href|src)\s*=\s*["']/incentiviperte/''', text):
             raise ValueError(f"{name}: link assoluto del vecchio percorso GitHub Pages")
         for match in re.finditer("Arezzo-Siena", text):
@@ -971,6 +973,10 @@ def self_check(written):
         raise ValueError("testo che restringe la copertura ancora presente")
     if FPEF not in home or "stesso titolare" not in home.lower():
         raise ValueError("home: manca il rimando a FoglioPEF con la disclosure")
+    if "fogliopef.gumroad.com" in home or "fogliopef.gumroad.com" in about:
+        raise ValueError("rimando FoglioPEF ancora su Gumroad")
+    if FPEF_LI not in home:
+        raise ValueError("home: manca il link LinkedIn di FoglioPEF")
     if "link affiliato" in home.lower():
         raise ValueError("home: FoglioPEF non va etichettato come link affiliato")
     robots = (D / "robots.txt").read_text(encoding="utf-8")

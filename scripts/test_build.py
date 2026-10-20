@@ -110,7 +110,15 @@ class Sito(unittest.TestCase):
         self.assertIn('type="search"', home)
         self.assertIn(".after(sponsor)", home)
         self.assertIn("Sponsorizzato", home)
-        self.assertIn("https://fogliopef.gumroad.com", home)
+        self.assertIn("https://fogliopef.pages.dev", home)
+        self.assertNotIn("fogliopef.gumroad.com", home)
+        self.assertIn("https://www.linkedin.com/company/fogliopef", home)
+        about = (DIST / "chi-siamo.html").read_text(encoding="utf-8")
+        self.assertIn("https://fogliopef.pages.dev", about)
+        self.assertIn("https://www.linkedin.com/company/fogliopef", about)
+        sponsor = (DIST / "sponsor.html").read_text(encoding="utf-8")
+        self.assertIn("https://fogliopef.pages.dev", sponsor)
+        self.assertIn(">fogliopef.pages.dev<", sponsor)
         self.assertIn("stesso titolare", home.lower())
         self.assertNotIn("link affiliato", home.lower())
         self.assertIn('href="settore/startup.html"', home)
@@ -305,6 +313,7 @@ class Sito(unittest.TestCase):
                 continue
             raw = path.read_bytes()
             self.assertNotIn(b"essedade.github.io", raw, path.as_posix())
+            self.assertNotIn(b"fogliopef.gumroad.com", raw, path.as_posix())
             if path.suffix.lower() not in {".html", ".css", ".svg", ".txt", ".xml"}:
                 continue
             text = raw.decode("utf-8")
