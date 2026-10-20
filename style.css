@@ -77,6 +77,8 @@ a.tag.area:hover{background:var(--bd);color:#fff}
 .spt{font-size:1.05rem;font-weight:800;margin:8px 0}
 .spp{font-weight:800;color:var(--b);margin:0 0 8px}
 .lab{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:#e8edf3;color:#243044;border-radius:6px;padding:3px 8px}
+.checkup{margin:22px 0}
+.checkup h2{margin-top:0}
 .fpef{background:#f5f9ff;border:2px solid var(--b);border-radius:14px;padding:16px 18px;margin:22px 0}
 .fpef h2,.offer h3{margin-top:0}
 .fpef .row,.hero-actions{align-items:center}
