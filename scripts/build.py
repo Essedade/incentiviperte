@@ -54,6 +54,12 @@ REQUIRED = (
 )
 ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# Stato facoltativo, riutilizzabile. «lista_attesa» non chiude il bando:
+# lo sportello resta aperto e la scheda mostra l'avviso sui fondi.
+STATI = {
+    "aperto": "",
+    "lista_attesa": "Risorse esaurite: nuove domande solo in lista d'attesa.",
+}
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}")
 TRACKERS = (
     "googletagmanager", "google-analytics", "gtag(", "facebook.net", "connect.facebook",
@@ -246,6 +252,16 @@ def validate(bandi):
             if b["scadenza"] is not None and b["apertura"] > b["scadenza"]:
                 raise ValueError(f"{bid}: apertura successiva alla scadenza")
         parse_date(b["ultimo_controllo"], "ultimo_controllo", bid)
+        stato = b.get("stato")
+        if stato is not None and stato not in STATI:
+            raise ValueError(
+                f"{bid}: stato «{stato}» non previsto. Valori ammessi: {', '.join(STATI)}"
+            )
+        fonte = b.get("fonte")
+        if fonte is not None:
+            fonte_parts = urllib.parse.urlparse(fonte) if isinstance(fonte, str) else None
+            if not fonte_parts or fonte_parts.scheme != "https" or not fonte_parts.netloc or " " in fonte:
+                raise ValueError(f"{bid}: fonte deve essere un URL https")
         for field in ("titolo", "ente", "sintesi", "importo", "nota_scadenza", "check"):
             val = b[field]
             if not isinstance(val, str) or not val.strip():
@@ -470,6 +486,36 @@ def _sentences(text):
     return [part.strip() for part in re.split(r"(?<=\.)\s+", text.strip()) if part.strip()]
 
 
+def stato_bando(b):
+    return b.get("stato") or "aperto"
+
+
+def avviso_fondi(b, con_link=False):
+    """Avviso sui fondi esauriti. Il bando resta aperto: non diventa «scaduto»."""
+    frase = STATI.get(stato_bando(b)) or ""
+    if not frase:
+        return ""
+    link = ""
+    if con_link:
+        link = " " + ext(b.get("fonte") or b["url"], "Fonte ufficiale")
+    return (
+        f'<p class="note" data-avviso="fondi" role="status">'
+        f"<strong>{e(frase)}</strong> Verificato il {e(it_date(b['ultimo_controllo']))}.{link}"
+        f"</p>"
+    )
+
+
+def fonte_fuori_avviso(b):
+    """Link alla fonte del dato, quando non è già dentro l'avviso di lista d'attesa."""
+    fonte = b.get("fonte")
+    if not fonte or STATI.get(stato_bando(b)):
+        return ""
+    return (
+        f'<p class="fonte">Verificato il {e(it_date(b["ultimo_controllo"]))}. '
+        f'{ext(fonte, "Fonte ufficiale")}</p>'
+    )
+
+
 def card_note(b):
     """Frasi dei dati che la sintesi a due righe non mostra sulla card.
 
@@ -511,9 +557,13 @@ def card(b, pre, today):
     tags = f'<span class="tag area">{e(b["regione"])}</span>'
     tags += "".join(f'<span class="tag">{e(d)}</span>' for d in b["destinatari"])
     note = card_note(b)
+    avviso = avviso_fondi(b)
     search_bits = [b["titolo"], b["sintesi"], b["ente"], b["regione"], " ".join(b["destinatari"])]
-    if note:
+    frase_stato = STATI.get(stato_bando(b)) or ""
+    if note or frase_stato:
         search_bits.append(b.get("nota_scadenza") or "")
+    if frase_stato:
+        search_bits.append(frase_stato)
     search = " ".join(" ".join(search_bits).split())
     hidden = " hidden" if b["scaduto"] else ""
     href = site_href(f'bando/{b["id"]}.html')
@@ -525,7 +575,7 @@ def card(b, pre, today):
         f'data-dest="{e("|".join(b["destinatari"]))}" data-scad="{b["scadenza"] or "9999-12-31"}" '
         f'data-apre="{e(b.get("apertura") or "")}" '
         f'data-scaduto="{1 if b["scaduto"] else 0}" data-search="{e(search)}"{hidden}>'
-        f'{badge(b, today)}<h3><a class="cardlink" href="{href}">{e(b["titolo"])}</a></h3>'
+        f'{badge(b, today)}{avviso}<h3><a class="cardlink" href="{href}">{e(b["titolo"])}</a></h3>'
         f'<p class="amt">{e(b["importo"])}</p><div class="tags">{tags}</div>'
         f'<p class="sum">{e(b["sintesi"])}</p>{note}<div class="meta"><span class="dl"{when}>{e(deadline_text(b))}</span>'
         f'<span class="ente">{e(b["ente"])}</span></div></article>'
@@ -948,6 +998,9 @@ main{padding:0 0 40px}
 main:focus{outline:none}
 main>.wrap{padding-top:20px}
 .note{background:#fff8e6;border:1px solid #c4922a;border-radius:10px;padding:12px 14px;margin:16px 0}
+.note[data-avviso]{border-width:2px}
+.card .note[data-avviso]{margin:8px 0 12px}
+.fonte{margin:8px 0 16px}
 .filters{display:grid;gap:12px;grid-template-columns:1fr;background:#fff;border:1px solid var(--l);border-radius:12px;padding:14px;margin:16px 0}
 .filters label{font-size:13px;font-weight:800;color:var(--m);display:block;margin:0 0 4px}
 .filters select,.filters input[type="search"]{width:100%;min-height:44px;padding:8px 10px;border:1px solid #5c6b82;border-radius:8px;font:inherit;font-size:16px;background:#fff;color:var(--t)}
@@ -1714,6 +1767,7 @@ def build(today=None):
         body = (
             crumbs([("index.html", "Bandi"), (area_href, area_label), ("", b["titolo"])], "../")
             + f'<article class="box">{badge(b, today)}<div class="tags">{tags}</div><h1>{e(b["titolo"])}</h1>'
+            + avviso_fondi(b, con_link=True)
             + "<dl class=\"kv\">"
             + f"<dt>Ente</dt><dd>{e(b['ente'])}</dd>"
             + f'<dt>Area</dt><dd><a href="{site_href(area_href)}">{e(b["regione"])}</a></dd>'
@@ -1724,6 +1778,7 @@ def build(today=None):
             + "</dl>"
             + f"<p>{e(b['sintesi'])}</p>"
             + official_bando_link(b["url"])
+            + fonte_fuori_avviso(b)
             + bando_checkup_box()
             + checkup_ask()
             + '<p class="note">Sintesi indicativa. Fa fede esclusivamente il testo ufficiale pubblicato dall&#39;ente. <a href="/disclaimer">Disclaimer</a></p></article>'
