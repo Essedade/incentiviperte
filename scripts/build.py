@@ -20,9 +20,24 @@ BASE = "https://incentiviperte.pages.dev/"
 SITE = "IncentiviPerTe"
 LINKEDIN = "https://www.linkedin.com/company/incentiviperte/"
 EMAIL = "incentiviperte.team@gmail.com"
-FPEF_EMAIL = "foglioPEF.team@gmail.com"
+FPEF_EMAIL = "fogliopef.team@gmail.com"
 FPEF = "https://fogliopef.pages.dev"
 FPEF_LI = "https://www.linkedin.com/company/fogliopef"
+FPEF_DESC = "FoglioPEF: modelli Excel per business plan, immobiliare e finanza d'impresa."
+CHECKUP_BASE = "report di circa 3-4 pagine, entro 5 giorni lavorativi dalla ricezione dei dati completi"
+CHECKUP_EXTRA = (
+    "requisiti punto per punto",
+    "cumulo e de minimis",
+    "documenti da preparare",
+    "priorità motivata",
+    "stima indicativa dell'agevolazione (non garantita)",
+    "scadenzario",
+    "call di 30 minuti",
+)
+CHECKUP_COMPLETO = (
+    "report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi, "
+    "con tutto il Base più " + ", ".join(CHECKUP_EXTRA[:-1]) + " e " + CHECKUP_EXTRA[-1]
+)
 REG = ["Nazionale", "Toscana", "Umbria", "Emilia-Romagna"]
 REQUIRED = (
     "id", "titolo", "ente", "regione", "destinatari", "scadenza", "nota_scadenza",
@@ -41,7 +56,7 @@ DEST_ORDER = ["Startup", "PMI", "Nuove imprese", "Under 35", "Donne", "Investito
 INTRO_REG = {
     "Nazionale": "Incentivi nazionali per avviare e far crescere l'impresa: finanziamenti a tasso zero e contributi a fondo perduto per nuove imprese, startup innovative e investimenti, insieme alle misure di MIMIT e del Ministero del Lavoro. Molte valgono anche per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna; altre, come Resto al Sud 2.0, riguardano solo il Mezzogiorno.",
     "Toscana": "Tutta la Toscana: bandi regionali e delle Camere di Commercio toscane, in tutte le province. Per un'impresa toscana restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord e Smart&Start Italia.",
-    "Umbria": "Bandi della Regione Umbria gestiti da Gepafin. Per un'impresa umbra restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord.",
+    "Umbria": "Bandi della Regione Umbria gestiti da Gepafin e Sviluppumbria. Per un'impresa umbra restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord.",
     "Emilia-Romagna": "Bandi della Regione Emilia-Romagna, comprese le finestre del Fondo Multiscopo. Per un'impresa emiliano-romagnola restano rilevanti anche gli incentivi nazionali per avviare e far crescere l'impresa, tra cui Autoimpiego Centro-Nord.",
 }
 INTRO_DEST = {
@@ -64,19 +79,27 @@ FAQ = (
     ("Posso comparire sul sito con il mio studio?",
      "Sì. Uno spazio su IncentiviPerTe parte da 49 € al mese, prezzo di lancio. Importi, regole ed etichetta Sponsorizzato sono sulla pagina Sponsor."),
     ("Che cos'è il Check-up Bandi?",
-     "È un controllo personalizzato di quali bandi regionali e nazionali sono adatti alla tua impresa: tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali per avviare e far crescere l'impresa. Ricevi una relazione scritta. Per richiederlo usa la pagina Contatti."),
+     "È un controllo personalizzato di quali bandi regionali e nazionali sono adatti alla tua impresa: tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali per avviare e far crescere l'impresa. Ricevi una relazione scritta. Per richiederlo usa la pagina Check-up."),
 )
 NAV = (
-    ("index.html", "Bandi"),
-    ("nazionale.html", "Nazionali"),
-    ("toscana.html", "Toscana"),
-    ("umbria.html", "Umbria"),
-    ("emilia-romagna.html", "Emilia-Romagna"),
-    ("chi-siamo.html", "Chi siamo"),
-    ("sponsor.html", "Sponsor"),
-    ("contatti.html", "Contatti"),
+    ("index.html", "Bandi", ""),
+    ("nazionale.html", "Nazionali", ""),
+    ("toscana.html", "Toscana", ""),
+    ("umbria.html", "Umbria", ""),
+    ("emilia-romagna.html", "Emilia-Romagna", ""),
+    ("chi-siamo.html", "Chi siamo", ""),
+    ("sponsor.html", "Sponsor", ""),
+    ("contatti.html", "Contatti", ""),
+    ("check-up.html", "Check-up", "cta"),
 )
-KEEP = {"style.css", "favicon.svg", "og.svg", "og.png", "robots.txt", "sitemap.xml", ".nojekyll"}
+KEEP = {
+    "style.css", "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-512.png",
+    "apple-touch-icon.png", "logo-header.svg", "og.png", "robots.txt", "sitemap.xml", ".nojekyll",
+}
+STATIC_ASSETS = (
+    "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-512.png",
+    "apple-touch-icon.png", "logo-header.svg", "og.png",
+)
 e = html.escape
 
 
@@ -100,6 +123,34 @@ def sector_path(name):
 
 def prefix(path):
     return "../" * path.count("/")
+
+
+def public_path(file_path):
+    """Percorso pubblico senza .html. I file restano nome.html: il server li rimanda."""
+    if not file_path or file_path in ("index.html", "index"):
+        return ""
+    if file_path.endswith(".html"):
+        return file_path[: -len(".html")]
+    return file_path
+
+
+def public_url(file_path):
+    rel = public_path(file_path)
+    return BASE if not rel else BASE + rel
+
+
+def site_href(file_path, query="", fragment=""):
+    rel = public_path(file_path)
+    url = "/" + rel if rel else "/"
+    if query:
+        url += "?" + query
+    if fragment:
+        url += "#" + fragment.lstrip("#")
+    return url
+
+
+def qty(n, one, many):
+    return f"{n} {one if n == 1 else many}"
 
 
 def it_date(iso):
@@ -174,6 +225,10 @@ def validate(bandi):
             slugs[slug] = d
         if b["scadenza"] is not None:
             parse_date(b["scadenza"], "scadenza", bid)
+        if "apertura" in b and b["apertura"] is not None:
+            parse_date(b["apertura"], "apertura", bid)
+            if b["scadenza"] is not None and b["apertura"] > b["scadenza"]:
+                raise ValueError(f"{bid}: apertura successiva alla scadenza")
         parse_date(b["ultimo_controllo"], "ultimo_controllo", bid)
         for field in ("titolo", "ente", "sintesi", "importo", "nota_scadenza", "check"):
             val = b[field]
@@ -201,14 +256,20 @@ def prepare(bandi, today):
         b = dict(src)
         b["destinatari"] = list(src["destinatari"])
         b["scaduto"] = bool(b["scadenza"] and b["scadenza"] < iso)
+        # apertura è facoltativa: se è nel futuro la scheda non è ancora aperta.
+        b["in_arrivo"] = bool(b.get("apertura") and b["apertura"] > iso)
+        if b["in_arrivo"]:
+            b["scaduto"] = False
         out.append(b)
     out.sort(key=lambda b: b["scadenza"] or "9999-12-31")
     return out
 
 
 def deadline_text(b):
-    if b["scaduto"]:
+    if b.get("scaduto"):
         return "Scaduto il " + it_date(b["scadenza"])
+    if b.get("in_arrivo") and b.get("apertura"):
+        return "Apre il " + it_date(b["apertura"])
     if b["scadenza"]:
         return f"Aperto fino al {it_date(b['scadenza'])}"
     return "Senza scadenza indicata: verifica sul sito ufficiale"
@@ -221,20 +282,114 @@ def days_left(b, today):
 
 
 def badge(b, today):
-    if b["scaduto"]:
-        return '<span class="badge exp">Scaduto</span>'
+    """Testo stabile, uguale a ogni build finché la scadenza non passa.
+
+    Il conto dei giorni lo calcola il browser da data-scadenza. Senza JavaScript
+    resta la data; un bando già scaduto in generazione mostra Scaduto.
+    """
+    del today
+    apre = f' data-apre="{b["apertura"]}"' if b.get("apertura") else ""
+    if b.get("in_arrivo") and b.get("apertura"):
+        scad = f' data-scadenza="{b["scadenza"]}"' if b.get("scadenza") else ""
+        return f'<span class="badge open"{apre}{scad}>Apre il {it_date(b["apertura"])}</span>'
     if not b["scadenza"]:
-        return '<span class="badge open">Sportello aperto</span>'
-    g = days_left(b, today)
-    if g <= 0:
-        label, cls = ("Scade oggi", " soon")
-    elif g == 1:
-        label, cls = ("Manca 1 giorno", " soon")
-    elif g <= 14:
-        label, cls = (f"Mancano {g} giorni", " soon")
-    else:
-        label, cls = (f"Mancano {g} giorni", "")
-    return f'<span class="badge{cls}">{label}</span>'
+        return f'<span class="badge open"{apre}>Sportello aperto</span>'
+    iso = b["scadenza"]
+    if b.get("scaduto"):
+        return f'<span class="badge exp" data-scadenza="{iso}"{apre}>Scaduto</span>'
+    return f'<span class="badge" data-scadenza="{iso}"{apre}>Scade il {it_date(iso)}</span>'
+
+
+BADGE_JS = r"""<script>
+(function () {
+  function startOfToday() {
+    var now = window.INCENTIVI_OGGI ? new Date(window.INCENTIVI_OGGI) : new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+  function parts(iso) {
+    var p = (iso || "").split("-");
+    if (p.length !== 3 || p[0].length !== 4) return null;
+    if (isNaN(+p[0]) || isNaN(+p[1]) || isNaN(+p[2])) return null;
+    return p;
+  }
+  function daysLeft(iso, start) {
+    var p = parts(iso);
+    if (!p) return null;
+    var target = new Date(+p[0], +p[1] - 1, +p[2]);
+    return Math.round((target - start) / 864e5);
+  }
+  function itDate(p) {
+    var d = p[2].length < 2 ? "0" + p[2] : p[2];
+    var m = p[1].length < 2 ? "0" + p[1] : p[1];
+    return d + "/" + m + "/" + p[0];
+  }
+  var start = startOfToday();
+  var nodes = document.querySelectorAll(".badge[data-scadenza], .badge[data-apre]");
+  for (var i = 0; i < nodes.length; i++) {
+    var el = nodes[i];
+    var card = el.closest("article");
+    var apre = el.getAttribute("data-apre") || (card && card.getAttribute("data-apre")) || "";
+    var pOpen = parts(apre);
+    el.classList.remove("soon", "exp", "open");
+    if (pOpen && daysLeft(apre, start) > 0) {
+      el.textContent = "Apre il " + itDate(pOpen);
+      el.classList.add("open");
+      if (card) card.setAttribute("data-scaduto", "0");
+      continue;
+    }
+    var iso = el.getAttribute("data-scadenza") || "";
+    var p = parts(iso);
+    if (!p) {
+      el.textContent = "Sportello aperto";
+      el.classList.add("open");
+      if (card) card.setAttribute("data-scaduto", "0");
+      continue;
+    }
+    var left = daysLeft(iso, start);
+    if (left < 0) {
+      el.textContent = "Scaduto";
+      el.classList.add("exp");
+      if (card) card.setAttribute("data-scaduto", "1");
+    } else if (left === 0) {
+      el.textContent = "Scade oggi";
+      el.classList.add("soon");
+    } else if (left === 1) {
+      el.textContent = "Manca 1 giorno";
+      el.classList.add("soon");
+    } else {
+      el.textContent = "Mancano " + left + " giorni";
+      if (left <= 14) el.classList.add("soon");
+    }
+  }
+  var deadlines = document.querySelectorAll("[data-deadline]");
+  for (var j = 0; j < deadlines.length; j++) {
+    var node = deadlines[j];
+    var apreD = node.getAttribute("data-apre") || "";
+    var pOpenD = parts(apreD);
+    var isoD = node.getAttribute("data-deadline") || "";
+    var pD = parts(isoD);
+    if (pOpenD && daysLeft(apreD, start) > 0) {
+      node.textContent = "Apre il " + itDate(pOpenD);
+      continue;
+    }
+    if (!pD) continue;
+    if (daysLeft(isoD, start) < 0) node.textContent = "Scaduto il " + itDate(pD);
+    else if (pOpenD) node.textContent = "Aperto fino al " + itDate(pD);
+  }
+  var list = document.getElementById("elenco");
+  if (!list) return;
+  var cards = list.querySelectorAll("article.card");
+  var expired = [];
+  for (var k = 0; k < cards.length; k++) {
+    if (cards[k].getAttribute("data-scaduto") === "1") expired.push(cards[k]);
+  }
+  for (var n = 0; n < expired.length; n++) list.appendChild(expired[n]);
+  var open = cards.length - expired.length;
+  var label = open === 1 ? "1 bando aperto" : open + " bandi aperti";
+  var counts = document.querySelectorAll("[data-aperti]");
+  for (var c = 0; c < counts.length; c++) counts[c].textContent = label;
+})();
+</script>"""
 
 
 def ext(url, label, klass=""):
@@ -256,7 +411,7 @@ def crumbs(items, pre):
         if i == len(items) - 1 or not href:
             lis.append(f'<li aria-current="page">{e(label)}</li>')
         else:
-            lis.append(f'<li><a href="{pre}{href}">{e(label)}</a></li>')
+            lis.append(f'<li><a href="{site_href(href)}">{e(label)}</a></li>')
     return f'<nav class="crumb" aria-label="Percorso"><ol>{"".join(lis)}</ol></nav>'
 
 
@@ -265,7 +420,7 @@ def breadcrumb_ld(items):
     for i, (href, label) in enumerate(items, start=1):
         item = {"@type": "ListItem", "position": i, "name": label}
         if href is not None:
-            item["item"] = BASE if href == "" else BASE + href
+            item["item"] = public_url(href)
         elements.append(item)
     return {"@type": "BreadcrumbList", "itemListElement": elements}
 
@@ -276,29 +431,30 @@ def org_ld():
         "name": SITE,
         "url": BASE,
         "sameAs": [LINKEDIN],
-        "logo": BASE + "favicon.svg",
+        "logo": BASE + "favicon-512.png",
     }
 
 
 def card(b, pre, today):
-    tags = f'<a class="tag area" href="{pre}{region_path(b["regione"])}">{e(b["regione"])}</a>'
-    tags += "".join(
-        f'<a class="tag" href="{pre}{sector_path(d)}">{e(d)}</a>' for d in b["destinatari"]
-    )
+    tags = f'<span class="tag area">{e(b["regione"])}</span>'
+    tags += "".join(f'<span class="tag">{e(d)}</span>' for d in b["destinatari"])
     search = " ".join(" ".join([
         b["titolo"], b["sintesi"], b["ente"], b["regione"], " ".join(b["destinatari"]),
     ]).split())
     hidden = " hidden" if b["scaduto"] else ""
-    href = f'{pre}bando/{b["id"]}.html'
+    href = site_href(f'bando/{b["id"]}.html')
+    when = f' data-deadline="{b["scadenza"]}"' if b["scadenza"] else ""
+    if b.get("apertura"):
+        when += f' data-apre="{b["apertura"]}"'
     return (
         f'<article class="card" data-reg="{e(b["regione"])}" '
         f'data-dest="{e("|".join(b["destinatari"]))}" data-scad="{b["scadenza"] or "9999-12-31"}" '
+        f'data-apre="{e(b.get("apertura") or "")}" '
         f'data-scaduto="{1 if b["scaduto"] else 0}" data-search="{e(search)}"{hidden}>'
-        f'{badge(b, today)}<h3><a href="{href}">{e(b["titolo"])}</a></h3>'
+        f'{badge(b, today)}<h3><a class="cardlink" href="{href}">{e(b["titolo"])}</a></h3>'
         f'<p class="amt">{e(b["importo"])}</p><div class="tags">{tags}</div>'
-        f'<p class="sum">{e(b["sintesi"])}</p><div class="meta"><span class="dl">{e(deadline_text(b))}</span>'
-        f'<span class="ente">{e(b["ente"])}</span>'
-        f'<a class="more" href="{href}">Vedi la scheda</a></div></article>'
+        f'<p class="sum">{e(b["sintesi"])}</p><div class="meta"><span class="dl"{when}>{e(deadline_text(b))}</span>'
+        f'<span class="ente">{e(b["ente"])}</span></div></article>'
     )
 
 
@@ -307,25 +463,38 @@ def sponsor_card(pre):
         '<aside class="card spc" aria-label="Spazio sponsor"><span class="lab">Sponsorizzato</span>'
         '<p class="spt">Il tuo studio qui, tra chi cerca un finanziamento</p>'
         '<p class="spp">Da 49 € al mese · prezzo di lancio</p>'
-        f'<a class="btn" href="{pre}sponsor.html">Diventa sponsor</a></aside>'
+        f'<a class="btn outline" href="{site_href("sponsor.html")}">Scopri gli spazi sponsor</a></aside>'
     )
 
 
 def grid(items, pre, today):
     blocks = [card(b, pre, today) for b in items]
     active = [i for i, b in enumerate(items) if not b["scaduto"]]
-    pos = active[2] + 1 if len(active) >= 3 else len(blocks)
+    pos = active[5] + 1 if len(active) >= 6 else len(blocks)
     blocks.insert(pos, sponsor_card(pre))
-    return '<div class="grid" id="elenco">' + "".join(blocks) + "</div>"
+    return '<div class="grid" id="elenco">' + "".join(blocks) + "</div>" + BADGE_JS
 
 
 def official_bando_link(url):
     host = urllib.parse.urlparse(url).netloc.removeprefix("www.")
     if "invitalia" in host.lower():
-        label = "Vai al bando ufficiale"
-    else:
-        label = f"Vai al bando ufficiale su {e(host)}"
-    return ext(url, label, "btn")
+        host = "sito ufficiale dell'ente gestore"
+    return (
+        '<div class="official">'
+        + ext(url, "Vai al bando ufficiale", "btn")
+        + f'<small class="host">{html.escape(host, quote=False)}</small></div>'
+    )
+
+
+def checkup_ask():
+    return (
+        '<aside class="checkup-ask" aria-labelledby="checkup-scheda">'
+        '<h2 id="checkup-scheda">Richiedi il Check-up</h2>'
+        "<p>Relazione scritta sui bandi regionali e nazionali adatti alla tua impresa: "
+        "Base, circa 3-4 pagine; Completo, 6-10 pagine.</p>"
+        f'<p><a class="btn outline" href="{site_href("check-up.html")}">Richiedi il Check-up</a></p>'
+        "</aside>"
+    )
 
 
 def checkup_section(pre):
@@ -336,7 +505,7 @@ def checkup_section(pre):
         "tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali "
         "per avviare e far crescere l'impresa, tra cui finanziamenti a tasso zero e contributi a fondo perduto "
         "per nuove imprese, startup innovative e investimenti. Il risultato è una relazione scritta.</p>"
-        f'<p><a class="btn" href="{pre}contatti.html">Richiedi il Check-up Bandi</a></p>'
+        f'<p><a class="btn" href="{site_href("check-up.html")}">Richiedi il Check-up</a></p>'
         "</div></section>"
     )
 
@@ -346,9 +515,9 @@ def fpef_box():
         '<aside class="fpef" aria-label="FoglioPEF, progetto dello stesso titolare">'
         '<p class="lab">Progetto dello stesso titolare</p>'
         '<h2>Numeri in ordine per un investimento immobiliare</h2>'
-        '<p>FoglioPEF è un foglio Excel per ricavi, costi e cassa. Serve a preparare un piano economico-finanziario immobiliare: non presenta la domanda e non sostituisce il bando.</p>'
+        f"<p>{FPEF_DESC}</p>"
         '<p class="row">'
-        f'{ext(FPEF, "Apri FoglioPEF", "btn")}'
+        f'{ext(FPEF, "Apri FoglioPEF", "btn outline")}'
         f'{ext(FPEF_LI, "FoglioPEF su LinkedIn")}'
         '</p></aside>'
     )
@@ -448,7 +617,7 @@ JS = r"""<script>
       if (!visible.length) sponsor.hidden = true;
       else {
         sponsor.hidden = false;
-        visible[Math.min(2, visible.length - 1)].after(sponsor);
+        visible[Math.min(5, visible.length - 1)].after(sponsor);
       }
     }
     var n = visible.length;
@@ -484,7 +653,7 @@ def area_links(bandi, pre, current=None):
         if reg == current:
             continue
         n = sum(1 for b in bandi if b["regione"] == reg and not b["scaduto"])
-        out.append((pre + region_path(reg), "Nazionali" if reg == "Nazionale" else reg, n))
+        out.append((site_href(region_path(reg)), "Nazionali" if reg == "Nazionale" else reg, n))
     return out
 
 
@@ -495,7 +664,7 @@ def dest_links(bandi, pre, current=None):
         if name == current:
             continue
         n = sum(1 for b in bandi if name in b["destinatari"] and not b["scaduto"])
-        out.append((pre + sector_path(name), name, n))
+        out.append((site_href(sector_path(name)), name, n))
     return out
 
 
@@ -518,12 +687,15 @@ def faq_html():
 
 def page(path, title, desc, body, hero="", ld=None, robots=None):
     pre = prefix(path)
-    url = BASE if path == "index.html" else BASE + path
+    url = public_url(path)
     full = title if path == "index.html" else f"{title} – {SITE}"
-    nav = "".join(
-        f'<li><a href="{pre}{href}"{" aria-current=\"page\"" if href == path else ""}>{label}</a></li>'
-        for href, label in NAV
-    )
+    nav_items = []
+    for href, label, kind in NAV:
+        cls = f' class="{kind}"' if kind else ""
+        current = ' aria-current="page"' if href == path else ""
+        nav_items.append(f'<li{cls}><a{cls} href="{site_href(href)}"{current}>{label}</a></li>')
+    nav = "".join(nav_items)
+    cta_current = ' aria-current="page"' if path == "check-up.html" else ""
     ld_html = ""
     if ld:
         raw = json.dumps(ld, ensure_ascii=False).replace("<", "\\u003c")
@@ -554,21 +726,26 @@ def page(path, title, desc, body, hero="", ld=None, robots=None):
 <meta property="og:image" content="{BASE}og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="IncentiviPerTe – Bandi e incentivi per startup e PMI">
+<meta property="og:image:alt" content="IncentiviPerTe – Bandi e incentivi per la tua impresa">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{full_e}">
 <meta name="twitter:description" content="{desc_e}">
 <meta name="twitter:image" content="{BASE}og.png">
-<meta name="theme-color" content="#0b5cad">
+<meta name="theme-color" content="#0F7A5C">
 <link rel="icon" href="{pre}favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{pre}favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="{pre}favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="{pre}apple-touch-icon.png" sizes="180x180">
+<link rel="icon" href="{pre}favicon-512.png" type="image/png" sizes="512x512">
 <link rel="stylesheet" href="{pre}style.css">
 {ld_html}
 </head>
 <body>
 <a class="skip" href="#main">Vai al contenuto</a>
 <header class="top"><div class="wrap bar">
-<a class="brand" href="{pre}index.html">{LOGO}<span>Incentivi<span class="per">PerTe</span></span></a>
+<a class="brand" href="{site_href("index.html")}"><img src="{pre}logo-header.svg" alt="IncentiviPerTe" height="40"></a>
 <nav class="dnav" aria-label="Principale"><ul>{nav}</ul></nav>
+<a class="btn head-cta" href="{site_href("check-up.html")}"{cta_current}>Check-up</a>
 <details class="menu"><summary><span class="when-closed">Menu</span><span class="when-open">Chiudi</span></summary>
 <nav aria-label="Menu"><ul>{nav}</ul></nav></details>
 </div></header>
@@ -579,27 +756,24 @@ def page(path, title, desc, body, hero="", ld=None, robots=None):
 """
 
 
-LOGO = '<svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0b5cad"/><path d="M9 22V10m5 12V14m5 8v-5m5 5V8" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>'
-
-
 def footer(pre):
     # I link di area e destinatario sono aggiunti dopo, quando i bandi sono noti.
     info = (
         ("chi-siamo.html", "Chi siamo"),
         ("contatti.html", "Contatti"),
-        ("sponsor.html", "Sponsor e pubblicità"),
+        ("sponsor.html", "Sponsor"),
         ("disclaimer.html", "Disclaimer"),
         ("privacy.html", "Privacy"),
         ("cookie.html", "Cookie policy"),
         ("note-legali.html", "Note legali"),
     )
-    links = "".join(f'<li><a href="{pre}{href}">{label}</a></li>' for href, label in info)
+    links = "".join(f'<li><a href="{site_href(href)}">{label}</a></li>' for href, label in info)
     return f"""<footer><div class="wrap">
 <p><strong>{SITE}</strong> · raccolta gratuita e indipendente di bandi per startup e PMI, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali. Le schede sono sintesi: fa fede solo il bando ufficiale.</p>
 <nav aria-label="Aree"><p><strong>Aree</strong></p><ul id="foot-aree"></ul></nav>
 <nav aria-label="Destinatari"><p><strong>Destinatari</strong></p><ul id="foot-dest"></ul></nav>
 <nav aria-label="Informazioni"><ul>{links}</ul></nav>
-<p>Strumento dello stesso titolare: {ext(FPEF, "FoglioPEF")}, modelli Excel per il piano economico-finanziario immobiliare ({ext(FPEF_LI, "LinkedIn")}). Contatti: {ext(LINKEDIN, "messaggi della Pagina LinkedIn IncentiviPerTe")} o {mail_link()}. Nessun cookie, nessun tracker.</p>
+<p>Strumento dello stesso titolare: {FPEF_DESC.replace("FoglioPEF", ext(FPEF, "FoglioPEF"), 1)} ({ext(FPEF_LI, "LinkedIn")}). Contatti: {ext(LINKEDIN, "messaggi della Pagina LinkedIn IncentiviPerTe")} o {mail_link()}. Nessun cookie, nessun tracker.</p>
 </div></footer>"""
 
 
@@ -615,7 +789,7 @@ def fill_footer(html_text, bandi, pre):
     )
 
 
-CSS = """:root{--b:#0b5cad;--bd:#083f78;--t:#18202e;--m:#3d4a5c;--bg:#f4f6fa;--l:#dde3ec;--ok:#0b5a2d}
+CSS = """:root{--b:#0F7A5C;--bd:#0A5A44;--t:#14213D;--m:#3d4a5c;--bg:#f4f6fa;--l:#dde3ec;--ok:#0b5a2d}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--t);background:var(--bg)}
@@ -624,7 +798,7 @@ h1{font-size:clamp(1.6rem,3vw,2rem);line-height:1.2;margin:0 0 12px}
 h2{font-size:1.3rem;line-height:1.3;margin:28px 0 10px}
 a{color:var(--b);text-underline-offset:2px}
 a:hover{color:var(--bd)}
-:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 6px #083f78}
+:focus-visible{outline:3px solid #fff;outline-offset:2px;box-shadow:0 0 0 6px #0A5A44}
 .skip{position:absolute;left:8px;top:8px;transform:translateY(-160%);background:#fff;color:var(--t);padding:10px 12px;z-index:20;border-radius:8px;font-weight:700}
 .skip:focus{transform:none}
 .vh{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -632,12 +806,16 @@ a:hover{color:var(--bd)}
 header .wrap{max-width:1180px}
 header.top{background:#fff;border-bottom:1px solid var(--l);position:sticky;top:0;z-index:5}
 .bar{display:flex;align-items:center;justify-content:space-between;min-height:64px;gap:12px;position:relative}
-.brand{display:flex;align-items:center;gap:8px;min-height:44px;font-weight:800;font-size:1.15rem;color:var(--t);text-decoration:none}
-.brand .per{color:var(--b)}
+.brand{display:flex;align-items:center;min-height:44px;min-width:0;color:var(--t);text-decoration:none}
+.brand img{display:block;height:auto;max-height:40px;width:auto;max-width:min(222px,calc(100vw - 230px))}
 nav ul{list-style:none;margin:0;padding:0;display:flex;gap:2px;flex-wrap:wrap}
 nav a{display:flex;align-items:center;min-height:44px;padding:8px;border-radius:8px;text-decoration:none;color:var(--t);font-weight:700;font-size:15px}
-.dnav ul{flex-wrap:nowrap}
-nav a:hover,nav a[aria-current="page"]{background:#e8f0fb;color:var(--b)}
+.dnav ul{flex-wrap:nowrap;width:100%;align-items:center}
+.dnav li.cta{margin-left:auto}
+nav a.cta,a.head-cta{background:var(--b);color:#fff;border-radius:10px}
+nav a.cta:hover,nav a.cta[aria-current="page"],a.head-cta:hover,a.head-cta[aria-current="page"]{background:var(--bd);color:#fff}
+.head-cta{margin-left:auto;flex:0 0 auto}
+nav a:hover,nav a[aria-current="page"]{background:#E7F4EE;color:var(--b)}
 .dnav{display:none}
 details.menu summary{list-style:none;cursor:pointer;min-height:44px;min-width:44px;display:flex;align-items:center;padding:8px 12px;border:1px solid #5c6b82;border-radius:8px;font-weight:800;background:#fff}
 details.menu summary::-webkit-details-marker{display:none}
@@ -647,8 +825,8 @@ details.menu[open] .when-open{display:inline}
 details.menu[open] summary{border-color:var(--b);color:var(--b)}
 details.menu nav{position:absolute;z-index:6;left:0;right:0;top:100%;background:#fff;border:1px solid var(--l);border-radius:12px;padding:8px;box-shadow:0 8px 24px #0002;max-height:min(70vh,520px);overflow:auto}
 details.menu nav ul{flex-direction:column}
-@media(min-width:1000px){.dnav{display:block}details.menu{display:none}}
-.hero{background:linear-gradient(135deg,#083f78,#0b5cad);color:#fff;padding:36px 0 32px}
+@media(min-width:1180px){.dnav{display:flex;flex:1;min-width:0}details.menu{display:none}a.btn.head-cta{display:none}}
+.hero{background:linear-gradient(135deg,#0A5A44,#0F7A5C);color:#fff;padding:36px 0 32px}
 .hero h1{font-size:clamp(1.7rem,4.5vw,2.5rem);line-height:1.15;margin:0 0 10px;color:#fff}
 .hero p{margin:0;color:#fff;max-width:42rem}
 .hero .upd{margin-top:8px;font-weight:700}
@@ -671,12 +849,13 @@ button.link{background:none;border:0;padding:8px 0;min-height:44px;font:inherit;
 .grid{display:grid;gap:14px;grid-template-columns:1fr}
 @media(min-width:700px){.grid{grid-template-columns:repeat(2,1fr)}}
 @media(min-width:1000px){.grid{grid-template-columns:repeat(3,1fr)}}
-.card{background:#fff;border:1px solid var(--l);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column}
+.card{background:#fff;border:1px solid var(--l);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;position:relative}
 .card[hidden]{display:none !important}
 .card h3{font-size:1.15rem;margin:8px 0;line-height:1.3}
-.card h3 a{text-decoration:underline;text-underline-offset:3px}
-.amt{font-weight:800;margin:0 0 8px}
-.sum{margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card h3 a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px}
+.card h3 a::after{content:"";position:absolute;inset:0}
+.amt{font-weight:800;margin:0 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum{margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card .meta{margin-top:auto;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--l);padding-top:10px;font-size:14px;color:var(--m)}
 .ente{color:var(--m)}
 .dl{font-weight:800;color:var(--t)}
@@ -684,35 +863,42 @@ button.link{background:none;border:0;padding:8px 0;min-height:44px;font:inherit;
 .badge{align-self:flex-start;font-size:13px;font-weight:800;border-radius:999px;padding:4px 10px;background:#e7f6ec;color:var(--ok)}
 .badge.soon{background:#fde8e7;color:#9b1c1c}
 .badge.exp{background:#eceff3;color:#243044}
-.badge.open{background:#e8f0fb;color:var(--bd)}
+.badge.open{background:#E7F4EE;color:var(--bd)}
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
 .tag{display:inline-flex;align-items:center;min-height:32px;background:#fff;color:var(--bd);border:1px solid var(--b);border-radius:999px;padding:2px 10px;font-size:13px;font-weight:800;text-decoration:none}
-a.tag:hover{background:#e8f0fb}
+a.tag:hover{background:#E7F4EE}
 .tag.area{background:var(--b);color:#fff;border-color:var(--b)}
 a.tag.area:hover{background:var(--bd);color:#fff}
-.spc{border:2px dashed #5c6b82;background:#f8fafc}
+.card .tag{background:#E7F4EE;border:0;color:var(--bd)}
+.spc{border:2px dashed #8b95a5;background:#f8fafc}
 .spt{font-size:1.05rem;font-weight:800;margin:8px 0}
 .spp{font-weight:800;color:var(--b);margin:0 0 8px}
 .lab{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:#e8edf3;color:#243044;border-radius:6px;padding:3px 8px}
 .checkup{margin:22px 0}
 .checkup h2{margin-top:0}
-.fpef{background:#f5f9ff;border:2px solid var(--b);border-radius:14px;padding:16px 18px;margin:22px 0}
+.fpef{background:#F4FAF7;border:2px solid var(--b);border-radius:14px;padding:16px 18px;margin:22px 0}
 .fpef h2,.offer h3{margin-top:0}
 .fpef .row,.hero-actions{align-items:center}
 .fpef .row{display:flex;flex-wrap:wrap;gap:12px 16px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;background:var(--b);color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:800}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;background:var(--b);color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font:inherit;font-weight:800;border:0;cursor:pointer}
 .btn:hover{background:var(--bd);color:#fff}
+.btn.outline{background:transparent;color:var(--b);border:2px solid var(--b)}
+.btn.outline:hover{background:#E7F4EE;color:var(--bd)}
 .hero .btn{background:#fff;color:var(--bd)}
-.hero .btn:hover{background:#e8f0fb;color:var(--bd)}
+.hero .btn:hover{background:#E7F4EE;color:var(--bd)}
 .btn.ghost,.hero .btn.ghost{background:transparent;color:#fff;border:2px solid #fff}
 .btn.ghost:hover,.hero .btn.ghost:hover{background:#fff;color:var(--bd)}
 .pills{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:8px 0 0}
 .pills a{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 12px;background:#fff;border:1px solid #5c6b82;border-radius:999px;text-decoration:none;font-weight:800;color:var(--t)}
 .pills a:hover{border-color:var(--b);color:var(--b)}
-.num{background:#e8f0fb;color:var(--bd);border-radius:999px;min-width:1.6rem;text-align:center;padding:0 8px;font-size:13px}
+.num{background:#E7F4EE;color:var(--bd);border-radius:999px;min-width:1.6rem;text-align:center;padding:0 8px;font-size:13px}
 .faq details{background:#fff;border:1px solid var(--l);border-radius:12px;padding:4px 14px;margin:8px 0}
 .faq summary{cursor:pointer;font-weight:800;min-height:44px;display:flex;align-items:center}
 .box{background:#fff;border:1px solid var(--l);border-radius:14px;padding:18px}
+.official{display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin:12px 0}
+.official small{color:var(--m);font-size:13px;line-height:1.3}
+.checkup-ask{background:#F4FAF7;border:1px solid var(--b);border-radius:14px;padding:16px 18px;margin:18px 0}
+.checkup-ask h2{margin-top:0}
 dl.kv{display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:8px 16px;margin:12px 0}
 dl.kv dt{font-weight:800;color:var(--m)}
 dl.kv dd{margin:0}
@@ -728,7 +914,7 @@ nav.crumb li+li::before{content:"›";color:var(--m);margin:0 6px}
 .offers{display:grid;gap:12px;margin:12px 0}
 @media(min-width:800px){.offers{grid-template-columns:repeat(3,1fr);align-items:stretch}}
 .offer{border:2px solid #5c6b82;border-radius:14px;padding:16px;background:#fff;display:flex;flex-direction:column;gap:8px}
-.offer.featured{border-color:var(--b);background:#f5f9ff}
+.offer.featured{border-color:var(--b);background:#F4FAF7}
 .price{font-size:18px;margin:0}
 .price strong{font-size:34px;color:var(--b);line-height:1.1}
 .launch{font-weight:800;color:#9b1c1c;margin:0}
@@ -752,15 +938,134 @@ footer nav{margin-top:8px}
   .hero-actions .btn,.spc .btn,.offer .btn{width:100%}
   footer ul{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 }
+.checkup-form{display:grid;gap:12px;margin-top:16px}
+.checkup-form label,.checkup-form legend{font-weight:800}
+.checkup-form label{display:block;margin:0 0 4px}
+.checkup-form input[type="text"],.checkup-form input:not([type]),.checkup-form select,.checkup-form textarea{width:100%;min-height:44px;padding:8px 10px;border:1px solid #5c6b82;border-radius:8px;font:inherit;font-size:16px;background:#fff;color:var(--t)}
+.checkup-form textarea{min-height:8rem}
+#checkup-fallback{display:grid;gap:8px;margin-top:12px}
+#checkup-fallback[hidden]{display:none}
+.checkup-form fieldset{border:1px solid var(--l);border-radius:12px;margin:0;padding:8px 12px 12px}
+.checkup-form legend{padding:0 4px}
+.livelli{display:flex;flex-wrap:wrap;gap:8px 16px}
+.livelli label{display:flex;align-items:center;gap:8px;min-height:44px;margin:0;font-weight:700}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 """
 
 
+def checkup_service():
+    return {
+        "@type": "Service",
+        "name": "Check-up Bandi",
+        "serviceType": "Relazione scritta sui bandi adatti all'impresa",
+        "description": (
+            "Relazione scritta sui bandi adatti all'impresa. "
+            f"Base, 49 €: {CHECKUP_BASE}. Completo, 79 €: {CHECKUP_COMPLETO}."
+        ),
+        "url": public_url("check-up.html"),
+        "provider": org_ld(),
+        "offers": [
+            {
+                "@type": "Offer",
+                "name": "Base",
+                "price": "49",
+                "priceCurrency": "EUR",
+                "description": f"Base, 49 €: {CHECKUP_BASE}.",
+            },
+            {
+                "@type": "Offer",
+                "name": "Completo",
+                "price": "79",
+                "priceCurrency": "EUR",
+                "description": f"Completo, 79 €: {CHECKUP_COMPLETO}.",
+            },
+        ],
+    }
+
+
+def checkup_body():
+    tipi = (
+        "Startup", "PMI", "Nuove imprese", "Under 35", "Donne",
+        "Professionisti", "Grandi imprese", "Altro",
+    )
+    stadi = ("Da costituire", "Appena costituita", "In attività", "In crescita")
+    tipo_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in tipi)
+    stadio_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in stadi)
+    extra = "".join(f"<li>{e(item)}</li>" for item in CHECKUP_EXTRA)
+    return f"""<h1>Check-up Bandi</h1><div class="box">
+<p>Ricevi una relazione scritta sui bandi adatti alla tua impresa: tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali per avviare e far crescere l'impresa.</p>
+<h2>Livelli del servizio</h2>
+<ul>
+<li><strong>Base</strong>, 49 €: {e(CHECKUP_BASE)}.</li>
+<li><strong>Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi. Include tutto il Base, più:<ul>{extra}</ul></li>
+</ul>
+<h2>Chi lo prepara</h2>
+<p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>
+<form id="checkup-form" class="checkup-form">
+<div><label for="cu-regione">Regione (comprende la provincia)</label><input id="cu-regione" name="regione" type="text" required autocomplete="address-level1"></div>
+<div><label for="cu-tipo">Tipo di impresa</label><select id="cu-tipo" name="tipo" required><option value="">Scegli</option>{tipo_opts}</select></div>
+<div><label for="cu-stadio">Stadio</label><select id="cu-stadio" name="stadio" required><option value="">Scegli</option>{stadio_opts}</select></div>
+<div><label for="cu-importo">Importo indicativo</label><input id="cu-importo" name="importo" type="text" required inputmode="decimal" placeholder="es. 50.000 €"></div>
+<fieldset><legend>Livello</legend><div class="livelli">
+<label><input type="radio" name="livello" value="Base" required> Base · 49 €</label>
+<label><input type="radio" name="livello" value="Completo"> Completo · 79 €</label>
+</div></fieldset>
+<button type="submit" class="btn">Invia richiesta</button>
+</form>
+<p>Il pulsante apre il programma di posta con oggetto e testo già compilati.</p>
+<div id="checkup-fallback" hidden>
+<p>Se non si apre un'app di posta, copia il testo e invialo a {mail_link()}.</p>
+<label for="checkup-text">Testo della richiesta</label>
+<textarea id="checkup-text" readonly></textarea>
+<button type="button" class="btn outline" id="checkup-copy">Copia</button>
+<p id="checkup-copied" role="status" hidden>Testo copiato.</p>
+</div>
+</div>
+<script>
+(function () {{
+  var form = document.getElementById("checkup-form");
+  var fallback = document.getElementById("checkup-fallback");
+  var area = document.getElementById("checkup-text");
+  var copy = document.getElementById("checkup-copy");
+  var status = document.getElementById("checkup-copied");
+  if (!form || !fallback || !area || !copy) return;
+  form.addEventListener("submit", function (ev) {{
+    ev.preventDefault();
+    var data = new FormData(form);
+    var body = [
+      "Regione (comprende la provincia): " + (data.get("regione") || ""),
+      "Tipo di impresa: " + (data.get("tipo") || ""),
+      "Stadio: " + (data.get("stadio") || ""),
+      "Importo indicativo: " + (data.get("importo") || ""),
+      "Livello: " + (data.get("livello") || "")
+    ].join("\\n");
+    area.value = body;
+    fallback.hidden = false;
+    location.href = "mailto:{EMAIL}?subject=" + encodeURIComponent("Richiesta Check-up Bandi") + "&body=" + encodeURIComponent(body);
+  }});
+  copy.addEventListener("click", function () {{
+    var text = area.value;
+    var done = function () {{ if (status) status.hidden = false; }};
+    var manual = function () {{
+      area.focus();
+      area.select();
+      try {{ document.execCommand("copy"); }} catch (err) {{}}
+      done();
+    }};
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, manual);
+    else manual();
+  }});
+}})();
+</script>"""
+
+
 def static_pages(today):
     li = ext(LINKEDIN, "Pagina LinkedIn IncentiviPerTe")
-    li_btn = ext(LINKEDIN, "Contattaci su LinkedIn", "btn")
+    li_btn = ext(LINKEDIN, "Contattaci su LinkedIn", "btn outline")
     mail = mail_link()
     fpef_mail = mail_link(FPEF_EMAIL)
+    ipt_btn = f'<a class="btn" href="mailto:{EMAIL}">Scrivi a IncentiviPerTe</a>'
+    fpef_btn = f'<a class="btn" href="mailto:{FPEF_EMAIL}">Scrivi a FoglioPEF</a>'
     contacts = f'<p class="contact-links">{li_btn}{mail}</p>'
     sponsor_contacts = (
         f'<p class="contact-links">{li_btn}{mail}{fpef_mail}</p>'
@@ -779,14 +1084,14 @@ def static_pages(today):
             "<p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>"
             "<h2>Metodo</h2><p>Ogni scheda è redatta partendo dalla fonte ufficiale (ministeri, Regioni, Sviluppo Toscana, Camere di Commercio toscane, Gepafin e altri enti) e riporta il link al bando e la data dell'ultimo controllo. Le pagine ufficiali vengono ricontrollate periodicamente e ogni anomalia è verificata a mano. I bandi scaduti vengono rimossi.</p>"
             "<h2>Indipendenza</h2><p>Non siamo un ente pubblico né siamo affiliati agli enti citati. Le schede gratuite sono sintesi informative e non sostituiscono il testo del bando. Il sito si sostiene con spazi sponsor sempre etichettati come <em>Sponsorizzato</em>, che non influenzano la selezione dei bandi.</p>"
-            "<p>Per gli spazi pubblicitari vedi <a href='sponsor.html'>Sponsor e pubblicità</a>. Per segnalare un bando, una correzione o per il Check-up Bandi, <a href='contatti.html'>Contatti</a>.</p></div>"
+            "<p>Per gli spazi pubblicitari vedi <a href='/sponsor'>Sponsor</a>. Per segnalare un bando o una correzione, <a href='/contatti'>Contatti</a>. Per il Check-up, <a href='/check-up'>Richiedi il Check-up</a>.</p></div>"
             + checkup_section(""),
             True,
         ),
         "contatti.html": (
             "Contatti",
             "Come contattare IncentiviPerTe: segnalazioni di bandi, Check-up Bandi e richieste sponsor.",
-            f"<h1>Contatti</h1><div class='box'><p>Per segnalare un bando, una correzione, per richiedere il Check-up Bandi o per informazioni sugli spazi sponsor scrivici tramite i messaggi della Pagina LinkedIn IncentiviPerTe oppure all'indirizzo email:</p>{contacts}<p>Le schede pubblicate restano sintesi: requisiti e domanda si verificano sull'ente che gestisce la misura. Il Check-up Bandi è il controllo personalizzato, consegnato come relazione scritta, e si richiede da questi stessi contatti. Gli spazi pubblicitari sono descritti nella pagina <a href='sponsor.html'>Sponsor</a>.</p></div>",
+            f"<h1>Contatti</h1><div class='box'><p>Per segnalare un bando, una correzione o per informazioni sugli spazi sponsor scrivici tramite i messaggi della Pagina LinkedIn IncentiviPerTe oppure all'indirizzo email:</p>{contacts}<p>Le schede pubblicate restano sintesi: requisiti e domanda si verificano sull'ente che gestisce la misura. Il Check-up Bandi è la relazione scritta sui bandi adatti: <a href='/check-up'>Richiedi il Check-up</a>. Gli spazi pubblicitari sono descritti nella pagina <a href='/sponsor'>Sponsor</a>.</p></div>",
             False,
         ),
         "sponsor.html": (
@@ -800,26 +1105,32 @@ def static_pages(today):
 <h2 id="prezzi">Prezzi</h2>
 <p>I prezzi qui sotto sono per uno spazio pubblicitario etichettato Sponsorizzato. Non sono il prezzo dei modelli Excel.</p>
 <div class="offers">
-<div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 €</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € per i primi 3 sponsor, poi 79 €, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{li_btn}{mail}</div></div>
-<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.pages.dev")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{li_btn}{mail}{fpef_space}</div></div>
-<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{li_btn}{mail}{fpef_pack}</div></div>
+<div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 €</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € per i primi 3 sponsor, poi 79 €, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{ipt_btn}{li_btn}{mail}</div></div>
+<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.pages.dev")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{li_btn}{mail}{fpef_space}</div></div>
+<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{fpef_btn}{li_btn}{mail}{fpef_pack}</div></div>
 </div>
 <h2>Regole</h2>
 <ul><li>Ogni contenuto a pagamento è etichettato <strong>Sponsorizzato</strong>.</li><li>Gli sponsor non influenzano quali bandi pubblichiamo né come li descriviamo.</li><li>Nessun tracciamento degli utenti: niente pixel, cookie o script di terze parti.</li></ul>
-<p>Domande? Scrivi a messaggi della {li} o all'indirizzo {mail}. Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € al mese): {fpef_mail}.</p>
+<p>Domande? Scrivici a {mail} o in un messaggio alla {ext(LINKEDIN, "nostra pagina LinkedIn")}. Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € al mese): {fpef_mail}.</p>
 </div>""",
+            False,
+        ),
+        "check-up.html": (
+            "Check-up Bandi",
+            "Check-up Bandi: relazione scritta sui bandi adatti. Base 49 € entro 5 giorni lavorativi, Completo 79 € entro 7-10 giorni lavorativi.",
+            checkup_body(),
             False,
         ),
         "cookie.html": (
             "Cookie policy",
             "IncentiviPerTe non usa cookie né strumenti di tracciamento.",
-            "<h1>Cookie policy</h1><div class='box'><p>Questo sito <strong>non installa cookie</strong>, né tecnici né di profilazione, e non utilizza strumenti di analisi, pixel pubblicitari, font o script di terze parti. Per questo non è mostrato alcun banner cookie.</p><p>Il sito è ospitato da GitHub Pages (GitHub, Inc.), che può trattare dati tecnici di navigazione come l'indirizzo IP nei propri log per finalità di sicurezza e funzionamento: vedi la <a href='https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement' rel='noopener noreferrer'>informativa di GitHub</a>.</p><p>Se in futuro introducessimo cookie non tecnici, chiederemo prima il consenso e aggiorneremo questa pagina.</p></div>",
+            "<h1>Cookie policy</h1><div class='box'><p>Questo sito <strong>non installa cookie</strong>, né tecnici né di profilazione, e non utilizza strumenti di analisi, pixel pubblicitari, font o script di terze parti. Per questo non è mostrato alcun banner cookie.</p><p>Il sito è ospitato da Cloudflare Pages (Cloudflare, Inc.), che può trattare dati tecnici di navigazione come l'indirizzo IP nei propri log per finalità di sicurezza e funzionamento: vedi la <a href='https://www.cloudflare.com/privacypolicy/' rel='noopener noreferrer'>privacy policy di Cloudflare</a>.</p><p>Se in futuro introducessimo cookie non tecnici, chiederemo prima il consenso e aggiorneremo questa pagina.</p></div>",
             False,
         ),
         "note-legali.html": (
             "Note legali",
             "Note legali di IncentiviPerTe: titolarità, contenuti, marchi e link esterni.",
-            f"<h1>Note legali</h1><div class='box'><h2>Titolare del sito</h2><p>{owner}</p><h2>Contenuti</h2><p>Le schede sono sintesi originali redatte a scopo informativo da fonti pubbliche ufficiali, citate e linkate. I testi dei bandi restano dei rispettivi enti. Nomi e marchi citati appartengono ai legittimi titolari.</p><h2>Link esterni</h2><p>I link a siti di terzi sono forniti per comodità; non siamo responsabili dei loro contenuti.</p><h2>Responsabilità</h2><p>Vedi il <a href='disclaimer.html'>Disclaimer</a>. Per segnalazioni o richieste di rimozione scrivi all'indirizzo sopra.</p></div>",
+            f"<h1>Note legali</h1><div class='box'><h2>Titolare del sito</h2><p>{owner}</p><h2>Contenuti</h2><p>Le schede sono sintesi originali redatte a scopo informativo da fonti pubbliche ufficiali, citate e linkate. I testi dei bandi restano dei rispettivi enti. Nomi e marchi citati appartengono ai legittimi titolari.</p><h2>Link esterni</h2><p>I link a siti di terzi sono forniti per comodità; non siamo responsabili dei loro contenuti.</p><h2>Responsabilità</h2><p>Vedi il <a href='/disclaimer'>Disclaimer</a>. Per segnalazioni o richieste di rimozione scrivi all'indirizzo sopra.</p></div>",
             False,
         ),
         "disclaimer.html": (
@@ -831,7 +1142,7 @@ def static_pages(today):
         "privacy.html": (
             "Informativa privacy",
             "Informativa privacy di IncentiviPerTe ai sensi del Regolamento UE 2016/679 (GDPR).",
-            f"<h1>Informativa privacy</h1><div class='box'><p>Ai sensi degli artt. 13-14 del Regolamento UE 2016/679 (GDPR).</p><h2>Titolare del trattamento</h2><p>{owner}</p><h2>Dati trattati</h2><ul><li><strong>Navigazione</strong>: il sito non usa cookie, analytics o tracker. L'hosting (GitHub Pages, GitHub Inc.) può registrare dati tecnici come l'indirizzo IP nei log di server per sicurezza e funzionamento, secondo la propria informativa; base giuridica: legittimo interesse (art. 6.1.f).</li><li><strong>Email</strong>: se ci scrivi trattiamo indirizzo e contenuto del messaggio solo per rispondere; base giuridica: misure su richiesta dell'interessato / legittimo interesse. Conservazione: il tempo necessario a gestire la richiesta e comunque non oltre 24 mesi.</li></ul><h2>Trasferimenti</h2><p>GitHub Inc. ha sede negli USA; i trasferimenti avvengono secondo le garanzie previste dal GDPR (es. EU-US Data Privacy Framework o clausole contrattuali standard) indicate dal fornitore.</p><h2>Diritti</h2><p>Puoi chiedere accesso, rettifica, cancellazione, limitazione, opposizione e portabilità (artt. 15-22) scrivendo al titolare tramite i messaggi della {li} o all'indirizzo {mail}, e proporre reclamo al Garante per la protezione dei dati personali (garanteprivacy.it).</p><p>Nessuna newsletter è attiva: se verrà introdotta, sarà con consenso esplicito e informativa dedicata.</p><p><small>Ultimo aggiornamento: {it_date(today.isoformat())}.</small></p></div>",
+            f"<h1>Informativa privacy</h1><div class='box'><p>Ai sensi degli artt. 13-14 del Regolamento UE 2016/679 (GDPR).</p><h2>Titolare del trattamento</h2><p>{owner}</p><h2>Dati trattati</h2><ul><li><strong>Navigazione</strong>: il sito non usa cookie, analytics o tracker. Il sito è ospitato da Cloudflare Pages (Cloudflare, Inc.), che può registrare dati tecnici come l'indirizzo IP nei log di server per sicurezza e funzionamento, secondo la propria <a href='https://www.cloudflare.com/privacypolicy/' rel='noopener noreferrer'>privacy policy</a>; base giuridica: legittimo interesse (art. 6.1.f).</li><li><strong>Email</strong>: se ci scrivi trattiamo indirizzo e contenuto del messaggio solo per rispondere; base giuridica: misure su richiesta dell'interessato / legittimo interesse. Conservazione: il tempo necessario a gestire la richiesta e comunque non oltre 24 mesi.</li></ul><h2>Trasferimenti</h2><p>Cloudflare, Inc. ha sede negli USA; i trasferimenti avvengono secondo le garanzie previste dal GDPR (es. EU-US Data Privacy Framework o clausole contrattuali standard) indicate dal fornitore.</p><h2>Diritti</h2><p>Puoi chiedere accesso, rettifica, cancellazione, limitazione, opposizione e portabilità (artt. 15-22) scrivendo al titolare tramite i messaggi della {li} o all'indirizzo {mail}, e proporre reclamo al Garante per la protezione dei dati personali (garanteprivacy.it).</p><p>Nessuna newsletter è attiva: se verrà introdotta, sarà con consenso esplicito e informativa dedicata.</p><p><small>Ultimo aggiornamento: {it_date(today.isoformat())}.</small></p></div>",
             False,
         ),
     }
@@ -844,7 +1155,7 @@ def item_list(items):
             {
                 "@type": "ListItem",
                 "position": i,
-                "url": f"{BASE}bando/{b['id']}.html",
+                "url": public_url(f"bando/{b['id']}.html"),
                 "name": b["titolo"],
             }
             for i, b in enumerate((b for b in items if not b["scaduto"]), start=1)
@@ -853,17 +1164,13 @@ def item_list(items):
 
 
 def write_assets():
-    (D / "favicon.svg").write_text(
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#0b5cad"/><path d="M9 22V10m5 12V14m5 8v-5m5 5V8" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>',
-        encoding="utf-8",
-    )
-    (D / "og.svg").write_text(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630"><rect width="1200" height="630" fill="#0b5cad"/><text x="80" y="300" font-family="sans-serif" font-size="96" font-weight="700" fill="#fff">IncentiviPerTe</text><text x="80" y="390" font-family="sans-serif" font-size="44" fill="#dbe8fb">Bandi e incentivi per startup e PMI</text></svg>',
-        encoding="utf-8",
-    )
+    for name in STATIC_ASSETS:
+        shutil.copy(R / "assets" / name, D / name)
+    old_og = D / "og.svg"
+    if old_og.exists():
+        old_og.unlink()
     (D / "style.css").write_text(CSS, encoding="utf-8")
     (D / ".nojekyll").write_text("", encoding="utf-8")
-    shutil.copy(R / "assets" / "og.png", D / "og.png")
 
 
 def cleanup(written):
@@ -893,6 +1200,17 @@ def without_urls(text):
     return re.sub(r'"https?://[^"]*"', "", text, flags=re.I)
 
 
+def visible_text(text):
+    """Testo visibile: via gli href e il JSON-LD, resta il dominio sotto il pulsante."""
+    text = re.sub(
+        r'<script type="application/ld\+json">.*?</script>',
+        "",
+        text,
+        flags=re.I | re.S,
+    )
+    return re.sub(r'\bhref="[^"]*"', "", text, flags=re.I)
+
+
 def self_check(written):
     htmls = [p for p in written if p.endswith(".html")]
     for rel in htmls:
@@ -917,6 +1235,12 @@ def self_check(written):
             raise ValueError(f"{name}: email FoglioPEF fuori dalla pagina sponsor")
         for match in re.finditer(r'<script type="application/ld\+json">(.*?)</script>', text, re.S):
             json.loads(match.group(1))
+            if re.search(r'https://incentiviperte\.pages\.dev/[^"\s]*\.html', match.group(1)):
+                raise ValueError(f"{name}: URL canonico con .html nei dati strutturati")
+        if re.search(r'''(?:href|src)="(?!https?:|mailto:)[^"]*\.html''', text):
+            raise ValueError(f"{name}: link interno con .html")
+        if re.search(r"\b1 bandi\b|\b1 misure\b", text):
+            raise ValueError(f"{name}: plurale sbagliato")
         if name == "404.html":
             if "noindex" not in text or 'rel="canonical"' in text:
                 raise ValueError("404: atteso noindex senza canonical")
@@ -936,11 +1260,11 @@ def self_check(written):
             raise ValueError(f"{name}: nome personale fuori dalle pagine legali")
         if rel in ("privacy.html", "note-legali.html") and "Davide Davoglio, Arezzo (Italia)" not in text:
             raise ValueError(f"{name}: dati del titolare mancanti")
-        for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe"):
+        for banned in ("Invitalia", "Sorbolini", "Frascadore", "Flavio", "Giuseppe", "Myself Plus"):
             if banned in text:
                 raise ValueError(f"{name}: testo non pubblicabile ({banned})")
-        if re.search(r"invitalia", without_urls(text), re.I):
-            raise ValueError(f"{name}: la parola Invitalia compare fuori dai link ufficiali")
+        if re.search(r"invitalia", visible_text(text), re.I):
+            raise ValueError(f"{name}: la parola Invitalia compare nel testo visibile")
         if "essedade.github.io" in text:
             raise ValueError(f"{name}: vecchio indirizzo GitHub Pages")
         if "fogliopef.gumroad.com" in text:
@@ -957,6 +1281,12 @@ def self_check(written):
             raise ValueError(f"prezzo mancante sulla pagina sponsor: {price}")
     if f"mailto:{FPEF_EMAIL}" not in sponsor:
         raise ValueError("pagina sponsor: manca il contatto FoglioPEF")
+    for title, end in (("FoglioPEF", "<h3>"), ("Entrambi i siti", "<h2>")):
+        chunk = sponsor.split(f"<h3>{title}</h3>", 1)[1].split(end, 1)[0]
+        if f'<a class="btn" href="mailto:{FPEF_EMAIL}">' not in chunk:
+            raise ValueError(f"pagina sponsor: il pulsante di {title} non apre {FPEF_EMAIL}")
+        if f'<a class="btn" href="mailto:{EMAIL}">' in chunk:
+            raise ValueError(f"pagina sponsor: il pulsante pieno di {title} apre l'email di IncentiviPerTe")
     about = (D / "chi-siamo.html").read_text(encoding="utf-8")
     if "Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale." not in about:
         raise ValueError("chi siamo: manca la descrizione del team")
@@ -965,8 +1295,12 @@ def self_check(written):
     if "Arezzo-Siena" in about:
         raise ValueError("chi siamo: Arezzo-Siena resta come limite di copertura")
     home = (D / "index.html").read_text(encoding="utf-8")
-    if "Check-up Bandi" not in home or 'href="contatti.html">Richiedi il Check-up Bandi</a>' not in home:
+    if "Check-up Bandi" not in home or 'href="/check-up">Richiedi il Check-up</a>' not in home:
         raise ValueError("home: manca la sezione Check-up Bandi")
+    if 'getAttribute("data-scadenza")' not in home or 'getAttribute("data-apre")' not in home:
+        raise ValueError("home: il conto alla rovescia non viene dalle date dei bandi")
+    if 'data-scad="2026-10-23"' not in home:
+        raise ValueError("home: manca la scadenza letta dai dati")
     if 'value="Umbria"' not in home or 'value="Emilia-Romagna"' not in home or 'value="Toscana"' not in home:
         raise ValueError("home: filtri di area incompleti")
     if "focus iniziale" in home or "focus iniziale" in about:
@@ -983,8 +1317,23 @@ def self_check(written):
     if f"Sitemap: {BASE}sitemap.xml" not in robots or "Disallow: /" in robots:
         raise ValueError("robots.txt non valido")
     sitemap = (D / "sitemap.xml").read_text(encoding="utf-8")
-    if "<loc>" not in sitemap or "404.html" in sitemap:
+    if "<loc>" not in sitemap or ".html" in sitemap or "/404<" in sitemap:
         raise ValueError("sitemap non valida")
+    css = (D / "style.css").read_text(encoding="utf-8")
+    if re.search(r"#0b5cad", css, re.I):
+        raise ValueError("css: resta #0B5CAD")
+    if "a.btn.head-cta{display:none}" not in css:
+        raise ValueError("css: il Check-up in header non si nasconde sopra i 1180px")
+    if ".btn.outline{background:transparent;color:var(--b);border:2px solid var(--b)}" not in css:
+        raise ValueError("css: manca il pulsante outline")
+    if ".card .tag{background:#E7F4EE;border:0;color:var(--bd)}" not in css:
+        raise ValueError("css: le chip delle card sembrano ancora cliccabili")
+    for rel in htmls:
+        text = (D / rel).read_text(encoding="utf-8")
+        if "FoglioPEF è un foglio Excel" in text:
+            raise ValueError(f"{rel}: descrizione vecchia di FoglioPEF")
+        if 'class="fpef"' in text and FPEF_DESC not in text:
+            raise ValueError(f"{rel}: il riquadro FoglioPEF non usa la descrizione unica")
     for rel in ("robots.txt", "sitemap.xml"):
         blob = (D / rel).read_text(encoding="utf-8")
         if "essedade.github.io" in blob:
@@ -1012,14 +1361,14 @@ def build(today=None):
     hero = (
         '<section class="hero"><div class="wrap">'
         "<h1>Bandi e incentivi per startup e PMI</h1>"
-        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: {len(att)} bandi aperti, con scadenza e link alla fonte ufficiale.</p>"
+        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(len(att), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
-        '<a class="btn ghost" href="sponsor.html">Spazi per professionisti</a></p>'
+        '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>'
         "</div></section>"
     )
     home_desc = clip(
-        f"{len(att)} bandi aperti per startup e PMI, da Arezzo: tutta la Toscana, Umbria, Emilia-Romagna e incentivi nazionali, con scadenze e link ufficiali."
+        "Bandi aperti per startup e PMI, da Arezzo: tutta la Toscana, Umbria, Emilia-Romagna e incentivi nazionali, con scadenze e link ufficiali."
     )
     home_ld = {
         "@context": "https://schema.org",
@@ -1052,19 +1401,19 @@ def build(today=None):
         path = region_path(reg)
         label = "Nazionali" if reg == "Nazionale" else reg
         title = "Bandi e incentivi nazionali" if reg == "Nazionale" else f"Bandi e incentivi in {reg}"
-        desc = clip(f"{title}: {len(rows)} misure aperte, con scadenze, destinatari e link alle fonti ufficiali.")
+        desc = clip(f"{title}: misure aperte, con scadenze, destinatari e link alle fonti ufficiali.")
         others = pills(area_links(bandi, "", reg))
         sectors_here = sort_dest({d for b in rows for d in b["destinatari"]})
         sector_pills = pills([
-            (sector_path(name), name, sum(1 for b in rows if name in b["destinatari"]))
+            (site_href(sector_path(name)), name, sum(1 for b in rows if name in b["destinatari"]))
             for name in sectors_here
         ]) if sectors_here else ""
         listing = grid(rows, "", today) if rows else '<p class="note">Nessun bando aperto in questa area. Guarda le altre aree qui sotto.</p>'
         h1_fix = "Bandi nazionali aperti" if reg == "Nazionale" else f"Bandi aperti in {reg}"
         body = (
             crumbs([("index.html", "Bandi"), ("", label)], "")
-            + f"<h1>{e(h1_fix)}</h1><p>{e(INTRO_REG[reg])} In elenco: {len(rows)} bandi aperti.</p>"
-            + f'<p><a href="index.html?{urllib.parse.urlencode({"area": reg})}#filtri">Apri gli stessi bandi nel filtro della home</a></p>'
+            + f"<h1>{e(h1_fix)}</h1><p>{e(INTRO_REG[reg])} In elenco: <span data-aperti>{qty(len(rows), 'bando aperto', 'bandi aperti')}</span>.</p>"
+            + f'<p><a href="{site_href("index.html", urllib.parse.urlencode({"area": reg}), "filtri")}">Trova il tuo bando</a></p>'
             + listing
             + (f'<section aria-labelledby="dest-qui"><h2 id="dest-qui">Destinatari</h2>{sector_pills}</section>' if sector_pills else "")
             + f'<section aria-labelledby="altre-aree"><h2 id="altre-aree">Altre aree</h2>{others}</section>'
@@ -1073,7 +1422,7 @@ def build(today=None):
         ld = {
             "@context": "https://schema.org",
             "@graph": [
-                {"@type": "CollectionPage", "name": title, "url": BASE + path, "inLanguage": "it-IT", "isPartOf": BASE},
+                {"@type": "CollectionPage", "name": title, "url": public_url(path), "inLanguage": "it-IT", "isPartOf": BASE},
                 breadcrumb_ld([("", "Bandi"), (path, label)]),
                 item_list(rows),
             ],
@@ -1088,13 +1437,13 @@ def build(today=None):
         where = join_it(["nazionali" if r == "Nazionale" else r for r in regs]) or "nessuna area"
         intro = INTRO_DEST.get(name, f"Misure che indicano {name} tra i destinatari.")
         title = f"Bandi per {name}"
-        desc = clip(f"{title}: {len(rows)} bandi aperti ({where}), con scadenze e link ufficiali.")
+        desc = clip(f"{title}: bandi aperti ({where}), con scadenze e link ufficiali.")
         listing = grid(rows, "../", today) if rows else '<p class="note">Nessun bando aperto per questo destinatario. Guarda gli altri destinatari qui sotto.</p>'
         body = (
             crumbs([("index.html", "Bandi"), ("", name)], "../")
             + f"<h1>Bandi aperti per {e(name)}</h1>"
-            + f"<p>{e(intro)} In elenco: {len(rows)} bandi aperti, aree {e(where)}.</p>"
-            + f'<p><a href="../index.html?{urllib.parse.urlencode({"dest": name})}#filtri">Apri gli stessi bandi nel filtro della home</a></p>'
+            + f"<p>{e(intro)} In elenco: <span data-aperti>{qty(len(rows), 'bando aperto', 'bandi aperti')}</span>, aree {e(where)}.</p>"
+            + f'<p><a href="{site_href("index.html", urllib.parse.urlencode({"dest": name}), "filtri")}">Trova il tuo bando</a></p>'
             + listing
             + '<section aria-labelledby="altre-aree"><h2 id="altre-aree">Aree</h2>'
             + pills(area_links(bandi, "../"))
@@ -1106,7 +1455,7 @@ def build(today=None):
         ld = {
             "@context": "https://schema.org",
             "@graph": [
-                {"@type": "CollectionPage", "name": title, "url": BASE + path, "inLanguage": "it-IT", "about": name},
+                {"@type": "CollectionPage", "name": title, "url": public_url(path), "inLanguage": "it-IT", "about": name},
                 breadcrumb_ld([("", "Bandi"), (path, name)]),
                 item_list(rows),
             ],
@@ -1118,39 +1467,44 @@ def build(today=None):
         area_href = region_path(b["regione"])
         area_label = "Nazionali" if b["regione"] == "Nazionale" else b["regione"]
         dest_html = ", ".join(
-            f'<a href="../{sector_path(d)}">{e(d)}</a>' for d in b["destinatari"]
+            f'<a href="{site_href(sector_path(d))}">{e(d)}</a>' for d in b["destinatari"]
         )
         sibs = related(b, bandi)
         related_html = ""
         if sibs:
             lis = "".join(
-                f'<li><a href="{o["id"]}.html">{e(o["titolo"])}<span>{e(o["regione"])} · {e(deadline_text(o))}</span></a></li>'
+                f'<li><a href="{site_href(f"bando/{o["id"]}.html")}">{e(o["titolo"])}<span>{e(o["regione"])} · {e(deadline_text(o))}</span></a></li>'
                 for o in sibs
             )
             related_html = f'<section class="related" aria-labelledby="collegati"><h2 id="collegati">Bandi collegati</h2><ul>{lis}</ul></section>'
-        tags = f'<a class="tag area" href="../{area_href}">{e(b["regione"])}</a>' + "".join(
-            f'<a class="tag" href="../{sector_path(d)}">{e(d)}</a>' for d in b["destinatari"]
+        tags = f'<a class="tag area" href="{site_href(area_href)}">{e(b["regione"])}</a>' + "".join(
+            f'<a class="tag" href="{site_href(sector_path(d))}">{e(d)}</a>' for d in b["destinatari"]
         )
+        when = f' data-deadline="{b["scadenza"]}"' if b["scadenza"] else ""
+        if b.get("apertura"):
+            when += f' data-apre="{b["apertura"]}"'
         body = (
             crumbs([("index.html", "Bandi"), (area_href, area_label), ("", b["titolo"])], "../")
-            + f'<article class="box"><div class="tags">{tags}</div><h1>{e(b["titolo"])}</h1>'
+            + f'<article class="box">{badge(b, today)}<div class="tags">{tags}</div><h1>{e(b["titolo"])}</h1>'
             + "<dl class=\"kv\">"
             + f"<dt>Ente</dt><dd>{e(b['ente'])}</dd>"
-            + f'<dt>Area</dt><dd><a href="../{area_href}">{e(b["regione"])}</a></dd>'
+            + f'<dt>Area</dt><dd><a href="{site_href(area_href)}">{e(b["regione"])}</a></dd>'
             + f"<dt>Destinatari</dt><dd>{dest_html}</dd>"
             + f"<dt>Importo</dt><dd>{e(b['importo'])}</dd>"
-            + f"<dt>Scadenza</dt><dd><strong>{e(deadline_text(b))}</strong><br><small>{e(b['nota_scadenza'])}</small></dd>"
+            + f"<dt>Scadenza</dt><dd><strong{when}>{e(deadline_text(b))}</strong><br><small>{e(b['nota_scadenza'])}</small></dd>"
             + f"<dt>Ultimo controllo</dt><dd>{it_date(b['ultimo_controllo'])}</dd>"
             + "</dl>"
             + f"<p>{e(b['sintesi'])}</p>"
-            + f"<p>{official_bando_link(b['url'])}</p>"
-            + '<p class="note">Sintesi indicativa. Fa fede esclusivamente il testo ufficiale pubblicato dall&#39;ente. <a href="../disclaimer.html">Disclaimer</a></p></article>'
+            + official_bando_link(b["url"])
+            + checkup_ask()
+            + '<p class="note">Sintesi indicativa. Fa fede esclusivamente il testo ufficiale pubblicato dall&#39;ente. <a href="/disclaimer">Disclaimer</a></p></article>'
             + related_html
             + '<aside class="sp" aria-label="Spazio sponsor"><span class="lab">Sponsorizzato</span>'
             + '<p class="spt">Spazio disponibile per commercialisti, consulenti, banche e software</p>'
             + '<p class="spp">Da 49 € al mese · prezzo di lancio</p>'
-            + '<p><a class="btn" href="../sponsor.html">Scopri gli spazi</a></p></aside>'
+            + '<p><a class="btn outline" href="/sponsor">Scopri gli spazi sponsor</a></p></aside>'
             + fpef_box()
+            + BADGE_JS
         )
         desc = clip(f"{b['titolo']} ({b['ente']}): {b['sintesi']}")
         grant = {
@@ -1167,7 +1521,7 @@ def build(today=None):
                 {
                     "@type": "WebPage",
                     "name": b["titolo"],
-                    "url": BASE + path,
+                    "url": public_url(path),
                     "inLanguage": "it-IT",
                     "dateModified": b["ultimo_controllo"],
                     "isBasedOn": b["url"],
@@ -1187,12 +1541,15 @@ def build(today=None):
             "@context": "https://schema.org",
             "@type": "WebPage",
             "name": title,
-            "url": BASE + path,
+            "url": public_url(path),
             "inLanguage": "it-IT",
             "publisher": org_ld(),
         }
-        freq = "monthly" if path == "sponsor.html" else "yearly"
-        priority = "0.8" if path == "sponsor.html" else "0.3"
+        if path == "check-up.html":
+            webpage = {k: v for k, v in ld.items() if k != "@context"}
+            ld = {"@context": "https://schema.org", "@graph": [webpage, checkup_service()]}
+        freq = "monthly" if path in ("sponsor.html", "check-up.html") else "yearly"
+        priority = "0.8" if path in ("sponsor.html", "check-up.html") else "0.3"
         emit(path, page(path, title, desc, body, ld=ld), agg, freq, priority)
 
     # La 404 può essere servita da qualsiasi percorso: i link partono dalla radice.
@@ -1201,7 +1558,7 @@ def build(today=None):
         "404.html",
         "Pagina non trovata",
         "La pagina richiesta non esiste.",
-        '<div class="box"><h1>Pagina non trovata</h1><p>La pagina che cerchi non esiste o è stata spostata. Il bando potrebbe essere scaduto e non essere più in elenco.</p><p><a class="btn" href="/index.html">Torna ai bandi</a></p></div>',
+        '<div class="box"><h1>Pagina non trovata</h1><p>La pagina che cerchi non esiste o è stata spostata. Il bando potrebbe essere scaduto e non essere più in elenco.</p><p><a class="btn" href="/">Torna ai bandi</a></p></div>',
         robots="noindex",
     ), bandi, "/")
     not_found = re.sub(
@@ -1215,7 +1572,7 @@ def build(today=None):
 
     urlset = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for path, lastmod, freq, priority in urls:
-        loc = BASE if path == "index.html" else BASE + path
+        loc = public_url(path)
         urlset.append(
             f"<url><loc>{loc}</loc><lastmod>{lastmod}</lastmod><changefreq>{freq}</changefreq><priority>{priority}</priority></url>"
         )

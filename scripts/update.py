@@ -3,6 +3,8 @@
 
 Se il controllo riesce aggiorna ultimo_controllo; altrimenti segnala il caso in report.txt
 per una revisione umana. Non modifica le schede andate male e non pubblica il sito.
+Il markup, badge compresi, lo produce solo build.py: il conto dei giorni non è scritto
+nel HTML, quindi una nuova build prima della scadenza non cambia quel testo.
 Uso: python3 scripts/update.py && python3 scripts/build.py
 """
 import datetime
