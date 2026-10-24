@@ -519,7 +519,7 @@
     ],
     "scadenza": "2026-11-10",
     "nota_scadenza": "Dalle 12:00 del 25/03/2026 alle 23:59 del 10/11/2026, salvo esaurimento risorse (ReStart)",
-    "sintesi": "Contributo a fondo perduto per le micro, piccole e medie imprese turistiche (codici ATECO indicati nel bando) delle province di Livorno e Grosseto che investono nella sostenibilità ambientale delle strutture e dei servizi. Contributo del 60%, fino a 3.000 €, più 300 € di premialità; investimento minimo 1.000 €. Dotazione: da verificare (40.000 € nel bando, poi rifinanziato).",
+    "sintesi": "Contributo a fondo perduto per le micro, piccole e medie imprese turistiche (codici ATECO indicati nel bando) delle province di Livorno e Grosseto che investono nella sostenibilità ambientale delle strutture e dei servizi. Contributo del 60%, fino a 3.000 €, più 300 € di premialità; investimento minimo 1.000 €. Dotazione: il bando indica 40.000 €; la scheda di avanzamento della Camera del 07/10/2026 riporta uno stanziamento di 60.000 € più un rifinanziamento di 50.000 €, con 48.677,68 € ancora da assegnare (dato a solo titolo informativo).",
     "url": "https://www.lg.camcom.it/bandi/bando-transizione-sostenibile-imprese-turistiche-2026",
     "check": "imprese turistiche",
     "importo": "Fondo perduto 60% · massimo 3.000 €",
@@ -585,7 +585,7 @@
     ],
     "scadenza": "2027-05-17",
     "nota_scadenza": "Domande dal 15/10/2026, con tre scadenze: 16/11/2026, 28/02/2027 e 17/05/2027 (ore 23:59), via PEC al Settore Servizi per il Lavoro competente",
-    "sintesi": "Contributi a fondo perduto ai datori di lavoro privati con unità operativa in Toscana che assumono persone con disabilità iscritte al collocamento mirato (L. 68/99) o adeguano il posto di lavoro. Esempi dall'avviso del Settore di Arezzo e Siena: 15.000 € per ogni assunzione a tempo indeterminato (anche in apprendistato), con maggiorazioni; contributi per adeguare il posto di lavoro (fino a 5.000 €), abbattere barriere architettoniche (fino a 10.000 €), telelavoro e tutoraggio. Gli avvisi sono distinti per territorio: importi e dotazione del proprio settore da verificare.",
+    "sintesi": "Contributi a fondo perduto ai datori di lavoro privati con unità operativa in Toscana che assumono persone con disabilità iscritte al collocamento mirato (L. 68/99) o adeguano il posto di lavoro. Gli importi sono uguali nei cinque avvisi territoriali: 15.000 € per ogni assunzione a tempo indeterminato (anche in apprendistato), con maggiorazioni di 2.000 € per ciascuna caratteristica indicata nell'avviso (fino a 10.000 €); contributi per adeguare il posto di lavoro (fino a 5.000 €), abbattere barriere architettoniche (fino a 10.000 €), telelavoro e tutoraggio. Dotazione complessiva 3.199.999,99 €, divisa per Settore Servizi per il Lavoro: Firenze e Prato 893.387,53 €; Lucca e Pistoia 625.629,68 €; Arezzo e Siena 626.091,28 €; Pisa e Massa Carrara 591.574,67 €; Grosseto e Livorno 463.316,83 €.",
     "url": "https://arti.toscana.it/fondo-regionale-occupazione-persone-con-disabilita-2026-2027-avviso-pubblico-concessione-contributi-datori-di-lavoro-privati",
     "check": "16/11/2026",
     "importo": "Fino a 15.000 € per assunzione a tempo indeterminato",
@@ -758,6 +758,185 @@
     "url": "https://www.romagna.camcom.it/it/opportunita/accesso-al-credito/intervento-straordinario-fondo-energia-imprese",
     "check": "Fondo Energia",
     "importo": "7% del finanziamento · massimo 7.000 €",
+    "ultimo_controllo": "2026-10-24"
+  },
+  {
+    "id": "cciaa-maremma-tirreno-internazionalizzazione-2026",
+    "titolo": "Bando a sostegno dell'internazionalizzazione delle imprese – 2026 (Livorno e Grosseto)",
+    "ente": "Camera di Commercio della Maremma e del Tirreno",
+    "regione": "Toscana",
+    "destinatari": [
+      "PMI"
+    ],
+    "scadenza": "2026-11-10",
+    "nota_scadenza": "Dalle 11:00 del 07/05/2026 alle 23:59 del 10/11/2026, salvo chiusura anticipata (ReStart); risorse esaurite secondo la scheda di avanzamento del 02/09/2026",
+    "sintesi": "Contributo a fondo perduto per le micro, piccole e medie imprese con sede legale o operativa nelle province di Livorno o Grosseto, per progetti di internazionalizzazione. Contributo del 60%, fino a 2.500 €, più premialità di 300 € (rating di legalità e altre premialità non cumulabili); investimento minimo 1.000 €. Obbligatorio il test Self i4.0; serve DURC regolare. Dotazione 110.000 €: secondo la scheda di avanzamento del 02/09/2026 le richieste superano le risorse (disponibilità −18.481,60 €). Domande ancora accettate fino al 10/11/2026, ma senza garanzia di copertura (finanziabili solo con eventuali economie o rifinanziamenti).",
+    "url": "https://www.lg.camcom.it/bandi/bando-sostegno-internazionalizzazione-delle-imprese-2026",
+    "check": "110.000",
+    "importo": "Fondo perduto 60% · massimo 2.500 €",
+    "ultimo_controllo": "2026-10-24"
+  },
+  {
+    "id": "cciaa-maremma-tirreno-agricoltura-green-2026",
+    "titolo": "Bando Agricoltura green – 2026 (Livorno e Grosseto)",
+    "ente": "Camera di Commercio della Maremma e del Tirreno",
+    "regione": "Toscana",
+    "destinatari": [
+      "PMI"
+    ],
+    "scadenza": "2026-11-10",
+    "nota_scadenza": "Dalle 9:00 del 09/04/2026 alle 23:59 del 10/11/2026, salvo chiusura anticipata (ReStart); risorse impegnate secondo la scheda di avanzamento del 01/09/2026",
+    "sintesi": "Contributo a fondo perduto per le micro, piccole e medie imprese agricole (codici ATECO A01 e A02) delle province di Livorno e Grosseto che investono nella sostenibilità. Contributo del 60%, fino a 3.000 € (4.000 € per produzioni DOP/IGP o biologiche), più 300 € di premialità; investimento minimo 1.000 €. Obbligatorio il questionario SUSTAINability; serve DURC regolare. Dotazione 430.000 € dopo i rifinanziamenti del 29/06 e del 27/07/2026: secondo la scheda di avanzamento del 01/09/2026 sono state liquidate domande per 173.027,56 € e ne restano in corso per 256.972,44 €, senza ulteriori risorse da assegnare. Domande ancora accettate fino al 10/11/2026, ma senza garanzia di copertura (finanziabili solo con eventuali economie o rifinanziamenti).",
+    "url": "https://www.lg.camcom.it/bandi/bando-agricoltura-green-2026",
+    "check": "430.000",
+    "importo": "Fondo perduto 60% · massimo 3.000-4.000 €",
+    "ultimo_controllo": "2026-10-24"
+  },
+  {
+    "id": "cciaa-maremma-tirreno-imprese-vicinato-2026",
+    "titolo": "Bando a sostegno delle imprese di vicinato – 2026 (Livorno e Grosseto)",
+    "ente": "Camera di Commercio della Maremma e del Tirreno",
+    "regione": "Toscana",
+    "destinatari": [
+      "PMI"
+    ],
+    "scadenza": "2026-11-10",
+    "nota_scadenza": "Dalle 11:00 del 25/03/2026 alle 23:59 del 10/11/2026, salvo chiusura anticipata (ReStart); al 20/10/2026 risorse disponibili 0,00 €",
+    "sintesi": "Contributo a fondo perduto per le micro e piccole imprese del commercio al dettaglio di vicinato (superficie fino a 300 mq) e della ristorazione e somministrazione delle province di Livorno e Grosseto. Contributo del 60%, fino a 2.500 €, più 300 € di premialità; investimento minimo 1.000 €. Obbligatorio il questionario PID Cyber Check; serve DURC regolare. Dotazione 250.000 € (100.000 € iniziali, rifinanziati con 50.000 € e 100.000 € a giugno e luglio 2026): secondo la scheda di avanzamento del 20/10/2026 le risorse disponibili sono 0,00 €. Domande ancora accettate fino al 10/11/2026, ma senza garanzia di copertura (finanziabili solo con eventuali economie o rifinanziamenti).",
+    "url": "https://www.lg.camcom.it/bandi/bando-sostegno-imprese-vicinato-2026",
+    "check": "250.000",
+    "importo": "Fondo perduto 60% · massimo 2.500 €",
+    "ultimo_controllo": "2026-10-24"
+  },
+  {
+    "id": "cciaa-maremma-tirreno-certificazioni-qualita-2026",
+    "titolo": "Bando certificazioni di qualità – 2026 (Livorno e Grosseto)",
+    "ente": "Camera di Commercio della Maremma e del Tirreno",
+    "regione": "Toscana",
+    "destinatari": [
+      "PMI"
+    ],
+    "scadenza": "2026-11-10",
+    "nota_scadenza": "Dalle 9:00 del 25/03/2026 alle 23:59 del 10/11/2026, salvo esaurimento risorse (ReStart)",
+    "sintesi": "Contributo a fondo perduto per le micro, piccole e medie imprese delle province di Livorno e Grosseto che ottengono nel 2026 una prima certificazione tra quelle elencate nell'Allegato A del bando (qualità, ambiente, sicurezza e altre). Contributo del 60%, fino a 2.000 €, più 300 € di premialità; investimento minimo 1.000 €. Obbligatorio il questionario PID Cyber Check; serve DURC regolare. Dotazione 30.000 €: secondo la scheda di avanzamento del 19/10/2026 restano 1.510,92 € da assegnare.",
+    "url": "https://www.lg.camcom.it/bandi/bando-certificazioni-qualita-2026",
+    "check": "30.000",
+    "importo": "Fondo perduto 60% · massimo 2.000 €",
+    "ultimo_controllo": "2026-10-24"
+  },
+  {
+    "id": "cciaa-maremma-tirreno-societa-benefit-2026",
+    "titolo": "Bando a sostegno della creazione di società benefit – 2026 (Livorno e Grosseto)",
+    "ente": "Camera di Commercio della Maremma e del Tirreno",
+    "regione": "Toscana",
+    "destinatari": [
+      "PMI",
+      "Nuove imprese"
+    ],
+    "scadenza": "2026-11-10",
+    "nota_scadenza": "Dalle 9:00 del 03/03/2026 alle 23:59 del 10/11/2026, salvo esaurimento risorse (ReStart)",
+    "sintesi": "Contributo a fondo perduto per le imprese diventate società benefit dal 01/01/2026 (nuove o per trasformazione), con sede legale nelle province di Livorno o Grosseto. Copre spese notarili, consulenza, formazione (entro il 20%) e comunicazione: contributo del 60%, fino a 4.000 €, più 300 € di premialità; investimento minimo 1.000 €. Obbligatorio il questionario SUSTAINability; serve DURC regolare. Dotazione 20.000 €: al 21/10/2026 non risultano domande pervenute.",
+    "url": "https://www.lg.camcom.it/bandi/bando-sostegno-della-creazione-societa-benefit-anno-2026",
+    "check": "20.000",
+    "importo": "Fondo perduto 60% · massimo 4.000 €",
+    "ultimo_controllo": "2026-10-24"
+  },
+  {
+    "id": "cciaa-maremma-tirreno-frihub-2026",
+    "titolo": "Voucher per la partecipazione delle MPMI al progetto FRIHUB",
+    "ente": "Camera di Commercio della Maremma e del Tirreno",
+    "regione": "Toscana",
+    "destinatari": [
+      "PMI"
+    ],
+    "scadenza": "2026-11-06",
+    "nota_scadenza": "Domande dal 03/08/2026, prorogate al 06/11/2026 (determinazione n. 384 del 16/10/2026): registrazione sulla piattaforma del progetto e invio via PEC",
+    "sintesi": "Voucher al 100% per massimo 12 micro, piccole e medie imprese con sede o unità locale nelle province di Grosseto, Livorno, Lucca, Massa-Carrara o Pisa (il progetto riguarda anche Liguria e Sardegna), delle filiere nautica, turismo sostenibile, biotecnologie blu e verdi ed energie rinnovabili. Copre un percorso di accompagnamento all'innovazione: assessment (690 €), percorso fino a 6.200 € e partecipazione al summit (700 €), per un massimo di 6.900 € a impresa. Selezione con punteggio. Dotazione 82.800 €.",
+    "url": "https://www.lg.camcom.it/bandi/bando-voucher-la-partecipazione-di-mpmi-al-progetto-frihub",
+    "check": "6 novembre 2026",
+    "importo": "Voucher 100% · massimo 6.900 €",
+    "ultimo_controllo": "2026-10-24"
+  },
+  {
+    "id": "cciaa-tno-competenze-trasversali-2026",
+    "titolo": "Bando per percorsi per le competenze trasversali e per l'orientamento (PCTO) – 2026",
+    "ente": "Camera di Commercio della Toscana Nord-Ovest",
+    "regione": "Toscana",
+    "destinatari": [
+      "PMI",
+      "Grandi imprese"
+    ],
+    "scadenza": "2026-10-31",
+    "nota_scadenza": "Dalle 14:00 del 02/03/2026 alle 18:00 del 31/10/2026, salvo chiusura anticipata per esaurimento risorse (ReStart)",
+    "sintesi": "Contributo per le imprese con sede legale nelle province di Lucca, Massa-Carrara e Pisa, iscritte al Registro nazionale per l'alternanza scuola-lavoro, che ospitano studenti in percorsi per le competenze trasversali e l'orientamento (PCTO), project work o stage e tirocini di IFTS, CFP e ITS. Importi per percorso o per studente (per esempio 800-1.000 € per percorso di tutoraggio, da 600 € a 2.000 € per studente), fino a 5.000 € per impresa. Servono DURC e diritto annuale regolari. Dotazione 100.000 €.",
+    "url": "https://tno.camcom.it/bandi/2026/bando-la-realizzazione-di-percorsi-le-competenze-trasversali-lorientamento-e-la",
+    "check": "31 ottobre 2026",
+    "importo": "Voucher · massimo 5.000 €",
+    "ultimo_controllo": "2026-10-24"
+  },
+  {
+    "id": "cciaa-arezzo-siena-export-2026-arezzo",
+    "titolo": "Bando Export 2026 – provincia di Arezzo",
+    "ente": "Camera di Commercio di Arezzo e Siena",
+    "regione": "Toscana",
+    "destinatari": [
+      "PMI"
+    ],
+    "scadenza": "2026-12-15",
+    "nota_scadenza": "Domande via PEC dal 12/03/2026 al 15/12/2026, in ordine cronologico fino a esaurimento risorse",
+    "sintesi": "Contributo a fondo perduto per le micro, piccole e medie imprese e i consorzi con sede o unità locale in provincia di Arezzo che partecipano in presenza alle manifestazioni fieristiche internazionali all'estero, tenute dal 01/01 al 15/12/2026. Contributo del 50% delle spese, fino a 1.500 € per domanda. Serve la polizza contro i rischi catastrofali. Fondo 140.000 €.",
+    "url": "https://www.as.camcom.it/bando-export-2026-arezzo",
+    "check": "15 dicembre 2026",
+    "importo": "Fondo perduto 50% · massimo 1.500 €",
+    "ultimo_controllo": "2026-10-24"
+  },
+  {
+    "id": "cciaa-arezzo-siena-export-2026-siena",
+    "titolo": "Bando Export 2026 – provincia di Siena",
+    "ente": "Camera di Commercio di Arezzo e Siena",
+    "regione": "Toscana",
+    "destinatari": [
+      "PMI"
+    ],
+    "scadenza": "2026-12-15",
+    "nota_scadenza": "Domande via PEC dal 12/03/2026 al 15/12/2026, in ordine cronologico fino a esaurimento risorse",
+    "sintesi": "Contributo a fondo perduto per le micro, piccole e medie imprese e i consorzi con sede o unità locale in provincia di Siena che partecipano in presenza alle manifestazioni fieristiche internazionali, anche in Italia, tenute dal 01/01 al 15/12/2026. Contributo del 50% delle spese, fino a 1.500 € per domanda. Serve la polizza contro i rischi catastrofali. Fondo 114.500 €.",
+    "url": "https://www.as.camcom.it/bando-export-2026-siena",
+    "check": "15 dicembre 2026",
+    "importo": "Fondo perduto 50% · massimo 1.500 €",
+    "ultimo_controllo": "2026-10-24"
+  },
+  {
+    "id": "umbria-feampa-indennizzo-pesca-acquacoltura-2026",
+    "titolo": "FEAMPA – Indennizzo per la pesca nelle acque interne e l'acquacoltura (Intervento 222507)",
+    "ente": "Regione Umbria",
+    "regione": "Umbria",
+    "destinatari": [
+      "PMI"
+    ],
+    "scadenza": "2026-10-27",
+    "nota_scadenza": "Domande via PEC dal 07/10/2026 al 27/10/2026 (20 giorni dalla pubblicazione sul BUR n. 47)",
+    "sintesi": "Indennizzo per le micro, piccole e medie imprese con sede in Umbria della pesca professionale nelle acque interne (ATECO 03.1, lago Trasimeno) e dell'acquacoltura (ATECO 03.2), per i costi aggiuntivi dovuti alla crisi in Medio Oriente tra il 28/02 e il 31/12/2026. Intensità del 100%, entro i massimali dell'avviso (80.000 € per imbarcazione, 360.000 € per impresa acquicola). Dotazione 18.958 €, aumentabile fino a 60.000 €.",
+    "url": "https://applicazioni.regione.umbria.it/widget/bandi1?p_p_id=bandi_WAR_bandiportlet&p_p_lifecycle=1&p_p_state=maximized&p_p_mode=view&_bandi_WAR_bandiportlet_codBando=2026-002-11091&_bandi_WAR_bandiportlet_javax.portlet.action=viewDettaglio",
+    "check": "27/10/2026",
+    "importo": "Indennizzo 100% dei costi aggiuntivi",
+    "ultimo_controllo": "2026-10-24"
+  },
+  {
+    "id": "umbria-poli-innovazione-2026",
+    "titolo": "Avviso Poli di Innovazione 2026",
+    "ente": "Regione Umbria",
+    "regione": "Umbria",
+    "destinatari": [
+      "PMI",
+      "Grandi imprese"
+    ],
+    "scadenza": "2026-10-30",
+    "nota_scadenza": "La scheda del portale regionale indica domande dal 21/10 al 30/10/2026; l'avviso aggiornato dopo la proroga (09/10/2026) indica invio via PEC fino alle 12:00 del 30/11/2026: termine da verificare",
+    "sintesi": "Contributi a fondo perduto per creare, ammodernare e gestire Poli di innovazione in Umbria: consorzi o società (già costituiti o da costituire) formati da almeno 3 imprese, che condividono strutture e competenze con imprese e organismi di ricerca. Spesa ammissibile da 500.000 € a 2 milioni € (fino a 4 milioni € con requisiti di solidità); aiuto del 50% dei costi ammissibili (+5 punti nelle zone assistite per gli investimenti). Dotazione 4 milioni €, aumentabile fino a 6 milioni € (PR FESR Umbria 2021-2027).",
+    "url": "https://applicazioni.regione.umbria.it/widget/bandi1?p_p_id=bandi_WAR_bandiportlet&p_p_lifecycle=1&p_p_state=maximized&p_p_mode=view&_bandi_WAR_bandiportlet_codBando=2026-002-8261&_bandi_WAR_bandiportlet_javax.portlet.action=viewDettaglio",
+    "check": "Poli di Innovazione 2026",
+    "importo": "Fondo perduto 50% · spesa 0,5-2 milioni €",
     "ultimo_controllo": "2026-10-24"
   }
 ]
