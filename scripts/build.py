@@ -447,12 +447,63 @@ def org_ld():
     }
 
 
+_CARD_WARNING = re.compile(
+    r"senza garanzia di copertura|risorse esaurite|risorse impegnate|"
+    r"risorse disponibili(?: sono)? (?:0,00|esaurite)|"
+    r"senza ulteriori risorse|disponibilità\s*[−\-]",
+    re.I,
+)
+
+
+def _sentences(text):
+    return [part.strip() for part in re.split(r"(?<=\.)\s+", text.strip()) if part.strip()]
+
+
+def card_note(b):
+    """Frasi dei dati che la sintesi a due righe non mostra sulla card.
+
+    Stesso riquadro delle altre note (classe note): la card non cambia impianto.
+    """
+    sintesi = " ".join((b.get("sintesi") or "").split())
+    nota = " ".join((b.get("nota_scadenza") or "").split())
+    importo = b.get("importo") or ""
+    visible = f"{importo} {sintesi[:160]}"
+    chosen = []
+
+    def add(text):
+        text = " ".join(text.split())
+        if not text or text in visible:
+            return
+        if any(text in prev or prev in text for prev in chosen):
+            return
+        chosen.append(text)
+
+    for sentence in _sentences(sintesi):
+        if _CARD_WARNING.search(sentence):
+            add(sentence)
+        if (
+            re.search(r"(?<!\d)40\.000", sentence)
+            and re.search(r"(?<!\d)60\.000", sentence)
+            and "40.000" not in importo
+            and "60.000" not in importo
+        ):
+            add(sentence)
+    # La nota sulla data (30/10 contro 30/11) sta in nota_scadenza, non nella sintesi.
+    if "30/10" in nota and "30/11" in nota and "30/11" not in visible:
+        add(nota)
+    if not chosen:
+        return ""
+    return f'<p class="note">{e(" ".join(chosen))}</p>'
+
+
 def card(b, pre, today):
     tags = f'<span class="tag area">{e(b["regione"])}</span>'
     tags += "".join(f'<span class="tag">{e(d)}</span>' for d in b["destinatari"])
-    search = " ".join(" ".join([
-        b["titolo"], b["sintesi"], b["ente"], b["regione"], " ".join(b["destinatari"]),
-    ]).split())
+    note = card_note(b)
+    search_bits = [b["titolo"], b["sintesi"], b["ente"], b["regione"], " ".join(b["destinatari"])]
+    if note:
+        search_bits.append(b.get("nota_scadenza") or "")
+    search = " ".join(" ".join(search_bits).split())
     hidden = " hidden" if b["scaduto"] else ""
     href = site_href(f'bando/{b["id"]}.html')
     when = f' data-deadline="{b["scadenza"]}"' if b["scadenza"] else ""
@@ -465,7 +516,7 @@ def card(b, pre, today):
         f'data-scaduto="{1 if b["scaduto"] else 0}" data-search="{e(search)}"{hidden}>'
         f'{badge(b, today)}<h3><a class="cardlink" href="{href}">{e(b["titolo"])}</a></h3>'
         f'<p class="amt">{e(b["importo"])}</p><div class="tags">{tags}</div>'
-        f'<p class="sum">{e(b["sintesi"])}</p><div class="meta"><span class="dl"{when}>{e(deadline_text(b))}</span>'
+        f'<p class="sum">{e(b["sintesi"])}</p>{note}<div class="meta"><span class="dl"{when}>{e(deadline_text(b))}</span>'
         f'<span class="ente">{e(b["ente"])}</span></div></article>'
     )
 

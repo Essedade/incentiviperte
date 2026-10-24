@@ -401,24 +401,26 @@ class Sito(unittest.TestCase):
         self.assertIn("Camera di Commercio di Arezzo e Siena", arezzo)
         self.assertNotIn("Arezzo-Siena", arezzo)
         data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
-        self.assertEqual(len(data), 45)
+        self.assertEqual(len(data), 56)
         aree = {}
         for row in data:
             aree[row["regione"]] = aree.get(row["regione"], 0) + 1
-        self.assertEqual(aree, {"Nazionale": 8, "Toscana": 16, "Umbria": 4, "Emilia-Romagna": 17})
+        self.assertEqual(aree, {"Nazionale": 8, "Toscana": 25, "Umbria": 6, "Emilia-Romagna": 17})
         self.assertTrue(all(row["ultimo_controllo"] == "2026-10-24" for row in data))
         oggi = datetime.date(2026, 10, 24)
         prepared = build.prepare(data, oggi)
         self.assertEqual(sum(1 for b in prepared if b["scaduto"]), 1)
         self.assertEqual(sum(1 for b in prepared if b["in_arrivo"]), 2)
-        self.assertEqual(sum(1 for b in prepared if build.is_aperto(b)), 42)
+        self.assertEqual(sum(1 for b in prepared if build.is_aperto(b)), 53)
         toscana = [b for b in prepared if b["regione"] == "Toscana"]
         emilia = [b for b in prepared if b["regione"] == "Emilia-Romagna"]
-        self.assertEqual(len(toscana), 16)
+        self.assertEqual(len(toscana), 25)
         self.assertEqual(sum(1 for b in toscana if b["scaduto"]), 1)
         self.assertEqual(sum(1 for b in emilia if b["in_arrivo"]), 2)
-        self.assertEqual(sum(1 for b in prepared if b["regione"] == "Umbria"), 4)
+        self.assertEqual(sum(1 for b in prepared if b["regione"] == "Umbria"), 6)
         self.assertEqual(sum(1 for b in prepared if b["regione"] == "Nazionale"), 8)
+        self.assertEqual(sum(1 for b in emilia if build.is_aperto(b)), 15)
+        self.assertEqual(sum(1 for b in toscana if build.is_aperto(b)), 24)
         eco = next(b for b in prepared if b["id"] == "economia-circolare-privati")
         self.assertTrue(eco["scaduto"])
         self.assertEqual(eco["scadenza"], "2026-10-23")
@@ -429,6 +431,39 @@ class Sito(unittest.TestCase):
             page = (DIST / "bando" / f"{bid}.html").read_text(encoding="utf-8")
             self.assertIn(when, page)
             self.assertTrue(next(b for b in prepared if b["id"] == bid)["in_arrivo"])
+
+    def test_note_fondi_data_e_importi_sulla_card(self):
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        cards = {}
+        for card in re.findall(r'<article class="card\b.*?</article>', home, re.S):
+            link = re.search(r'href="(/bando/[^"]+)"', card)
+            self.assertIsNotNone(link)
+            cards[link.group(1)] = card
+
+        def note(slug):
+            card = cards["/bando/" + slug]
+            summary = card.split('<p class="sum">', 1)[1].split("</p>", 1)[0]
+            self.assertNotIn('class="note"', summary)
+            return "".join(re.findall(r'<p class="note">(.*?)</p>', card, re.S))
+
+        for slug in (
+            "cciaa-maremma-tirreno-internazionalizzazione-2026",
+            "cciaa-maremma-tirreno-agricoltura-green-2026",
+            "cciaa-maremma-tirreno-imprese-vicinato-2026",
+        ):
+            text = note(slug)
+            self.assertIn("senza garanzia di copertura", text, slug)
+        self.assertIn("18.481,60", note("cciaa-maremma-tirreno-internazionalizzazione-2026"))
+        self.assertIn("senza ulteriori risorse da assegnare", note("cciaa-maremma-tirreno-agricoltura-green-2026"))
+        self.assertIn("0,00", note("cciaa-maremma-tirreno-imprese-vicinato-2026"))
+        poli = note("umbria-poli-innovazione-2026")
+        self.assertIn("30/10/2026", poli)
+        self.assertIn("30/11/2026", poli)
+        self.assertIn("termine da verificare", poli)
+        turismo = note("cciaa-maremma-tirreno-turismo-sostenibile-2026")
+        self.assertIn("40.000", turismo)
+        self.assertIn("60.000", turismo)
+        self.assertIn("50.000", turismo)
 
     def test_dominio_cloudflare_e_niente_vecchio_percorso(self):
         self.assertEqual(build.BASE, "https://incentiviperte.pages.dev/")
