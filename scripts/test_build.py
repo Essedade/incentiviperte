@@ -181,6 +181,29 @@ class Sito(unittest.TestCase):
             file_rel = "index.html" if rel == "" else rel + ".html"
             self.assertTrue((DIST / file_rel).is_file(), file_rel)
 
+    def test_verifica_search_console(self):
+        path = DIST / build.GSC_FILE
+        self.assertTrue(path.is_file())
+        self.assertEqual(path.parent, DIST)
+        self.assertEqual(
+            path.read_text(encoding="utf-8"),
+            "google-site-verification: googlec8d66ea588cfa987.html",
+        )
+        meta = (
+            '<meta name="google-site-verification" '
+            'content="jCzN7Fx7XoDrf8U8F0zh3SqX4j2mogdrXKI-ygMN8m4" />'
+        )
+        pages = [p for p in DIST.rglob("*.html") if p.name != build.GSC_FILE]
+        self.assertGreater(len(pages), 10)
+        for page in pages:
+            head = page.read_text(encoding="utf-8").split("</head>", 1)[0]
+            self.assertIn(meta, head, page.relative_to(DIST).as_posix())
+        sitemap = (DIST / "sitemap.xml").read_text(encoding="utf-8")
+        self.assertNotIn("googlec8d66ea588cfa987", sitemap)
+        self.assertNotIn(build.GSC_TOKEN, sitemap)
+        robots = (DIST / "robots.txt").read_text(encoding="utf-8")
+        self.assertEqual(robots, f"User-agent: *\nAllow: /\nSitemap: {BASE}sitemap.xml\n")
+
     def test_home_filtri_conversione_e_link(self):
         home = (DIST / "index.html").read_text(encoding="utf-8")
         self.assertIn('lang="it"', home)
@@ -723,6 +746,8 @@ class Sito(unittest.TestCase):
         self.assertIn("6 bandi aperti", donne)
         self.assertNotIn("1 bandi", donne)
         for path in DIST.rglob("*.html"):
+            if path.name == build.GSC_FILE:
+                continue
             text = path.read_text(encoding="utf-8")
             title = re.search(r"<title>(.*?)</title>", text).group(1)
             desc = re.search(r'<meta name="description" content="([^"]*)"', text).group(1)
@@ -980,7 +1005,7 @@ class Sito(unittest.TestCase):
         header = (DIST / "logo-header.svg").read_text(encoding="utf-8")
         self.assertIn("#0F7A5C", header)
         self.assertIn("#14213D", header)
-        pages = list(DIST.rglob("*.html"))
+        pages = [p for p in DIST.rglob("*.html") if p.name != build.GSC_FILE]
         self.assertGreater(len(pages), 10)
         for path in pages:
             text = path.read_text(encoding="utf-8")
