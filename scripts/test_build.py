@@ -228,7 +228,7 @@ class Sito(unittest.TestCase):
         self.assertIn("Prezzo di lancio: 3 posti, poi 79 €", sponsor)
         self.assertIn(f'href="mailto:{build.FPEF_EMAIL}"', sponsor)
         self.assertIn(
-            "Per le sponsorizzazioni FoglioPEF (39 € + IVA al mese) e per il pacchetto entrambi i siti (69 € + IVA al mese)",
+            "Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € al mese)",
             sponsor,
         )
         foglio = sponsor.split("<h3>FoglioPEF</h3>", 1)[1].split("<h3>", 1)[0]
@@ -669,10 +669,10 @@ class Sito(unittest.TestCase):
         self.assertIn(f'rel="canonical" href="{BASE}check-up"', page)
         self.assertIn("una relazione scritta sui bandi adatti", page)
         self.assertIn(
-            "Base</strong>, 49 € + IVA: report di circa 3-4 pagine, entro 5 giorni lavorativi dalla ricezione dei dati completi.",
+            "Base</strong>, 49 €: report di circa 3-4 pagine, entro 5 giorni lavorativi dalla ricezione dei dati completi.",
             page,
         )
-        self.assertIn("Completo</strong>, 79 € + IVA: report di 6-10 pagine, entro 7-10 giorni lavorativi", page)
+        self.assertIn("Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi", page)
         self.assertIn("Livelli del servizio", page)
         for item in build.CHECKUP_EXTRA:
             self.assertIn(item, page)
@@ -816,7 +816,7 @@ class Sito(unittest.TestCase):
             self.assertIn('class="bando-checkup"', text, path.name)
             box = text.split('class="bando-checkup"', 1)[1].split("</aside>", 1)[0]
             self.assertIn(phrase, box, path.name)
-            self.assertIn("(da 49 € + IVA)", box, path.name)
+            self.assertIn("(da 49 €)", box, path.name)
             self.assertIn(build.CHECKUP_IVA_NOTE, box, path.name)
             self.assertIn("Verifica di ammissibilità, non garantisce il contributo.", box, path.name)
             self.assertIn('href="/check-up"', box, path.name)
@@ -826,36 +826,44 @@ class Sito(unittest.TestCase):
             self.assertIsNone(re.search(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b", text), path.name)
         self.assertNotIn('class="bando-checkup"', (DIST / "index.html").read_text(encoding="utf-8"))
 
-    def test_prezzi_checkup_e_servizi_con_iva(self):
-        """Check-up e servizi, anche il bonifico, mostrano il prezzo con «+ IVA»."""
+    def test_prezzi_finali_senza_piu_iva(self):
+        """I prezzi indicati sono finali: niente «+ IVA» su Check-up e sponsor."""
         page = (DIST / "check-up.html").read_text(encoding="utf-8")
         main = page.split('<main id="main"', 1)[1].split("</main>", 1)[0]
         self.assertEqual(main.count(build.CHECKUP_IVA_NOTE), 2)
         livelli = main.split("<h2>Livelli del servizio</h2>", 1)[1].split('<aside class="promo"', 1)[0]
         self.assertIn(build.CHECKUP_IVA_NOTE, livelli)
-        self.assertIn("Base</strong>, 49 € + IVA", livelli)
-        self.assertIn("Completo</strong>, 79 € + IVA", livelli)
-        self.assertIn("Base · 49 € + IVA", main)
-        self.assertIn("Completo · 79 € + IVA", main)
+        self.assertIn("Base</strong>, 49 €:", livelli)
+        self.assertIn("Completo</strong>, 79 €:", livelli)
+        self.assertIn("Base · 49 €", main)
+        self.assertIn("Completo · 79 €", main)
         paga = main.split('id="paga-ora"', 1)[1].split("</section>", 1)[0]
         self.assertIn(build.CHECKUP_IVA_NOTE, paga)
         self.assertIn(build.CHECKUP_LANCIO, main.split('id="paga-ora"', 1)[0])
-        self.assertIn("41,65 € + IVA", main)
-        self.assertIn("67,15 € + IVA", main)
+        self.assertIn("41,65 €", main)
+        self.assertIn("67,15 €", main)
+        self.assertNotIn("+ IVA", main)
         choices = re.findall(r'<div class="pay-choice">(.*?)</div>', paga, re.S)
         self.assertEqual(len(choices), 4)
         card_amounts = []
         wire_amounts = []
         for chunk in choices:
             amount = re.search(r'class="pay-amt">(.*?)</span>', chunk).group(1)
-            self.assertTrue(amount.endswith(" € + IVA"), amount)
             if "gumroad.com" in chunk:
                 card_amounts.append(amount)
+                self.assertIn(amount, ("49 €", "79 €"))
             else:
                 wire_amounts.append(amount)
                 self.assertIn(">Bonifico istantaneo<", chunk)
-        self.assertEqual(card_amounts, ["49 € + IVA", "79 € + IVA"])
-        self.assertEqual(wire_amounts, ["49 € + IVA", "79 € + IVA"])
+                self.assertTrue(amount.endswith("(prezzo finale, nessuna IVA aggiunta)"), amount)
+        self.assertEqual(card_amounts, ["49 €", "79 €"])
+        self.assertEqual(
+            wire_amounts,
+            [
+                "49 € (prezzo finale, nessuna IVA aggiunta)",
+                "79 € (prezzo finale, nessuna IVA aggiunta)",
+            ],
+        )
         hrefs = []
         for chunk in choices:
             if "gumroad.com" in chunk:
@@ -867,53 +875,44 @@ class Sito(unittest.TestCase):
             query = urllib.parse.parse_qs(parsed.query)
             subject = query["subject"][0]
             body = query["body"][0]
-            self.assertNotIn("senza IVA", subject)
-            self.assertNotIn("senza IVA", body)
-            self.assertNotIn("prestazione occasionale", subject)
-            self.assertNotIn("prestazione occasionale", body)
-            self.assertRegex(body, r"Importo: (?:49|79) € \+ IVA\n")
+            self.assertNotIn("+ IVA", subject)
+            self.assertNotIn("+ IVA", body)
+            self.assertNotIn("prestazione occasionale", subject + body)
+            self.assertNotIn("forfettario", subject + body)
+            self.assertRegex(body, r"Importo: (?:49|79) €\n")
         desc = re.search(r'<meta name="description" content="([^"]*)"', page).group(1)
         self.assertIn(build.CHECKUP_IVA_NOTE, html.unescape(desc))
+        self.assertNotIn("+ IVA", html.unescape(desc))
         raw = page.split('<script type="application/ld+json">', 1)[1].split("</script>", 1)[0]
         data = json.loads(raw)
         service = next(node for node in data["@graph"] if node["@type"] == "Service")
         self.assertIn(build.CHECKUP_IVA_NOTE, service["description"])
-        self.assertIn("49 € + IVA", service["description"])
-        self.assertIn("79 € + IVA", service["description"])
+        self.assertNotIn("+ IVA", service["description"])
         for offer in service["offers"]:
             self.assertIn(build.CHECKUP_IVA_NOTE, offer["description"])
-            self.assertIn("€ + IVA", offer["description"])
+            self.assertNotIn("+ IVA", offer["description"])
             self.assertNotIn("+", offer["price"])
         for path in (DIST / "bando").glob("*.html"):
             box = path.read_text(encoding="utf-8").split('class="bando-checkup"', 1)[1].split("</aside>", 1)[0]
-            self.assertIn("da 49 € + IVA", box, path.name)
+            self.assertIn("da 49 €", box, path.name)
+            self.assertNotIn("+ IVA", box, path.name)
             self.assertIn(build.CHECKUP_IVA_NOTE, box, path.name)
         sponsor = re.sub(r"<[^>]+>", "", (DIST / "sponsor.html").read_text(encoding="utf-8"))
-        for price in ("49 € + IVA al mese", "39 € + IVA al mese", "69 € + IVA al mese", "79 € + IVA al mese", "99 € + IVA al mese"):
+        for price in ("49 € al mese", "39 € al mese", "69 € al mese", "79 € al mese", "99 € al mese"):
             self.assertIn(price, sponsor)
-        self.assertNotIn("39 € al mese", sponsor)
-        for path in DIST.rglob("*"):
-            if path.suffix.lower() not in {".html", ".css", ".xml", ".txt", ".svg"}:
-                continue
-            visible = re.sub(r"<[^>]+>", "", path.read_text(encoding="utf-8"))
-            for match in re.finditer(r"39 €", visible):
-                self.assertTrue(
-                    visible[match.start():].startswith("39 € + IVA al mese"),
-                    f"{path.as_posix()}: {visible[match.start():match.start() + 40]!r}",
-                )
+        self.assertNotIn("+ IVA", sponsor)
         home = (DIST / "index.html").read_text(encoding="utf-8")
-        self.assertIn("da 49 € + IVA al mese", home)
-        self.assertNotIn("da 49 € al mese", home)
+        self.assertIn("da 49 € al mese", home)
+        self.assertNotIn("+ IVA", home)
         for path in DIST.rglob("*.html"):
             text = path.read_text(encoding="utf-8")
             if 'class="spp"' in text:
                 self.assertIn(build.SPONSOR_DA, text, path.as_posix())
-                self.assertNotIn("Da 49 € al mese", text, path.as_posix())
         self.assertNotIn("24 €", page)
         self.assertNotIn("24 €", sponsor)
 
-    def test_niente_senza_iva_ne_prestazione_occasionale(self):
-        banned = ("senza IVA", "prestazione occasionale")
+    def test_niente_piu_iva_prestazione_o_forfettario(self):
+        banned = ("+ IVA", "prestazione occasionale", "forfettario")
         seen = 0
         for path in DIST.rglob("*"):
             if path.suffix.lower() not in {".html", ".css", ".xml", ".txt", ".svg"}:
