@@ -149,6 +149,11 @@ def site_href(file_path, query="", fragment=""):
     return url
 
 
+def is_aperto(b):
+    """Un bando in arrivo ha il badge «Apre il …» e non entra nel conto degli aperti."""
+    return not b.get("scaduto") and not b.get("in_arrivo")
+
+
 def qty(n, one, many):
     return f"{n} {one if n == 1 else many}"
 
@@ -380,11 +385,18 @@ BADGE_JS = r"""<script>
   if (!list) return;
   var cards = list.querySelectorAll("article.card");
   var expired = [];
+  var open = 0;
   for (var k = 0; k < cards.length; k++) {
-    if (cards[k].getAttribute("data-scaduto") === "1") expired.push(cards[k]);
+    var card = cards[k];
+    if (card.getAttribute("data-scaduto") === "1") {
+      expired.push(card);
+      continue;
+    }
+    var apreCard = card.getAttribute("data-apre") || "";
+    if (apreCard && daysLeft(apreCard, start) > 0) continue;
+    open++;
   }
   for (var n = 0; n < expired.length; n++) list.appendChild(expired[n]);
-  var open = cards.length - expired.length;
   var label = open === 1 ? "1 bando aperto" : open + " bandi aperti";
   var counts = document.querySelectorAll("[data-aperti]");
   for (var c = 0; c < counts.length; c++) counts[c].textContent = label;
@@ -514,7 +526,7 @@ def fpef_box():
     return (
         '<aside class="fpef" aria-label="FoglioPEF, progetto dello stesso titolare">'
         '<p class="lab">Progetto dello stesso titolare</p>'
-        '<h2>Numeri in ordine per un investimento immobiliare</h2>'
+        '<h2>FoglioPEF</h2>'
         f"<p>{FPEF_DESC}</p>"
         '<p class="row">'
         f'{ext(FPEF, "Apri FoglioPEF", "btn outline")}'
@@ -846,15 +858,15 @@ button.link{background:none;border:0;padding:8px 0;min-height:44px;font:inherit;
 @media(min-width:700px){.filters{grid-template-columns:1fr 1fr}}
 @media(min-width:1000px){.filters{grid-template-columns:1.3fr 1fr 1fr 1fr;position:sticky;top:72px;z-index:4;box-shadow:0 4px 16px #0001}}
 #filtri{scroll-margin-top:88px}
-.grid{display:grid;gap:14px;grid-template-columns:1fr}
-@media(min-width:700px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(min-width:1000px){.grid{grid-template-columns:repeat(3,1fr)}}
-.card{background:#fff;border:1px solid var(--l);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;position:relative}
+.grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1000px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.card{background:#fff;border:1px solid var(--l);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;position:relative;min-width:0}
 .card[hidden]{display:none !important}
 .card h3{font-size:1.15rem;margin:8px 0;line-height:1.3}
 .card h3 a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px}
 .card h3 a::after{content:"";position:absolute;inset:0}
-.amt{font-weight:800;margin:0 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amt{font-weight:800;margin:0 0 8px;min-width:0;overflow-wrap:anywhere}
 .sum{margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card .meta{margin-top:auto;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--l);padding-top:10px;font-size:14px;color:var(--m)}
 .ente{color:var(--m)}
@@ -1106,8 +1118,8 @@ def static_pages(today):
 <p>I prezzi qui sotto sono per uno spazio pubblicitario etichettato Sponsorizzato. Non sono il prezzo dei modelli Excel.</p>
 <div class="offers">
 <div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 €</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € per i primi 3 sponsor, poi 79 €, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{ipt_btn}{li_btn}{mail}</div></div>
-<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.pages.dev")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{li_btn}{mail}{fpef_space}</div></div>
-<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{fpef_btn}{li_btn}{mail}{fpef_pack}</div></div>
+<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.pages.dev")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{fpef_space}</div></div>
+<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{fpef_btn}{fpef_pack}</div></div>
 </div>
 <h2>Regole</h2>
 <ul><li>Ogni contenuto a pagamento è etichettato <strong>Sponsorizzato</strong>.</li><li>Gli sponsor non influenzano quali bandi pubblichiamo né come li descriviamo.</li><li>Nessun tracciamento degli utenti: niente pixel, cookie o script di terze parti.</li></ul>
@@ -1287,6 +1299,12 @@ def self_check(written):
             raise ValueError(f"pagina sponsor: il pulsante di {title} non apre {FPEF_EMAIL}")
         if f'<a class="btn" href="mailto:{EMAIL}">' in chunk:
             raise ValueError(f"pagina sponsor: il pulsante pieno di {title} apre l'email di IncentiviPerTe")
+        if "Contattaci su LinkedIn" in chunk or LINKEDIN in chunk:
+            raise ValueError(f"pagina sponsor: {title} rimanda al LinkedIn di IncentiviPerTe")
+        if EMAIL in chunk:
+            raise ValueError(f"pagina sponsor: {title} usa l'email di IncentiviPerTe")
+        if f'href="mailto:{FPEF_EMAIL}"' not in chunk:
+            raise ValueError(f"pagina sponsor: {title} non ha il mailto di FoglioPEF")
     about = (D / "chi-siamo.html").read_text(encoding="utf-8")
     if "Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale." not in about:
         raise ValueError("chi siamo: manca la descrizione del team")
@@ -1361,7 +1379,7 @@ def build(today=None):
     hero = (
         '<section class="hero"><div class="wrap">'
         "<h1>Bandi e incentivi per startup e PMI</h1>"
-        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(len(att), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
+        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(sum(1 for b in att if is_aperto(b)), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
         '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>'
@@ -1412,7 +1430,7 @@ def build(today=None):
         h1_fix = "Bandi nazionali aperti" if reg == "Nazionale" else f"Bandi aperti in {reg}"
         body = (
             crumbs([("index.html", "Bandi"), ("", label)], "")
-            + f"<h1>{e(h1_fix)}</h1><p>{e(INTRO_REG[reg])} In elenco: <span data-aperti>{qty(len(rows), 'bando aperto', 'bandi aperti')}</span>.</p>"
+            + f"<h1>{e(h1_fix)}</h1><p>{e(INTRO_REG[reg])} In elenco: <span data-aperti>{qty(sum(1 for b in rows if is_aperto(b)), 'bando aperto', 'bandi aperti')}</span>.</p>"
             + f'<p><a href="{site_href("index.html", urllib.parse.urlencode({"area": reg}), "filtri")}">Trova il tuo bando</a></p>'
             + listing
             + (f'<section aria-labelledby="dest-qui"><h2 id="dest-qui">Destinatari</h2>{sector_pills}</section>' if sector_pills else "")
@@ -1442,7 +1460,7 @@ def build(today=None):
         body = (
             crumbs([("index.html", "Bandi"), ("", name)], "../")
             + f"<h1>Bandi aperti per {e(name)}</h1>"
-            + f"<p>{e(intro)} In elenco: <span data-aperti>{qty(len(rows), 'bando aperto', 'bandi aperti')}</span>, aree {e(where)}.</p>"
+            + f"<p>{e(intro)} In elenco: <span data-aperti>{qty(sum(1 for b in rows if is_aperto(b)), 'bando aperto', 'bandi aperti')}</span>, aree {e(where)}.</p>"
             + f'<p><a href="{site_href("index.html", urllib.parse.urlencode({"dest": name}), "filtri")}">Trova il tuo bando</a></p>'
             + listing
             + '<section aria-labelledby="altre-aree"><h2 id="altre-aree">Aree</h2>'
