@@ -119,6 +119,10 @@ KEEP = {
     "favicon-512.png", "apple-touch-icon.png", "logo-header.svg", "logo-header-80.png",
     "logo-header-160.png", "og.png", "robots.txt", "sitemap.xml", ".nojekyll",
 }
+# Verifica Search Console. Non è una pagina: resta fuori da sitemap e dai controlli sulle schede.
+GSC_FILE = "googlec8d66ea588cfa987.html"
+GSC_CONTENT = "google-site-verification: googlec8d66ea588cfa987.html"
+GSC_TOKEN = "jCzN7Fx7XoDrf8U8F0zh3SqX4j2mogdrXKI-ygMN8m4"
 STATIC_ASSETS = (
     "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-48.png", "favicon-512.png",
     "apple-touch-icon.png", "logo-header.svg", "logo-header-80.png", "logo-header-160.png",
@@ -889,6 +893,7 @@ def page(path, title, desc, body, hero="", ld=None, robots=None):
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>{full_e}</title>
 <meta name="description" content="{desc_e}">
+<meta name="google-site-verification" content="{GSC_TOKEN}" />
 {refresh}{robots_html}{canon}{alt}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{SITE}">
@@ -1442,6 +1447,11 @@ def item_list(items):
     }
 
 
+def write_search_console():
+    """File di verifica in radice di dist/. Va scritto dopo cleanup: quello elimina gli html non in «written»."""
+    (D / GSC_FILE).write_text(GSC_CONTENT, encoding="utf-8")
+
+
 def write_assets():
     for name in STATIC_ASSETS:
         shutil.copy(R / "assets" / name, D / name)
@@ -1642,6 +1652,13 @@ def self_check(written):
         blob = (D / rel).read_text(encoding="utf-8")
         if "essedade.github.io" in blob:
             raise ValueError(f"{rel}: vecchio indirizzo GitHub Pages")
+    if (D / GSC_FILE).read_text(encoding="utf-8") != GSC_CONTENT:
+        raise ValueError("file di verifica Search Console mancante o alterato")
+    if GSC_FILE in sitemap or GSC_TOKEN in sitemap:
+        raise ValueError("il file di verifica non va nella sitemap")
+    for rel in htmls:
+        if f'name="google-site-verification" content="{GSC_TOKEN}"' not in (D / rel).read_text(encoding="utf-8"):
+            raise ValueError(f"{rel}: manca il meta di verifica Search Console")
 
 
 def build(today=None):
@@ -1915,6 +1932,8 @@ def build(today=None):
     (D / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {BASE}sitemap.xml\n", encoding="utf-8")
     write_assets()
     cleanup(written)
+    # Dopo cleanup: gli html non generati come pagine vengono eliminati, e questo file non è una pagina.
+    write_search_console()
     self_check(written)
     print(f"OK: {len(bandi)} bandi, {len(written)} pagine -> {D}")
     return written
