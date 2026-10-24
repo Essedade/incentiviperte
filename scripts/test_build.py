@@ -126,6 +126,27 @@ class Validazione(unittest.TestCase):
         self.assertFalse(gia["in_arrivo"])
         self.assertIn("Aperto fino al 01/12/2026", build.deadline_text(gia))
 
+    def test_stato_lista_attesa_resta_aperto(self):
+        with self.assertRaises(ValueError):
+            build.validate([sample(stato="chiuso")])
+        with self.assertRaises(ValueError):
+            build.validate([sample(stato="lista_attesa", fonte="http://example.com/scheda")])
+        build.validate([sample(stato="lista_attesa", fonte="https://example.com/scheda.pdf")])
+        row = build.prepare(
+            [sample(stato="lista_attesa", scadenza="2026-12-01", fonte="https://example.com/scheda.pdf")],
+            TODAY,
+        )[0]
+        self.assertEqual(row["stato"], "lista_attesa")
+        self.assertFalse(row["scaduto"])
+        self.assertTrue(build.is_aperto(row))
+        self.assertNotIn(">Scaduto<", build.badge(row, TODAY))
+        avviso = build.avviso_fondi(row, con_link=True)
+        self.assertIn("Risorse esaurite: nuove domande solo in lista d&#x27;attesa.", avviso)
+        self.assertIn("Verificato il 13/10/2026", avviso)
+        self.assertIn("https://example.com/scheda.pdf", avviso)
+        self.assertIn("Fonte ufficiale", avviso)
+        self.assertEqual(build.avviso_fondi(build.prepare([sample()], TODAY)[0]), "")
+
 
 class Sito(unittest.TestCase):
     @classmethod
@@ -448,18 +469,23 @@ class Sito(unittest.TestCase):
             card = cards["/bando/" + slug]
             summary = card.split('<p class="sum">', 1)[1].split("</p>", 1)[0]
             self.assertNotIn('class="note"', summary)
-            return "".join(re.findall(r'<p class="note">(.*?)</p>', card, re.S))
+            return "".join(re.findall(r'<p class="note"[^>]*>(.*?)</p>', card, re.S))
 
+        self.assertIn("senza garanzia di copertura", note("cciaa-maremma-tirreno-agricoltura-green-2026"))
+        self.assertIn("senza ulteriori risorse da assegnare", note("cciaa-maremma-tirreno-agricoltura-green-2026"))
         for slug in (
             "cciaa-maremma-tirreno-internazionalizzazione-2026",
-            "cciaa-maremma-tirreno-agricoltura-green-2026",
             "cciaa-maremma-tirreno-imprese-vicinato-2026",
+            "cciaa-maremma-tirreno-creazione-impresa-2026",
+            "cciaa-maremma-tirreno-doppia-transizione-2026",
         ):
             text = note(slug)
-            self.assertIn("senza garanzia di copertura", text, slug)
+            self.assertIn("Risorse esaurite: nuove domande solo in lista d&#x27;attesa.", text, slug)
+            self.assertIn("Verificato il 24/10/2026", text, slug)
+            self.assertNotIn("senza garanzia di copertura", text, slug)
         self.assertIn("18.481,60", note("cciaa-maremma-tirreno-internazionalizzazione-2026"))
-        self.assertIn("senza ulteriori risorse da assegnare", note("cciaa-maremma-tirreno-agricoltura-green-2026"))
         self.assertIn("0,00", note("cciaa-maremma-tirreno-imprese-vicinato-2026"))
+        self.assertIn("0,00", note("cciaa-maremma-tirreno-creazione-impresa-2026"))
         poli = note("umbria-poli-innovazione-2026")
         self.assertIn("30/10/2026", poli)
         self.assertIn("30/11/2026", poli)
@@ -468,6 +494,77 @@ class Sito(unittest.TestCase):
         self.assertIn("40.000", turismo)
         self.assertIn("60.000", turismo)
         self.assertIn("50.000", turismo)
+        self.assertIn("48.677,68", turismo)
+        self.assertNotIn("lista d&#x27;attesa", turismo)
+
+    def test_avviso_fondi_esauriti_sulle_schede(self):
+        lista = (
+            "cciaa-maremma-tirreno-creazione-impresa-2026",
+            "cciaa-maremma-tirreno-doppia-transizione-2026",
+            "cciaa-maremma-tirreno-imprese-vicinato-2026",
+            "cciaa-maremma-tirreno-internazionalizzazione-2026",
+        )
+        data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
+        prepared = build.prepare(data, datetime.date(2026, 10, 24))
+        by_id = {b["id"]: b for b in prepared}
+        frase = "Risorse esaurite: nuove domande solo in lista d&#x27;attesa."
+        for slug in lista:
+            row = by_id[slug]
+            self.assertEqual(row["stato"], "lista_attesa", slug)
+            self.assertFalse(row["scaduto"], slug)
+            self.assertTrue(build.is_aperto(row), slug)
+            page = (DIST / "bando" / f"{slug}.html").read_text(encoding="utf-8")
+            scheda = page.split("<article", 1)[1].split('class="related"', 1)[0]
+            self.assertIn(frase, scheda, slug)
+            self.assertIn("Verificato il 24/10/2026", scheda, slug)
+            self.assertIn(">Fonte ufficiale<", scheda, slug)
+            self.assertIn(row["fonte"], scheda, slug)
+            self.assertIn('class="badge"', scheda, slug)
+            self.assertNotIn('class="badge exp"', scheda, slug)
+            self.assertNotIn(">Scaduto<", scheda, slug)
+            self.assertIn('data-avviso="fondi"', scheda, slug)
+        doppia = (DIST / "bando" / "cciaa-maremma-tirreno-doppia-transizione-2026.html").read_text(encoding="utf-8")
+        self.assertIn("12:00 dell&#x27;08/07/2026", doppia)
+        self.assertIn("0,00", doppia)
+        vicinato = (DIST / "bando" / "cciaa-maremma-tirreno-imprese-vicinato-2026.html").read_text(encoding="utf-8")
+        self.assertIn("21/10/2026", vicinato)
+        self.assertNotIn("20/10/2026", vicinato)
+        creazione = (DIST / "bando" / "cciaa-maremma-tirreno-creazione-impresa-2026.html").read_text(encoding="utf-8")
+        self.assertIn("137.094,15", creazione)
+        self.assertIn("0,00", creazione)
+        internaz = (DIST / "bando" / "cciaa-maremma-tirreno-internazionalizzazione-2026.html").read_text(encoding="utf-8")
+        self.assertIn("−18.481,60", internaz)
+        self.assertIn("02/09/2026", internaz)
+        firenze = (DIST / "bando" / "cciaa-firenze-nuove-imprese-2026.html").read_text(encoding="utf-8")
+        self.assertIn("150.000", firenze)
+        self.assertIn("90.000", firenze)
+        self.assertIn("15:00 del 14/09/2026", firenze)
+        self.assertIn("16:00 del 31/12/2026", firenze)
+        self.assertIn("24/10/2026", firenze)
+        self.assertIn("https://www.fi.camcom.gov.it/", firenze)
+        self.assertNotIn("lista d&#x27;attesa", firenze)
+        self.assertNotIn('data-avviso="fondi"', firenze)
+        turismo_page = (DIST / "bando" / "cciaa-maremma-tirreno-turismo-sostenibile-2026.html").read_text(encoding="utf-8")
+        self.assertIn("48.677,68", turismo_page)
+        self.assertIn("60.000", turismo_page)
+        self.assertIn("50.000", turismo_page)
+        self.assertIn("23:59 del 10/11/2026", turismo_page)
+        self.assertIn("Verificato il 24/10/2026", turismo_page)
+        self.assertIn(">Fonte ufficiale<", turismo_page)
+        self.assertNotIn("lista d&#x27;attesa", turismo_page)
+        self.assertNotIn('data-avviso="fondi"', turismo_page)
+        agri = (DIST / "bando" / "cciaa-maremma-tirreno-agricoltura-green-2026.html").read_text(encoding="utf-8")
+        self.assertNotIn('data-avviso="fondi"', agri)
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        for slug in lista:
+            card = next(
+                block for block in re.findall(r'<article class="card\b.*?</article>', home, re.S)
+                if f'href="/bando/{slug}"' in block
+            )
+            self.assertIn('data-scaduto="0"', card, slug)
+            self.assertNotIn('data-scaduto="1"', card, slug)
+            self.assertIn('data-avviso="fondi"', card, slug)
+            self.assertNotIn(">Scaduto<", card, slug)
 
     def test_dominio_pubblico_e_niente_vecchio_percorso(self):
         self.assertEqual(build.BASE, "https://incentiviperte.github.io/")
