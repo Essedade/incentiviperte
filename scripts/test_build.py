@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Controlli sul generatore: dati, etichette, SEO, pulizia dei file obsoleti."""
 import datetime
+import html
 import json
 import pathlib
 import re
@@ -206,7 +207,7 @@ class Sito(unittest.TestCase):
         self.assertIn("Prezzo di lancio: 3 posti, poi 79 €", sponsor)
         self.assertIn(f'href="mailto:{build.FPEF_EMAIL}"', sponsor)
         self.assertIn(
-            "Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € al mese)",
+            "Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € + IVA al mese)",
             sponsor,
         )
         foglio = sponsor.split("<h3>FoglioPEF</h3>", 1)[1].split("<h3>", 1)[0]
@@ -636,9 +637,9 @@ class Sito(unittest.TestCase):
         self.assertIn("49 €", page)
         self.assertIn("79 €", page)
         self.assertIn("LANCIO15", page)
-        self.assertIn("15%", page)
+        self.assertIn(build.CHECKUP_LANCIO, page)
         self.assertIn("30/10/2026", page)
-        self.assertIn("Indicalo nell'email", page)
+        self.assertNotIn("15% di sconto", page)
         self.assertNotIn("Invitalia", page)
         self.assertIsNone(re.search(r"invitalia", build.visible_text(page), re.I))
         self.assertIn('rel="canonical" href="https://incentiviperte.github.io/check-up"', page)
@@ -681,7 +682,7 @@ class Sito(unittest.TestCase):
         self.assertIsNone(re.search(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b", page))
         self.assertIsNone(re.search(r"\b[A-Z]{2}\d{2}(?:\s[A-Z0-9]{4}){3,8}\b", page))
         self.assertIn('<p class="code">LANCIO15</p>', page)
-        self.assertIn("15% di sconto, valido fino al 30/10/2026. Indicalo nell'email.", page)
+        self.assertIn(build.CHECKUP_LANCIO, page)
         self.assertIn(">Invia richiesta<", page)
         self.assertEqual(build.GUMROAD_CHECKUP_BASE_URL, "https://fogliopef.gumroad.com/l/checkup-bandi-base")
         self.assertEqual(build.GUMROAD_CHECKUP_COMPLETO_URL, "https://fogliopef.gumroad.com/l/checkup-bandi-completo")
@@ -719,6 +720,7 @@ class Sito(unittest.TestCase):
             box = text.split('class="bando-checkup"', 1)[1].split("</aside>", 1)[0]
             self.assertIn(phrase, box, path.name)
             self.assertIn("(da 49 €)", box, path.name)
+            self.assertIn(build.BANDO_CHECKUP_IVA, box, path.name)
             self.assertIn("Verifica di ammissibilità, non garantisce il contributo.", box, path.name)
             self.assertIn('href="/check-up"', box, path.name)
             self.assertIn(f'rel="canonical" href="https://incentiviperte.github.io/bando/{path.stem}"', text, path.name)
@@ -726,6 +728,79 @@ class Sito(unittest.TestCase):
             self.assertNotIn("essedade.github.io", text, path.name)
             self.assertIsNone(re.search(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b", text), path.name)
         self.assertNotIn('class="bando-checkup"', (DIST / "index.html").read_text(encoding="utf-8"))
+
+    def test_prezzi_carta_con_iva_e_bonifico_senza(self):
+        """Ogni prezzo pagato con carta ha «+ IVA»; il bonifico resta senza."""
+        page = (DIST / "check-up.html").read_text(encoding="utf-8")
+        main = page.split('<main id="main"', 1)[1].split("</main>", 1)[0]
+        self.assertEqual(main.count(build.CHECKUP_IVA_NOTE), 2)
+        livelli = main.split("<h2>Livelli del servizio</h2>", 1)[1].split('<aside class="promo"', 1)[0]
+        self.assertIn(build.CHECKUP_IVA_NOTE, livelli)
+        paga = main.split('id="paga-ora"', 1)[1].split("</section>", 1)[0]
+        self.assertIn(build.CHECKUP_IVA_NOTE, paga)
+        self.assertIn(build.CHECKUP_LANCIO, main.split('id="paga-ora"', 1)[0])
+        choices = re.findall(r'<div class="pay-choice">(.*?)</div>', paga, re.S)
+        self.assertEqual(len(choices), 4)
+        card_amounts = []
+        wire_amounts = []
+        for chunk in choices:
+            amount = re.search(r'class="pay-amt">(.*?)</span>', chunk).group(1)
+            if "gumroad.com" in chunk:
+                card_amounts.append(amount)
+                self.assertTrue(amount.endswith(" € + IVA"), amount)
+            else:
+                wire_amounts.append(amount)
+                self.assertIn(">Bonifico istantaneo<", chunk)
+                self.assertNotIn("+ IVA", amount)
+                self.assertNotIn("IVA", amount)
+        self.assertEqual(card_amounts, ["49 € + IVA", "79 € + IVA"])
+        self.assertEqual(wire_amounts, ["49 €", "79 €"])
+        hrefs = []
+        for chunk in choices:
+            if "gumroad.com" in chunk:
+                continue
+            hrefs.extend(re.findall(r'href="(mailto:[^"]+)"', chunk))
+        self.assertEqual(len(hrefs), 2)
+        for href in hrefs:
+            parsed = urllib.parse.urlparse(html.unescape(href))
+            query = urllib.parse.parse_qs(parsed.query)
+            subject = query["subject"][0]
+            body = query["body"][0]
+            self.assertIn(build.BONIFICO_IVA, subject)
+            self.assertIn(build.BONIFICO_IVA, body)
+            self.assertNotIn("+ IVA", subject)
+            self.assertNotIn("+ IVA", body)
+            self.assertRegex(body, r"Importo: (?:49|79) €, prezzo senza IVA, prestazione occasionale")
+        desc = re.search(r'<meta name="description" content="([^"]*)"', page).group(1)
+        self.assertIn(build.CHECKUP_IVA_NOTE, html.unescape(desc))
+        raw = page.split('<script type="application/ld+json">', 1)[1].split("</script>", 1)[0]
+        data = json.loads(raw)
+        service = next(node for node in data["@graph"] if node["@type"] == "Service")
+        self.assertIn(build.CHECKUP_IVA_NOTE, service["description"])
+        for offer in service["offers"]:
+            self.assertIn(build.CHECKUP_IVA_NOTE, offer["description"])
+            self.assertNotIn("+", offer["price"])
+        line = build.BANDO_CHECKUP_IVA
+        for path in (DIST / "bando").glob("*.html"):
+            box = path.read_text(encoding="utf-8").split('class="bando-checkup"', 1)[1].split("</aside>", 1)[0]
+            self.assertIn("da 49 €", box, path.name)
+            self.assertIn(line, box, path.name)
+            self.assertNotRegex(box, r"da 49 €\s*\+ IVA", path.name)
+        sponsor = re.sub(r"<[^>]+>", "", (DIST / "sponsor.html").read_text(encoding="utf-8"))
+        for price in ("49 € + IVA al mese", "69 € + IVA al mese", "79 € + IVA al mese", "99 € + IVA al mese"):
+            self.assertIn(price, sponsor)
+        self.assertIn("39 € al mese", sponsor)
+        self.assertNotIn("39 € + IVA", sponsor)
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        self.assertIn("da 49 € + IVA al mese", home)
+        self.assertNotIn("da 49 € al mese", home)
+        for path in DIST.rglob("*.html"):
+            text = path.read_text(encoding="utf-8")
+            if 'class="spp"' in text:
+                self.assertIn(build.SPONSOR_DA, text, path.as_posix())
+                self.assertNotIn("Da 49 € al mese", text, path.as_posix())
+        self.assertNotIn("24 €", page)
+        self.assertNotIn("24 €", sponsor)
 
     def test_privacy_cita_github(self):
         privacy = (DIST / "privacy.html").read_text(encoding="utf-8")
