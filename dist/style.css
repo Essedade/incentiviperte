@@ -55,15 +55,15 @@ button.link{background:none;border:0;padding:8px 0;min-height:44px;font:inherit;
 @media(min-width:700px){.filters{grid-template-columns:1fr 1fr}}
 @media(min-width:1000px){.filters{grid-template-columns:1.3fr 1fr 1fr 1fr;position:sticky;top:72px;z-index:4;box-shadow:0 4px 16px #0001}}
 #filtri{scroll-margin-top:88px}
-.grid{display:grid;gap:14px;grid-template-columns:1fr}
-@media(min-width:700px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(min-width:1000px){.grid{grid-template-columns:repeat(3,1fr)}}
-.card{background:#fff;border:1px solid var(--l);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;position:relative}
+.grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:700px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1000px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.card{background:#fff;border:1px solid var(--l);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;position:relative;min-width:0}
 .card[hidden]{display:none !important}
 .card h3{font-size:1.15rem;margin:8px 0;line-height:1.3}
 .card h3 a{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px}
 .card h3 a::after{content:"";position:absolute;inset:0}
-.amt{font-weight:800;margin:0 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amt{font-weight:800;margin:0 0 8px;min-width:0;overflow-wrap:anywhere}
 .sum{margin:0 0 10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .card .meta{margin-top:auto;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--l);padding-top:10px;font-size:14px;color:var(--m)}
 .ente{color:var(--m)}

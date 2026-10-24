@@ -208,12 +208,22 @@ class Sito(unittest.TestCase):
         foglio = sponsor.split("<h3>FoglioPEF</h3>", 1)[1].split("<h3>", 1)[0]
         entrambi = sponsor.split("<h3>Entrambi i siti</h3>", 1)[1].split("<h2>", 1)[0]
         ipt = sponsor.split("<h3>IncentiviPerTe</h3>", 1)[1].split("<h3>", 1)[0]
-        self.assertIn(build.EMAIL, foglio)
+        self.assertNotIn(build.EMAIL, foglio)
+        self.assertNotIn(build.LINKEDIN, foglio)
+        self.assertNotIn("Contattaci su LinkedIn", foglio)
         self.assertIn(build.FPEF_EMAIL, foglio)
-        self.assertIn("Contatto per FoglioPEF:", foglio)
-        self.assertIn(build.EMAIL, entrambi)
+        self.assertIn(
+            f'Contatto per FoglioPEF: <a class="mail" href="mailto:{build.FPEF_EMAIL}">{build.FPEF_EMAIL}</a>',
+            foglio,
+        )
+        self.assertNotIn(build.EMAIL, entrambi)
+        self.assertNotIn(build.LINKEDIN, entrambi)
+        self.assertNotIn("Contattaci su LinkedIn", entrambi)
         self.assertIn(build.FPEF_EMAIL, entrambi)
-        self.assertIn("Contatto per entrambi i siti:", entrambi)
+        self.assertIn(
+            f'Contatto per entrambi i siti: <a class="mail" href="mailto:{build.FPEF_EMAIL}">{build.FPEF_EMAIL}</a>',
+            entrambi,
+        )
         self.assertIn(build.EMAIL, ipt)
         self.assertNotIn(build.FPEF_EMAIL, ipt)
         self.assertNotIn(build.FPEF_EMAIL, sponsor.split("<footer>", 1)[1])
@@ -552,9 +562,12 @@ class Sito(unittest.TestCase):
         for path in DIST.rglob("*.html"):
             text = path.read_text(encoding="utf-8")
             self.assertNotIn(old, text, path.as_posix())
+            self.assertNotIn("Numeri in ordine per un investimento immobiliare", text, path.as_posix())
             if 'class="fpef"' in text:
                 boxed += 1
                 box = text.split('class="fpef"', 1)[1].split("</aside>", 1)[0]
+                self.assertIn("<h2>FoglioPEF</h2>", box, path.as_posix())
+                self.assertNotIn("Numeri in ordine per un investimento immobiliare", box, path.as_posix())
                 self.assertIn(build.FPEF_DESC, box, path.as_posix())
                 footer = text.split("<footer>", 1)[1]
                 self.assertIn(build.FPEF_DESC.split(": ", 1)[1], footer, path.as_posix())
@@ -570,7 +583,9 @@ class Sito(unittest.TestCase):
             chunk = sponsor.split(f"<h3>{title}</h3>", 1)[1].split(end, 1)[0]
             self.assertIn(f'<a class="btn" href="mailto:{build.FPEF_EMAIL}">Scrivi a FoglioPEF</a>', chunk)
             self.assertNotIn(f'<a class="btn" href="mailto:{build.EMAIL}">', chunk)
-            self.assertIn('class="btn outline"', chunk)
+            self.assertNotIn(build.EMAIL, chunk)
+            self.assertNotIn("Contattaci su LinkedIn", chunk)
+            self.assertNotIn(build.LINKEDIN, chunk)
         ipt = sponsor.split("<h3>IncentiviPerTe</h3>", 1)[1].split("<h3>", 1)[0]
         self.assertIn(f'<a class="btn" href="mailto:{build.EMAIL}">Scrivi a IncentiviPerTe</a>', ipt)
         self.assertNotIn(f'<a class="btn" href="mailto:{build.FPEF_EMAIL}">', ipt)
@@ -751,6 +766,24 @@ process.stdout.write(JSON.stringify({
         self.assertIn("exp", data["detail"]["cls"].split())
         self.assertEqual(data["detail"]["when"], "Scaduto il 01/01/2020")
 
+    def test_importo_non_allarga_la_griglia(self):
+        css = (DIST / "style.css").read_text(encoding="utf-8")
+        amt = css.split(".amt{", 1)[1].split("}", 1)[0]
+        card = css.split(".card{", 1)[1].split("}", 1)[0]
+        grids = re.findall(r"\.grid\{([^}]*)\}", css)
+        contained = "min-width:0" in card and all("minmax(0,1fr)" in rule for rule in grids)
+        if "nowrap" in amt and not contained:
+            self.fail(".amt ha white-space:nowrap senza contenimento della griglia")
+        self.assertNotIn("nowrap", amt)
+        self.assertNotIn("text-overflow", amt)
+        self.assertIn("overflow-wrap:anywhere", amt)
+        self.assertIn("min-width:0", card)
+        self.assertGreaterEqual(len(grids), 3)
+        for rule in grids:
+            self.assertIn("minmax(0,1fr)", rule)
+            self.assertNotIn("grid-template-columns:1fr", rule)
+            self.assertNotRegex(rule, r"repeat\(\d+,1fr\)")
+
     def test_revisione_ux_pulsanti(self):
         css = (DIST / "style.css").read_text(encoding="utf-8")
         self.assertIn(
@@ -764,7 +797,6 @@ process.stdout.write(JSON.stringify({
         self.assertIn(".btn.outline{background:transparent;color:var(--b);border:2px solid var(--b)}", css)
         self.assertIn(".card .tag{background:#E7F4EE;border:0;color:var(--bd)}", css)
         self.assertIn("white-space:nowrap", css)
-        self.assertIn("text-overflow:ellipsis", css)
         home = (DIST / "index.html").read_text(encoding="utf-8")
         aside = re.search(r'<aside class="card spc".*?</aside>', home, re.S).group(0)
         self.assertIn(">Scopri gli spazi sponsor<", aside)
