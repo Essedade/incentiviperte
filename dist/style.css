@@ -124,6 +124,10 @@ nav.crumb li+li::before{content:"›";color:var(--m);margin:0 6px}
 .related span{display:block;font-weight:400;color:var(--m);font-size:14px}
 .offers{display:grid;gap:12px;margin:12px 0}
 @media(min-width:800px){.offers{grid-template-columns:repeat(3,1fr);align-items:stretch}}
+.promo{border:2px dashed var(--b);border-radius:14px;padding:16px 18px;background:#F4FAF7;margin:18px 0}
+.promo p{margin:8px 0 0}
+.promo p:first-child{margin-top:0}
+.promo .code{font-size:1.25rem;font-weight:800;letter-spacing:.04em;color:var(--bd)}
 .offer{border:2px solid #5c6b82;border-radius:14px;padding:16px;background:#fff;display:flex;flex-direction:column;gap:8px}
 .offer.featured{border-color:var(--b);background:#F4FAF7}
 .price{font-size:18px;margin:0}

@@ -780,15 +780,17 @@ def brand_link(pre):
 
 def page(path, title, desc, body, hero="", ld=None, robots=None):
     pre = prefix(path)
-    url = public_url(path)
+    # /check-up-bandi è solo un rimando: canonical e social puntano alla pagina vera.
+    url = public_url("check-up.html") if path == "check-up-bandi.html" else public_url(path)
     full = title if path == "index.html" else f"{title} – {SITE}"
     nav_items = []
     for href, label, kind in NAV:
         cls = f' class="{kind}"' if kind else ""
-        current = ' aria-current="page"' if href == path else ""
+        current = ' aria-current="page"' if href == path or (path == "check-up-bandi.html" and href == "check-up.html") else ""
         nav_items.append(f'<li{cls}><a{cls} href="{site_href(href)}"{current}>{label}</a></li>')
     nav = "".join(nav_items)
-    cta_current = ' aria-current="page"' if path == "check-up.html" else ""
+    cta_current = ' aria-current="page"' if path in ("check-up.html", "check-up-bandi.html") else ""
+    refresh = '<meta http-equiv="refresh" content="0; url=/check-up">' if path == "check-up-bandi.html" else ""
     ld_html = ""
     if ld:
         raw = json.dumps(ld, ensure_ascii=False).replace("<", "\\u003c")
@@ -809,7 +811,7 @@ def page(path, title, desc, body, hero="", ld=None, robots=None):
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>{full_e}</title>
 <meta name="description" content="{desc_e}">
-{robots_html}{canon}{alt}
+{refresh}{robots_html}{canon}{alt}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{SITE}">
 <meta property="og:locale" content="it_IT">
@@ -1004,6 +1006,10 @@ nav.crumb li+li::before{content:"›";color:var(--m);margin:0 6px}
 .related span{display:block;font-weight:400;color:var(--m);font-size:14px}
 .offers{display:grid;gap:12px;margin:12px 0}
 @media(min-width:800px){.offers{grid-template-columns:repeat(3,1fr);align-items:stretch}}
+.promo{border:2px dashed var(--b);border-radius:14px;padding:16px 18px;background:#F4FAF7;margin:18px 0}
+.promo p{margin:8px 0 0}
+.promo p:first-child{margin-top:0}
+.promo .code{font-size:1.25rem;font-weight:800;letter-spacing:.04em;color:var(--bd)}
 .offer{border:2px solid #5c6b82;border-radius:14px;padding:16px;background:#fff;display:flex;flex-direction:column;gap:8px}
 .offer.featured{border-color:var(--b);background:#F4FAF7}
 .price{font-size:18px;margin:0}
@@ -1090,6 +1096,11 @@ def checkup_body():
 <li><strong>Base</strong>, 49 €: {e(CHECKUP_BASE)}.</li>
 <li><strong>Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi. Include tutto il Base, più:<ul>{extra}</ul></li>
 </ul>
+<aside class="promo" aria-label="Codice di lancio">
+<p class="lab">Codice di lancio</p>
+<p class="code">LANCIO15</p>
+<p>15% di sconto, valido fino al 30/10/2026. Indicalo nell'email.</p>
+</aside>
 <h2>Chi lo prepara</h2>
 <p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>
 <form id="checkup-form" class="checkup-form">
@@ -1648,6 +1659,19 @@ def build(today=None):
         freq = "monthly" if path in ("sponsor.html", "check-up.html") else "yearly"
         priority = "0.8" if path in ("sponsor.html", "check-up.html") else "0.3"
         emit(path, page(path, title, desc, body, ld=ld), agg, freq, priority)
+
+    # Il vecchio indirizzo resta raggiungibile, ma non è una seconda pagina: rimanda a /check-up
+    # e non entra nella sitemap.
+    alias = page(
+        "check-up-bandi.html",
+        "Check-up Bandi",
+        "Il Check-up Bandi è sulla pagina Check-up.",
+        "<h1>Check-up Bandi</h1><div class='box'>"
+        "<p>Il Check-up Bandi è su un'unica pagina.</p>"
+        f'<p><a class="btn" href="{site_href("check-up.html")}">Vai al Check-up</a></p></div>',
+    )
+    (D / "check-up-bandi.html").write_text(fill_footer(alias, bandi, prefix("check-up-bandi.html")), encoding="utf-8")
+    written.add("check-up-bandi.html")
 
     # La 404 può essere servita da qualsiasi percorso: i link partono dalla radice.
     # Gli schemi (mailto:, https:) restano intatti.
