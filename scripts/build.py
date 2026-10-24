@@ -90,7 +90,6 @@ NAV = (
     ("chi-siamo.html", "Chi siamo", ""),
     ("sponsor.html", "Sponsor", ""),
     ("contatti.html", "Contatti", ""),
-    ("check-up-bandi.html", "Check-up Bandi", ""),
     ("check-up.html", "Check-up", "cta"),
 )
 KEEP = {
@@ -572,10 +571,6 @@ def checkup_section(pre):
         "per avviare e far crescere l'impresa, tra cui finanziamenti a tasso zero e contributi a fondo perduto "
         "per nuove imprese, startup innovative e investimenti. Il risultato è una relazione scritta.</p>"
         f'<p><a class="btn" href="{site_href("check-up.html")}">Richiedi il Check-up</a></p>'
-        "<p>Per la verifica dell'ammissibilità ai bandi aperti per startup, PMI e professionisti "
-        "(Toscana, Umbria, Emilia-Romagna e incentivi e agevolazioni nazionali) c'è una pagina dedicata: "
-        "Check-up Base 49 € e Check-up Completo 79 €. Il check-up verifica l'ammissibilità ma non garantisce di ottenere il contributo.</p>"
-        f'<p><a class="btn outline" href="{site_href("check-up-bandi.html")}">Check-up Bandi</a></p>'
         "</div></section>"
     )
 
@@ -785,15 +780,17 @@ def brand_link(pre):
 
 def page(path, title, desc, body, hero="", ld=None, robots=None):
     pre = prefix(path)
-    url = public_url(path)
+    # /check-up-bandi è solo un rimando: canonical e social puntano alla pagina vera.
+    url = public_url("check-up.html") if path == "check-up-bandi.html" else public_url(path)
     full = title if path == "index.html" else f"{title} – {SITE}"
     nav_items = []
     for href, label, kind in NAV:
         cls = f' class="{kind}"' if kind else ""
-        current = ' aria-current="page"' if href == path else ""
+        current = ' aria-current="page"' if href == path or (path == "check-up-bandi.html" and href == "check-up.html") else ""
         nav_items.append(f'<li{cls}><a{cls} href="{site_href(href)}"{current}>{label}</a></li>')
     nav = "".join(nav_items)
-    cta_current = ' aria-current="page"' if path == "check-up.html" else ""
+    cta_current = ' aria-current="page"' if path in ("check-up.html", "check-up-bandi.html") else ""
+    refresh = '<meta http-equiv="refresh" content="0; url=/check-up">' if path == "check-up-bandi.html" else ""
     ld_html = ""
     if ld:
         raw = json.dumps(ld, ensure_ascii=False).replace("<", "\\u003c")
@@ -814,7 +811,7 @@ def page(path, title, desc, body, hero="", ld=None, robots=None):
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>{full_e}</title>
 <meta name="description" content="{desc_e}">
-{robots_html}{canon}{alt}
+{refresh}{robots_html}{canon}{alt}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{SITE}">
 <meta property="og:locale" content="it_IT">
@@ -855,7 +852,6 @@ def footer(pre):
     info = (
         ("chi-siamo.html", "Chi siamo"),
         ("contatti.html", "Contatti"),
-        ("check-up-bandi.html", "Check-up Bandi"),
         ("sponsor.html", "Sponsor"),
         ("disclaimer.html", "Disclaimer"),
         ("privacy.html", "Privacy"),
@@ -1010,9 +1006,6 @@ nav.crumb li+li::before{content:"›";color:var(--m);margin:0 6px}
 .related span{display:block;font-weight:400;color:var(--m);font-size:14px}
 .offers{display:grid;gap:12px;margin:12px 0}
 @media(min-width:800px){.offers{grid-template-columns:repeat(3,1fr);align-items:stretch}}
-@media(min-width:800px){.offers.duo{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.offer ul{margin:0;padding-left:1.15rem}
-.offer li{margin:4px 0}
 .promo{border:2px dashed var(--b);border-radius:14px;padding:16px 18px;background:#F4FAF7;margin:18px 0}
 .promo p{margin:8px 0 0}
 .promo p:first-child{margin-top:0}
@@ -1103,6 +1096,11 @@ def checkup_body():
 <li><strong>Base</strong>, 49 €: {e(CHECKUP_BASE)}.</li>
 <li><strong>Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi. Include tutto il Base, più:<ul>{extra}</ul></li>
 </ul>
+<aside class="promo" aria-label="Codice di lancio">
+<p class="lab">Codice di lancio</p>
+<p class="code">LANCIO15</p>
+<p>15% di sconto, valido fino al 30/10/2026. Indicalo nell'email.</p>
+</aside>
 <h2>Chi lo prepara</h2>
 <p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>
 <form id="checkup-form" class="checkup-form">
@@ -1161,97 +1159,6 @@ def checkup_body():
   }});
 }})();
 </script>"""
-
-
-def checkup_bandi_service():
-    return {
-        "@type": "Service",
-        "name": "Check-up Bandi",
-        "serviceType": "Verifica di ammissibilità ai bandi aperti",
-        "description": (
-            "Verifica dell'ammissibilità ai bandi aperti per startup, PMI e professionisti "
-            "in Toscana, Umbria ed Emilia-Romagna e agli incentivi e agevolazioni nazionali. "
-            "Check-up Base, 49 €: bandi aperti adatti al profilo e breve report. "
-            "Check-up Completo, 79 €: include l'analisi dei requisiti e una scaletta dei documenti. "
-            "La consegna è indicativa e non ha un termine garantito. "
-            "Il check-up verifica l'ammissibilità ma non garantisce di ottenere il contributo."
-        ),
-        "url": public_url("check-up-bandi.html"),
-        "provider": org_ld(),
-        "offers": [
-            {
-                "@type": "Offer",
-                "name": "Check-up Base",
-                "price": "49",
-                "priceCurrency": "EUR",
-                "description": (
-                    "Verifica dei bandi aperti adatti al profilo e breve report. "
-                    "Consegna indicativa, senza un termine garantito."
-                ),
-            },
-            {
-                "@type": "Offer",
-                "name": "Check-up Completo",
-                "price": "79",
-                "priceCurrency": "EUR",
-                "description": (
-                    "Include il Check-up Base, più l'analisi dei requisiti e una scaletta dei documenti. "
-                    "Consegna indicativa, senza un termine garantito."
-                ),
-            },
-        ],
-    }
-
-
-def checkup_bandi_body():
-    mailto = "mailto:" + EMAIL + "?subject=" + urllib.parse.quote("Richiesta Check-up Bandi")
-    return f"""<h1>Check-up Bandi</h1><div class="box">
-<p>Il Check-up Bandi è un servizio di verifica dell'ammissibilità ai bandi aperti per startup, PMI e professionisti in Toscana, Umbria ed Emilia-Romagna, e agli incentivi e agevolazioni nazionali.</p>
-<p class="note"><strong>Il check-up verifica l'ammissibilità ma non garantisce di ottenere il contributo.</strong> Il report è un orientamento sulle misure aperte al momento del controllo, in base alle informazioni che ci invii. La domanda, se decidi di presentarla, resta sul testo ufficiale del bando e sull'ente che lo gestisce.</p>
-<h2>Le due fasce</h2>
-<div class="offers duo">
-<div class="offer"><h3>Check-up Base</h3><p class="price"><strong>49 €</strong></p>
-<ul>
-<li>Verifica dei bandi aperti adatti al profilo che descrivi</li>
-<li>Breve report con le misure pertinenti e il motivo della scelta</li>
-</ul>
-<p class="fine">Ambito: Toscana, Umbria, Emilia-Romagna e incentivi e agevolazioni nazionali.</p>
-</div>
-<div class="offer featured"><h3>Check-up Completo</h3><p class="price"><strong>79 €</strong></p>
-<ul>
-<li>Tutto il Check-up Base</li>
-<li>Analisi dei requisiti principali rispetto al profilo</li>
-<li>Scaletta dei documenti da preparare</li>
-</ul>
-<p class="fine">L'analisi resta nei limiti delle informazioni ricevute e delle fonti pubbliche.</p>
-</div>
-</div>
-<p>Per entrambe le fasce la consegna è indicativa: dipende dalla completezza dei dati e dalle richieste già in corso. Non indichiamo un termine certo.</p>
-<h2>Come richiederlo</h2>
-<p>Scrivi a {mail_link()}. Il pulsante apre l'email con l'oggetto già impostato su «Richiesta Check-up Bandi».</p>
-<p><a class="btn" href="{e(mailto)}">Richiedi il Check-up Bandi</a></p>
-<p>Nel messaggio indica:</p>
-<ul>
-<li>Settore</li>
-<li>Regione</li>
-<li>Forma giuridica</li>
-<li>Progetto</li>
-<li>Importo indicativo</li>
-<li>Fascia scelta, Base o Completo</li>
-<li>Il codice di lancio, se vuoi lo sconto</li>
-</ul>
-<h2>Pagamento</h2>
-<p>Il pagamento è con bonifico, dopo il primo contatto. Nella risposta confermiamo la fascia e inviamo le coordinate.</p>
-<aside class="promo" aria-label="Codice di lancio">
-<p class="lab">Codice di lancio</p>
-<p class="code">LANCIO15</p>
-<p>15% di sconto, valido fino al 30/10/2026. Indica il codice nell'email. Lo sconto si applica alla fascia scelta, Base 49 € o Completo 79 €, ed è confermato nella risposta insieme al bonifico.</p>
-</aside>
-<h2>Chi prepara il check-up</h2>
-<p>Dietro il servizio c'è un team di esperti professionisti con esperienza pluriennale.</p>
-<h2>Altri collegamenti</h2>
-<p>Gli spazi pubblicitari sono sulla <a href="/sponsor">pagina Sponsor</a>. Per i modelli Excel su misura: {ext(FPEF, "FoglioPEF")}.</p>
-</div>"""
 
 
 def static_pages(today):
@@ -1315,12 +1222,6 @@ def static_pages(today):
             "Check-up Bandi: relazione scritta sui bandi adatti. Base 49 € entro 5 giorni lavorativi, Completo 79 € entro 7-10 giorni lavorativi.",
             checkup_body(),
             False,
-        ),
-        "check-up-bandi.html": (
-            "Check-up Bandi",
-            "Verifica di ammissibilità ai bandi per startup, PMI e professionisti in Toscana, Umbria, Emilia-Romagna e agli incentivi nazionali. Base 49 €, Completo 79 €.",
-            checkup_bandi_body(),
-            True,
         ),
         "cookie.html": (
             "Cookie policy",
@@ -1571,8 +1472,7 @@ def build(today=None):
         f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(sum(1 for b in att if is_aperto(b)), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
-        '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a>'
-        '<a class="btn ghost" href="/check-up-bandi">Check-up Bandi</a></p>'
+        '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>'
         "</div></section>"
     )
     home_desc = clip(
@@ -1756,12 +1656,22 @@ def build(today=None):
         if path == "check-up.html":
             webpage = {k: v for k, v in ld.items() if k != "@context"}
             ld = {"@context": "https://schema.org", "@graph": [webpage, checkup_service()]}
-        elif path == "check-up-bandi.html":
-            webpage = {k: v for k, v in ld.items() if k != "@context"}
-            ld = {"@context": "https://schema.org", "@graph": [webpage, checkup_bandi_service()]}
-        freq = "monthly" if path in ("sponsor.html", "check-up.html", "check-up-bandi.html") else "yearly"
-        priority = "0.8" if path in ("sponsor.html", "check-up.html", "check-up-bandi.html") else "0.3"
+        freq = "monthly" if path in ("sponsor.html", "check-up.html") else "yearly"
+        priority = "0.8" if path in ("sponsor.html", "check-up.html") else "0.3"
         emit(path, page(path, title, desc, body, ld=ld), agg, freq, priority)
+
+    # Il vecchio indirizzo resta raggiungibile, ma non è una seconda pagina: rimanda a /check-up
+    # e non entra nella sitemap.
+    alias = page(
+        "check-up-bandi.html",
+        "Check-up Bandi",
+        "Il Check-up Bandi è sulla pagina Check-up.",
+        "<h1>Check-up Bandi</h1><div class='box'>"
+        "<p>Il Check-up Bandi è su un'unica pagina.</p>"
+        f'<p><a class="btn" href="{site_href("check-up.html")}">Vai al Check-up</a></p></div>',
+    )
+    (D / "check-up-bandi.html").write_text(fill_footer(alias, bandi, prefix("check-up-bandi.html")), encoding="utf-8")
+    written.add("check-up-bandi.html")
 
     # La 404 può essere servita da qualsiasi percorso: i link partono dalla radice.
     # Gli schemi (mailto:, https:) restano intatti.

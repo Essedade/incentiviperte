@@ -124,9 +124,6 @@ nav.crumb li+li::before{content:"›";color:var(--m);margin:0 6px}
 .related span{display:block;font-weight:400;color:var(--m);font-size:14px}
 .offers{display:grid;gap:12px;margin:12px 0}
 @media(min-width:800px){.offers{grid-template-columns:repeat(3,1fr);align-items:stretch}}
-@media(min-width:800px){.offers.duo{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.offer ul{margin:0;padding-left:1.15rem}
-.offer li{margin:4px 0}
 .promo{border:2px dashed var(--b);border-radius:14px;padding:16px 18px;background:#F4FAF7;margin:18px 0}
 .promo p{margin:8px 0 0}
 .promo p:first-child{margin-top:0}

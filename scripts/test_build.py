@@ -150,7 +150,7 @@ class Sito(unittest.TestCase):
         self.assertNotIn("Disallow: /", robots)
         ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
         locs = [el.text for el in ET.parse(DIST / "sitemap.xml").findall("s:url/s:loc", ns)]
-        for loc in (BASE, BASE + "nazionale", BASE + "toscana", BASE + "settore/startup", BASE + "settore/pmi", BASE + "sponsor", BASE + "check-up", BASE + "check-up-bandi"):
+        for loc in (BASE, BASE + "nazionale", BASE + "toscana", BASE + "settore/startup", BASE + "settore/pmi", BASE + "sponsor", BASE + "check-up"):
             self.assertIn(loc, locs)
         self.assertNotIn(".html", "\n".join(locs))
         for loc in locs:
@@ -624,39 +624,42 @@ class Sito(unittest.TestCase):
             self.assertNotRegex(title + " " + desc, r"\d+ bandi aperti")
             self.assertIsNone(re.search(r'''(?:href|src)="(?!https?:|mailto:)[^"]*\.html''', text), path.name)
 
-    def test_pagina_check_up_bandi(self):
-        path = DIST / "check-up-bandi.html"
-        self.assertTrue(path.is_file())
-        page = path.read_text(encoding="utf-8")
+    def test_checkup_codice_lancio_e_rimando(self):
+        page = (DIST / "check-up.html").read_text(encoding="utf-8")
         self.assertIn("49 €", page)
         self.assertIn("79 €", page)
+        self.assertIn("LANCIO15", page)
+        self.assertIn("15%", page)
+        self.assertIn("30/10/2026", page)
+        self.assertIn("Indicalo nell'email", page)
         self.assertNotIn("Invitalia", page)
         self.assertIsNone(re.search(r"invitalia", build.visible_text(page), re.I))
+        self.assertIn('rel="canonical" href="https://incentiviperte.github.io/check-up"', page)
+        self.assertIn('property="og:url" content="https://incentiviperte.github.io/check-up"', page)
         self.assertIn(
-            'rel="canonical" href="https://incentiviperte.github.io/check-up-bandi"',
+            'mailto:incentiviperte.team@gmail.com?subject=" + encodeURIComponent("Richiesta Check-up Bandi")',
             page,
         )
-        self.assertIn(
-            'property="og:url" content="https://incentiviperte.github.io/check-up-bandi"',
-            page,
-        )
-        self.assertIn("LANCIO15", page)
-        self.assertIn("30/10/2026", page)
-        self.assertIn(
-            "mailto:incentiviperte.team@gmail.com?subject=Richiesta%20Check-up%20Bandi",
-            page,
-        )
-        self.assertIn('href="/sponsor"', page)
-        self.assertIn("https://fogliopef.github.io", page)
-        self.assertIn("team di esperti professionisti con esperienza pluriennale", page)
-        self.assertNotIn("<form", page)
-        self.assertNotIn("<script src=", page)
+        alias = (DIST / "check-up-bandi.html").read_text(encoding="utf-8")
+        self.assertIn('http-equiv="refresh" content="0; url=/check-up"', alias)
+        self.assertIn('href="/check-up">Vai al Check-up</a>', alias)
+        self.assertIn('rel="canonical" href="https://incentiviperte.github.io/check-up"', alias)
+        self.assertIn('property="og:url" content="https://incentiviperte.github.io/check-up"', alias)
+        self.assertNotIn("Invitalia", alias)
+        self.assertNotIn("LANCIO15", alias)
         sitemap = (DIST / "sitemap.xml").read_text(encoding="utf-8")
-        self.assertIn("<loc>https://incentiviperte.github.io/check-up-bandi</loc>", sitemap)
+        self.assertIn("<loc>https://incentiviperte.github.io/check-up</loc>", sitemap)
+        self.assertNotIn("check-up-bandi", sitemap)
         home = (DIST / "index.html").read_text(encoding="utf-8")
-        self.assertIn('href="/check-up-bandi">Check-up Bandi</a>', home)
-        nav = home.split("<nav", 1)[1].split("</nav>", 1)[0]
-        self.assertIn('href="/check-up-bandi">Check-up Bandi</a>', nav)
+        self.assertNotIn("/check-up-bandi", home)
+        self.assertIn('href="/check-up">Richiedi il Check-up</a>', home)
+        nav = home.split('<nav class="dnav"', 1)[1].split("</nav>", 1)[0]
+        self.assertIn('href="/check-up">Check-up</a>', nav)
+        self.assertNotIn("check-up-bandi", nav)
+        self.assertEqual(nav.count('href="/check-up"'), 1)
+        footer = home.split("<footer>", 1)[1]
+        self.assertNotIn("check-up-bandi", footer)
+        self.assertNotIn('href="/check-up"', footer)
 
     def test_privacy_cita_github(self):
         privacy = (DIST / "privacy.html").read_text(encoding="utf-8")
