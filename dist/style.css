@@ -16,7 +16,9 @@ header .wrap{max-width:1180px}
 header.top{background:#fff;border-bottom:1px solid var(--l);position:sticky;top:0;z-index:5}
 .bar{display:flex;align-items:center;justify-content:space-between;min-height:64px;gap:12px;position:relative}
 .brand{display:flex;align-items:center;min-height:44px;min-width:0;color:var(--t);text-decoration:none}
-.brand img{display:block;height:auto;max-height:40px;width:auto;max-width:min(222px,calc(100vw - 230px))}
+.brand picture{display:block;min-width:0;max-width:100%}
+.brand img{display:block;height:auto;max-height:40px;width:auto;max-width:min(222px,100%)}
+@media(max-width:1179px){.brand{flex:1 1 auto}}
 nav ul{list-style:none;margin:0;padding:0;display:flex;gap:2px;flex-wrap:wrap}
 nav a{display:flex;align-items:center;min-height:44px;padding:8px;border-radius:8px;text-decoration:none;color:var(--t);font-weight:700;font-size:15px}
 .dnav ul{flex-wrap:nowrap;width:100%;align-items:center}

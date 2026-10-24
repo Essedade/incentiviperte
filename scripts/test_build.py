@@ -521,7 +521,10 @@ class Sito(unittest.TestCase):
         self.assertIn('alt="IncentiviPerTe"', home)
         self.assertIn("logo-header.svg", home)
         self.assertIn('height="40"', home)
-        for icon in ("favicon.svg", "favicon-16.png", "favicon-32.png", "apple-touch-icon.png", "favicon-512.png"):
+        for icon in (
+            "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-48.png",
+            "apple-touch-icon.png", "favicon-512.png", "logo-header-80.png", "logo-header-160.png",
+        ):
             self.assertIn(icon, home)
             self.assertTrue((DIST / icon).is_file(), icon)
         self.assertIn('content="#0F7A5C"', home)
@@ -613,6 +616,69 @@ class Sito(unittest.TestCase):
             desc = re.search(r'<meta name="description" content="([^"]*)"', text).group(1)
             self.assertNotRegex(title + " " + desc, r"\d+ bandi aperti")
             self.assertIsNone(re.search(r'''(?:href|src)="(?!https?:|mailto:)[^"]*\.html''', text), path.name)
+
+    def test_marchio_proposta_a(self):
+        """Header e favicon di ogni pagina usano i file del marchio A."""
+        import hashlib
+        import struct
+
+        icons = (
+            '<link rel="icon" href="{pre}favicon.svg" type="image/svg+xml">',
+            '<link rel="icon" href="{pre}favicon-48.png" type="image/png" sizes="48x48">',
+            '<link rel="icon" href="{pre}favicon-32.png" type="image/png" sizes="32x32">',
+            '<link rel="icon" href="{pre}favicon-16.png" type="image/png" sizes="16x16">',
+            '<link rel="apple-touch-icon" href="{pre}apple-touch-icon.png" sizes="180x180">',
+            '<link rel="icon" href="{pre}favicon-512.png" type="image/png" sizes="512x512">',
+        )
+        brand = (
+            '<source srcset="{pre}logo-header.svg" type="image/svg+xml">'
+            '<img src="{pre}logo-header-80.png" '
+            'srcset="{pre}logo-header-80.png 1x, {pre}logo-header-160.png 2x" '
+            'alt="IncentiviPerTe" width="222" height="40">'
+        )
+        expected = {
+            "logo-header.svg": "03b6e4bd4d7e735e879336b4f07a37184aea5d44aaf82b512f8537237d88d6ab",
+            "logo-header-80.png": "42948c7882d290a3771e3363fef57701604ff210dafca67566913a439161399c",
+            "logo-header-160.png": "8b03bc1a8819f7a35d3d720f86da14210f05962a43552755c3a686c551e8f552",
+            "favicon.svg": "d37b06dcfbea1e81dc4a8eaa6969a838b84fdf84cd56ae0b3df3fe95d3b400ec",
+            "favicon-16.png": "1837cf049ee26e751edf483a1e7af468c5075c3ef45880050d927074d5a5aa97",
+            "favicon-32.png": "127cc7557248100729280db89fa8ccfb7d2d673b6810010ed7f769c0c5e3c443",
+            "favicon-48.png": "a051afe7f8777ddd263284fd476e365612a39e886d758e3d545cd3a37ea7177f",
+            "apple-touch-icon.png": "61990e384527a791c0ba0972a9cd0686d90d29f78c7de986ba42801dbb23a70b",
+            "favicon-512.png": "ee6ae2045cd043586d72c742cb4f3a1af9827a08924fb9e4d9a402c262dd429c",
+            "og.png": "2f5f77e70348259d0a5413d07755fc1aff0bf925588bbd7d69044575331b783e",
+        }
+        sizes = {
+            "favicon-16.png": (16, 16),
+            "favicon-32.png": (32, 32),
+            "favicon-48.png": (48, 48),
+            "apple-touch-icon.png": (180, 180),
+            "favicon-512.png": (512, 512),
+            "logo-header-80.png": (445, 80),
+            "logo-header-160.png": (889, 160),
+            "og.png": (1200, 630),
+        }
+        for name, digest in expected.items():
+            data = (DIST / name).read_bytes()
+            self.assertEqual(hashlib.sha256(data).hexdigest(), digest, name)
+            self.assertEqual((ROOT / "assets" / name).read_bytes(), data, name)
+            if name in sizes:
+                self.assertEqual(struct.unpack(">II", data[16:24]), sizes[name], name)
+        header = (DIST / "logo-header.svg").read_text(encoding="utf-8")
+        self.assertIn("#0F7A5C", header)
+        self.assertIn("#14213D", header)
+        pages = list(DIST.rglob("*.html"))
+        self.assertGreater(len(pages), 10)
+        for path in pages:
+            text = path.read_text(encoding="utf-8")
+            rel = path.relative_to(DIST).as_posix()
+            # La 404 è servita da qualunque percorso: gli asset partono dalla radice.
+            pre = "/" if rel == "404.html" else "../" * rel.count("/")
+            for icon in icons:
+                self.assertIn(icon.format(pre=pre), text, rel)
+            self.assertIn(brand.format(pre=pre), text, rel)
+            self.assertIn('property="og:image" content="https://incentiviperte.pages.dev/og.png"', text, rel)
+            self.assertIn('name="twitter:image" content="https://incentiviperte.pages.dev/og.png"', text, rel)
 
     def test_descrizione_fogliopef_e_mailto_sponsor(self):
         old = "FoglioPEF è un foglio Excel"
