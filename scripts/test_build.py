@@ -377,7 +377,8 @@ class Sito(unittest.TestCase):
 
     def test_bandi_20_ottobre_e_conto_alla_rovescia(self):
         home = (DIST / "index.html").read_text(encoding="utf-8")
-        self.assertIn("Aggiornato il 20/10/2026", home)
+        self.assertIn("Aggiornato il 24/10/2026", home)
+        self.assertNotIn("Aggiornato il 20/10/2026", home)
         self.assertNotIn("Aggiornato il 15/10/2026", home)
         self.assertIn('getAttribute("data-scadenza")', home)
         self.assertIn('getAttribute("data-apre")', home)
@@ -400,12 +401,34 @@ class Sito(unittest.TestCase):
         self.assertIn("Camera di Commercio di Arezzo e Siena", arezzo)
         self.assertNotIn("Arezzo-Siena", arezzo)
         data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
-        self.assertEqual(len(data), 29)
+        self.assertEqual(len(data), 45)
         aree = {}
         for row in data:
             aree[row["regione"]] = aree.get(row["regione"], 0) + 1
-        self.assertEqual(aree, {"Nazionale": 8, "Toscana": 10, "Umbria": 4, "Emilia-Romagna": 7})
-        self.assertTrue(all(row["ultimo_controllo"] == "2026-10-20" for row in data))
+        self.assertEqual(aree, {"Nazionale": 8, "Toscana": 16, "Umbria": 4, "Emilia-Romagna": 17})
+        self.assertTrue(all(row["ultimo_controllo"] == "2026-10-24" for row in data))
+        oggi = datetime.date(2026, 10, 24)
+        prepared = build.prepare(data, oggi)
+        self.assertEqual(sum(1 for b in prepared if b["scaduto"]), 1)
+        self.assertEqual(sum(1 for b in prepared if b["in_arrivo"]), 2)
+        self.assertEqual(sum(1 for b in prepared if build.is_aperto(b)), 42)
+        toscana = [b for b in prepared if b["regione"] == "Toscana"]
+        emilia = [b for b in prepared if b["regione"] == "Emilia-Romagna"]
+        self.assertEqual(len(toscana), 16)
+        self.assertEqual(sum(1 for b in toscana if b["scaduto"]), 1)
+        self.assertEqual(sum(1 for b in emilia if b["in_arrivo"]), 2)
+        self.assertEqual(sum(1 for b in prepared if b["regione"] == "Umbria"), 4)
+        self.assertEqual(sum(1 for b in prepared if b["regione"] == "Nazionale"), 8)
+        eco = next(b for b in prepared if b["id"] == "economia-circolare-privati")
+        self.assertTrue(eco["scaduto"])
+        self.assertEqual(eco["scadenza"], "2026-10-23")
+        for bid, when in (
+            ("cciaa-modena-occupazione-giovanile-2026", "Apre il 02/11/2026"),
+            ("eureca-er-tutti-settori-2026", "Apre il 02/12/2026"),
+        ):
+            page = (DIST / "bando" / f"{bid}.html").read_text(encoding="utf-8")
+            self.assertIn(when, page)
+            self.assertTrue(next(b for b in prepared if b["id"] == bid)["in_arrivo"])
 
     def test_dominio_cloudflare_e_niente_vecchio_percorso(self):
         self.assertEqual(build.BASE, "https://incentiviperte.pages.dev/")
@@ -547,7 +570,7 @@ class Sito(unittest.TestCase):
         self.assertIn("nostra pagina LinkedIn", sponsor)
         self.assertNotIn("Scrivi a messaggi della", sponsor)
         donne = (DIST / "settore" / "donne.html").read_text(encoding="utf-8")
-        self.assertIn("1 bando aperto", donne)
+        self.assertIn("6 bandi aperti", donne)
         self.assertNotIn("1 bandi", donne)
         for path in DIST.rglob("*.html"):
             text = path.read_text(encoding="utf-8")

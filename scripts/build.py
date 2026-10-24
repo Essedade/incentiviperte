@@ -149,6 +149,11 @@ def site_href(file_path, query="", fragment=""):
     return url
 
 
+def is_aperto(b):
+    """Un bando in arrivo ha il badge «Apre il …» e non entra nel conto degli aperti."""
+    return not b.get("scaduto") and not b.get("in_arrivo")
+
+
 def qty(n, one, many):
     return f"{n} {one if n == 1 else many}"
 
@@ -380,11 +385,18 @@ BADGE_JS = r"""<script>
   if (!list) return;
   var cards = list.querySelectorAll("article.card");
   var expired = [];
+  var open = 0;
   for (var k = 0; k < cards.length; k++) {
-    if (cards[k].getAttribute("data-scaduto") === "1") expired.push(cards[k]);
+    var card = cards[k];
+    if (card.getAttribute("data-scaduto") === "1") {
+      expired.push(card);
+      continue;
+    }
+    var apreCard = card.getAttribute("data-apre") || "";
+    if (apreCard && daysLeft(apreCard, start) > 0) continue;
+    open++;
   }
   for (var n = 0; n < expired.length; n++) list.appendChild(expired[n]);
-  var open = cards.length - expired.length;
   var label = open === 1 ? "1 bando aperto" : open + " bandi aperti";
   var counts = document.querySelectorAll("[data-aperti]");
   for (var c = 0; c < counts.length; c++) counts[c].textContent = label;
@@ -1367,7 +1379,7 @@ def build(today=None):
     hero = (
         '<section class="hero"><div class="wrap">'
         "<h1>Bandi e incentivi per startup e PMI</h1>"
-        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(len(att), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
+        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(sum(1 for b in att if is_aperto(b)), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
         '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>'
@@ -1418,7 +1430,7 @@ def build(today=None):
         h1_fix = "Bandi nazionali aperti" if reg == "Nazionale" else f"Bandi aperti in {reg}"
         body = (
             crumbs([("index.html", "Bandi"), ("", label)], "")
-            + f"<h1>{e(h1_fix)}</h1><p>{e(INTRO_REG[reg])} In elenco: <span data-aperti>{qty(len(rows), 'bando aperto', 'bandi aperti')}</span>.</p>"
+            + f"<h1>{e(h1_fix)}</h1><p>{e(INTRO_REG[reg])} In elenco: <span data-aperti>{qty(sum(1 for b in rows if is_aperto(b)), 'bando aperto', 'bandi aperti')}</span>.</p>"
             + f'<p><a href="{site_href("index.html", urllib.parse.urlencode({"area": reg}), "filtri")}">Trova il tuo bando</a></p>'
             + listing
             + (f'<section aria-labelledby="dest-qui"><h2 id="dest-qui">Destinatari</h2>{sector_pills}</section>' if sector_pills else "")
@@ -1448,7 +1460,7 @@ def build(today=None):
         body = (
             crumbs([("index.html", "Bandi"), ("", name)], "../")
             + f"<h1>Bandi aperti per {e(name)}</h1>"
-            + f"<p>{e(intro)} In elenco: <span data-aperti>{qty(len(rows), 'bando aperto', 'bandi aperti')}</span>, aree {e(where)}.</p>"
+            + f"<p>{e(intro)} In elenco: <span data-aperti>{qty(sum(1 for b in rows if is_aperto(b)), 'bando aperto', 'bandi aperti')}</span>, aree {e(where)}.</p>"
             + f'<p><a href="{site_href("index.html", urllib.parse.urlencode({"dest": name}), "filtri")}">Trova il tuo bando</a></p>'
             + listing
             + '<section aria-labelledby="altre-aree"><h2 id="altre-aree">Aree</h2>'
