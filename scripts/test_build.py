@@ -596,7 +596,7 @@ class Sito(unittest.TestCase):
         for text in (privacy, cookie):
             self.assertIn("Cloudflare Pages (Cloudflare, Inc.)", text)
             self.assertIn("https://www.cloudflare.com/privacypolicy/", text)
-            self.assertNotIn("GitHub", text)
+        self.assertNotIn("GitHub", cookie)
         sponsor = (DIST / "sponsor.html").read_text(encoding="utf-8")
         self.assertIn("fogliopef.team@gmail.com", sponsor)
         self.assertNotIn("foglioPEF.team", sponsor)
@@ -613,6 +613,10 @@ class Sito(unittest.TestCase):
             desc = re.search(r'<meta name="description" content="([^"]*)"', text).group(1)
             self.assertNotRegex(title + " " + desc, r"\d+ bandi aperti")
             self.assertIsNone(re.search(r'''(?:href|src)="(?!https?:|mailto:)[^"]*\.html''', text), path.name)
+
+    def test_privacy_cita_github(self):
+        privacy = (DIST / "privacy.html").read_text(encoding="utf-8")
+        self.assertIn("GitHub", privacy)
 
     def test_descrizione_fogliopef_e_mailto_sponsor(self):
         old = "FoglioPEF è un foglio Excel"
