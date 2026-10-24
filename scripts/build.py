@@ -47,6 +47,17 @@ CHECKUP_COMPLETO = (
     "report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi, "
     "con tutto il Base più " + ", ".join(CHECKUP_EXTRA[:-1]) + " e " + CHECKUP_EXTRA[-1]
 )
+CHECKUP_IVA_NOTE = (
+    "Con bonifico istantaneo: Base 49 €, Completo 79 € (prestazione occasionale, senza IVA). "
+    "Con carta su Gumroad: al prezzo si aggiunge l'IVA del tuo Paese, calcolata e versata da Gumroad."
+)
+CHECKUP_LANCIO = (
+    "Con LANCIO15 fino al 30/10/2026: Base 41,65 €, Completo 67,15 €. "
+    "Con bonifico il prezzo è senza IVA; con carta su Gumroad si aggiunge l'IVA."
+)
+BANDO_CHECKUP_IVA = "Con bonifico senza IVA; con carta su Gumroad + IVA."
+BONIFICO_IVA = "prezzo senza IVA, prestazione occasionale"
+SPONSOR_DA = "Da 49 € + IVA al mese · prezzo di lancio"
 REG = ["Nazionale", "Toscana", "Umbria", "Emilia-Romagna"]
 REQUIRED = (
     "id", "titolo", "ente", "regione", "destinatari", "scadenza", "nota_scadenza",
@@ -92,7 +103,7 @@ FAQ = (
     ("Come segnalo un bando o un errore?",
      "Dalla pagina Contatti, con un messaggio alla Pagina LinkedIn IncentiviPerTe o all'indirizzo incentiviperte.team@gmail.com."),
     ("Posso comparire sul sito con il mio studio?",
-     "Sì. Uno spazio su IncentiviPerTe parte da 49 € al mese, prezzo di lancio. Importi, regole ed etichetta Sponsorizzato sono sulla pagina Sponsor."),
+     "Sì. Uno spazio su IncentiviPerTe parte da 49 € + IVA al mese, prezzo di lancio. Importi, regole ed etichetta Sponsorizzato sono sulla pagina Sponsor."),
     ("Che cos'è il Check-up Bandi?",
      "È un controllo personalizzato di quali bandi regionali e nazionali sono adatti alla tua impresa: tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali per avviare e far crescere l'impresa. Ricevi una relazione scritta. Per richiederlo usa la pagina Check-up."),
 )
@@ -586,7 +597,7 @@ def sponsor_card(pre):
     return (
         '<aside class="card spc" aria-label="Spazio sponsor"><span class="lab">Sponsorizzato</span>'
         '<p class="spt">Il tuo studio qui, tra chi cerca un finanziamento</p>'
-        '<p class="spp">Da 49 € al mese · prezzo di lancio</p>'
+        f'<p class="spp">{SPONSOR_DA}</p>'
         f'<a class="btn outline" href="{site_href("sponsor.html")}">Scopri gli spazi sponsor</a></aside>'
     )
 
@@ -628,6 +639,7 @@ def bando_checkup_box():
         "li verifichiamo per la tua impresa con il "
         f'<a href="{site_href("check-up.html")}">Check-up Bandi</a> '
         "(da 49 €). Verifica di ammissibilità, non garantisce il contributo.</p>"
+        f"<p>{BANDO_CHECKUP_IVA}</p>"
         "</aside>"
     )
 
@@ -1067,6 +1079,7 @@ a.tag.area:hover{background:var(--bd);color:#fff}
 .checkup-ask h2{margin-top:0}
 .bando-checkup{background:#F4FAF7;border:1px solid var(--b);border-radius:14px;padding:12px 14px;margin:12px 0}
 .bando-checkup p{margin:0}
+.bando-checkup p+p{margin-top:8px}
 dl.kv{display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:8px 16px;margin:12px 0}
 dl.kv dt{font-weight:800;color:var(--m)}
 dl.kv dd{margin:0}
@@ -1127,10 +1140,11 @@ footer nav{margin-top:8px}
 .paga h2{margin-top:0}
 .pay-level{background:#fff;border:1px solid var(--l);border-radius:12px;padding:12px 14px;margin:12px 0}
 .pay-level h3{margin:0 0 4px;font-size:1.05rem}
-.pay-amt{font-weight:800;color:var(--b);margin:0 0 8px}
-.pay-actions{display:flex;flex-wrap:wrap;gap:8px}
+.pay-amt{font-weight:800;color:var(--b);margin:0}
+.pay-actions{display:flex;flex-wrap:wrap;gap:12px 20px}
+.pay-choice{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .pay-actions .btn{text-align:center}
-@media(max-width:600px){.pay-actions{flex-direction:column}.pay-actions .btn{width:100%}}
+@media(max-width:600px){.pay-actions{flex-direction:column;align-items:stretch}.pay-choice{align-items:stretch}.pay-actions .btn{width:100%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 """
 
@@ -1142,7 +1156,8 @@ def checkup_service():
         "serviceType": "Relazione scritta sui bandi adatti all'impresa",
         "description": (
             "Relazione scritta sui bandi adatti all'impresa. "
-            f"Base, 49 €: {CHECKUP_BASE}. Completo, 79 €: {CHECKUP_COMPLETO}."
+            f"Base, 49 €: {CHECKUP_BASE}. Completo, 79 €: {CHECKUP_COMPLETO}. "
+            f"{CHECKUP_IVA_NOTE}"
         ),
         "url": public_url("check-up.html"),
         "provider": org_ld(),
@@ -1152,14 +1167,14 @@ def checkup_service():
                 "name": "Base",
                 "price": "49",
                 "priceCurrency": "EUR",
-                "description": f"Base, 49 €: {CHECKUP_BASE}.",
+                "description": f"Base, 49 €: {CHECKUP_BASE}. {CHECKUP_IVA_NOTE}",
             },
             {
                 "@type": "Offer",
                 "name": "Completo",
                 "price": "79",
                 "priceCurrency": "EUR",
-                "description": f"Completo, 79 €: {CHECKUP_COMPLETO}.",
+                "description": f"Completo, 79 €: {CHECKUP_COMPLETO}. {CHECKUP_IVA_NOTE}",
             },
         ],
     }
@@ -1183,11 +1198,11 @@ def mailto_href(subject, body):
 
 
 def bonifico_link(level, product, price):
-    subject = f"Richiesta Check-up {level} – pagamento con bonifico istantaneo"
+    subject = f"Richiesta Check-up {level} – pagamento con bonifico istantaneo, {BONIFICO_IVA}"
     body = (
         f"Livello: {level}\n"
         f"Prodotto: {product}\n"
-        f"Importo: {price}\n"
+        f"Importo: {price}, {BONIFICO_IVA}\n"
         "Codice di lancio: LANCIO15\n"
     )
     return f'<a class="btn" href="{e(mailto_href(subject, body))}">Bonifico istantaneo</a>'
@@ -1204,14 +1219,22 @@ def card_pay_link(url):
     return ext(url, CARD_PAY_LABEL, "btn outline")
 
 
+def pay_choice(link_html, amount):
+    return (
+        '<div class="pay-choice">'
+        f"{link_html}"
+        f'<span class="pay-amt">{e(amount)}</span>'
+        "</div>"
+    )
+
+
 def pay_level(product, price, level, url):
     return (
         '<div class="pay-level">'
         f"<h3>{e(product)}</h3>"
-        f'<p class="pay-amt">{e(price)}</p>'
         '<div class="pay-actions">'
-        f"{bonifico_link(level, product, price)}"
-        f"{card_pay_link(url)}"
+        f"{pay_choice(bonifico_link(level, product, price), price)}"
+        f"{pay_choice(card_pay_link(url), price + ' + IVA')}"
         "</div></div>"
     )
 
@@ -1221,6 +1244,7 @@ def checkup_pay_section():
         '<section class="paga" aria-labelledby="paga-ora">'
         '<h2 id="paga-ora">Paga ora</h2>'
         "<p>Il Check-up è una verifica di ammissibilità e non garantisce l'ottenimento del contributo.</p>"
+        f"<p>{CHECKUP_IVA_NOTE}</p>"
         + pay_level(CHECKUP_PRODUCT_BASE, "49 €", "Base", GUMROAD_CHECKUP_BASE_URL)
         + pay_level(CHECKUP_PRODUCT_COMPLETO, "79 €", "Completo", GUMROAD_CHECKUP_COMPLETO_URL)
         + "<p>Bonifico istantaneo: l'IBAN non è pubblicato sul sito. "
@@ -1245,10 +1269,11 @@ def checkup_body():
 <li><strong>Base</strong>, 49 €: {e(CHECKUP_BASE)}.</li>
 <li><strong>Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi. Include tutto il Base, più:<ul>{extra}</ul></li>
 </ul>
+<p>{CHECKUP_IVA_NOTE}</p>
 <aside class="promo" aria-label="Codice di lancio">
 <p class="lab">Codice di lancio</p>
 <p class="code">LANCIO15</p>
-<p>15% di sconto, valido fino al 30/10/2026. Indicalo nell'email.</p>
+<p>{CHECKUP_LANCIO}</p>
 </aside>
 <h2>Chi lo prepara</h2>
 <p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>
@@ -1325,8 +1350,8 @@ def static_pages(today):
     contacts = f'<p class="contact-links">{li_btn}{mail}</p>'
     sponsor_contacts = (
         f'<p class="contact-links">{li_btn}{mail}{fpef_mail}</p>'
-        f"<p>Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti "
-        f"(69 € al mese) scrivi a {fpef_mail}.</p>"
+        f"<p>Per le sponsorizzazioni FoglioPEF (39 € + IVA al mese) e per il pacchetto entrambi i siti "
+        f"(69 € + IVA al mese) scrivi a {fpef_mail}.</p>"
     )
     fpef_space = f'<span class="for">Contatto per FoglioPEF: {fpef_mail}</span>'
     fpef_pack = f'<span class="for">Contatto per entrambi i siti: {fpef_mail}</span>'
@@ -1352,7 +1377,7 @@ def static_pages(today):
         ),
         "sponsor.html": (
             "Sponsor e pubblicità",
-            "Spazi sponsor su IncentiviPerTe da 49 € al mese, su FoglioPEF da 39 € e su entrambi i siti a 69 €.",
+            "Spazi sponsor su IncentiviPerTe da 49 € + IVA al mese, su FoglioPEF da 39 € + IVA al mese e su entrambi i siti a 69 € + IVA al mese.",
             f"""<h1>Sponsor e pubblicità</h1><div class="box">
 <p>IncentiviPerTe è letto da imprenditori, startup e PMI che cercano finanziamenti. Gli spazi sono per <strong>commercialisti, consulenti di finanza agevolata, banche e software</strong> per le imprese.</p>
 {sponsor_contacts}
@@ -1361,19 +1386,20 @@ def static_pages(today):
 <h2 id="prezzi">Prezzi</h2>
 <p>I prezzi qui sotto sono per uno spazio pubblicitario etichettato Sponsorizzato. Non sono il prezzo dei modelli Excel.</p>
 <div class="offers">
-<div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 €</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € per i primi 3 sponsor, poi 79 €, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{ipt_btn}{li_btn}{mail}</div></div>
-<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.github.io")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{fpef_space}</div></div>
-<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{fpef_btn}{fpef_pack}</div></div>
+<div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 € + IVA</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 € + IVA al mese</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € + IVA al mese per i primi 3 sponsor, poi 79 € + IVA al mese, poi 99 € + IVA al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{ipt_btn}{li_btn}{mail}</div></div>
+<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 € + IVA</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.github.io")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{fpef_space}</div></div>
+<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 € + IVA</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{fpef_btn}{fpef_pack}</div></div>
 </div>
 <h2>Regole</h2>
 <ul><li>Ogni contenuto a pagamento è etichettato <strong>Sponsorizzato</strong>.</li><li>Gli sponsor non influenzano quali bandi pubblichiamo né come li descriviamo.</li><li>Nessun tracciamento degli utenti: niente pixel, cookie o script di terze parti.</li></ul>
-<p>Domande? Scrivici a {mail} o in un messaggio alla {ext(LINKEDIN, "nostra pagina LinkedIn")}. Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € al mese): {fpef_mail}.</p>
+<p>Domande? Scrivici a {mail} o in un messaggio alla {ext(LINKEDIN, "nostra pagina LinkedIn")}. Per le sponsorizzazioni FoglioPEF (39 € + IVA al mese) e per il pacchetto entrambi i siti (69 € + IVA al mese): {fpef_mail}.</p>
 </div>""",
             False,
         ),
         "check-up.html": (
             "Check-up Bandi",
-            "Check-up Bandi: relazione scritta sui bandi adatti. Base 49 € entro 5 giorni lavorativi, Completo 79 € entro 7-10 giorni lavorativi.",
+            "Check-up Bandi: relazione scritta sui bandi adatti. Base entro 5 giorni lavorativi, Completo entro 7-10 giorni lavorativi. "
+            + CHECKUP_IVA_NOTE,
             checkup_body(),
             False,
         ),
@@ -1785,7 +1811,7 @@ def build(today=None):
             + related_html
             + '<aside class="sp" aria-label="Spazio sponsor"><span class="lab">Sponsorizzato</span>'
             + '<p class="spt">Spazio disponibile per commercialisti, consulenti, banche e software</p>'
-            + '<p class="spp">Da 49 € al mese · prezzo di lancio</p>'
+            + f'<p class="spp">{SPONSOR_DA}</p>'
             + '<p><a class="btn outline" href="/sponsor">Scopri gli spazi sponsor</a></p></aside>'
             + fpef_box()
             + BADGE_JS

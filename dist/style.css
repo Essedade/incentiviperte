@@ -115,6 +115,7 @@ a.tag.area:hover{background:var(--bd);color:#fff}
 .checkup-ask h2{margin-top:0}
 .bando-checkup{background:#F4FAF7;border:1px solid var(--b);border-radius:14px;padding:12px 14px;margin:12px 0}
 .bando-checkup p{margin:0}
+.bando-checkup p+p{margin-top:8px}
 dl.kv{display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:8px 16px;margin:12px 0}
 dl.kv dt{font-weight:800;color:var(--m)}
 dl.kv dd{margin:0}
@@ -175,8 +176,9 @@ footer nav{margin-top:8px}
 .paga h2{margin-top:0}
 .pay-level{background:#fff;border:1px solid var(--l);border-radius:12px;padding:12px 14px;margin:12px 0}
 .pay-level h3{margin:0 0 4px;font-size:1.05rem}
-.pay-amt{font-weight:800;color:var(--b);margin:0 0 8px}
-.pay-actions{display:flex;flex-wrap:wrap;gap:8px}
+.pay-amt{font-weight:800;color:var(--b);margin:0}
+.pay-actions{display:flex;flex-wrap:wrap;gap:12px 20px}
+.pay-choice{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .pay-actions .btn{text-align:center}
-@media(max-width:600px){.pay-actions{flex-direction:column}.pay-actions .btn{width:100%}}
+@media(max-width:600px){.pay-actions{flex-direction:column;align-items:stretch}.pay-choice{align-items:stretch}.pay-actions .btn{width:100%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
