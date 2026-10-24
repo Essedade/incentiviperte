@@ -24,6 +24,15 @@ FPEF_EMAIL = "fogliopef.team@gmail.com"
 FPEF = "https://fogliopef.github.io"
 FPEF_LI = "https://www.linkedin.com/company/fogliopef"
 FPEF_DESC = "FoglioPEF: modelli Excel per business plan, immobiliare e finanza d'impresa."
+# Pagine prodotto sul negozio Gumroad fogliopef. Sono bozze non pubblicate:
+# unire solo dopo che entrambe sono pubbliche. Unico punto di configurazione.
+# IncentiviPerTe – Check-up Bandi Base (49 €)
+GUMROAD_CHECKUP_BASE_URL = "https://fogliopef.gumroad.com/l/checkup-bandi-base"
+# IncentiviPerTe – Check-up Bandi Completo (79 €)
+GUMROAD_CHECKUP_COMPLETO_URL = "https://fogliopef.gumroad.com/l/checkup-bandi-completo"
+CHECKUP_PRODUCT_BASE = "IncentiviPerTe – Check-up Bandi Base"
+CHECKUP_PRODUCT_COMPLETO = "IncentiviPerTe – Check-up Bandi Completo"
+CARD_PAY_LABEL = "Pagamento sicuro con carta tramite Gumroad"
 CHECKUP_BASE = "report di circa 3-4 pagine, entro 5 giorni lavorativi dalla ricezione dei dati completi"
 CHECKUP_EXTRA = (
     "requisiti punto per punto",
@@ -562,6 +571,17 @@ def checkup_ask():
     )
 
 
+def bando_checkup_box():
+    return (
+        '<aside class="bando-checkup" aria-label="Check-up per questo bando">'
+        "<p>Documenti da preparare, calendario ed errori da evitare per questo bando: "
+        "li verifichiamo per la tua impresa con il "
+        f'<a href="{site_href("check-up.html")}">Check-up Bandi</a> '
+        "(da 49 €). Verifica di ammissibilità, non garantisce il contributo.</p>"
+        "</aside>"
+    )
+
+
 def checkup_section(pre):
     return (
         '<section class="checkup" aria-labelledby="checkup-title"><div class="box">'
@@ -992,6 +1012,8 @@ a.tag.area:hover{background:var(--bd);color:#fff}
 .official small{color:var(--m);font-size:13px;line-height:1.3}
 .checkup-ask{background:#F4FAF7;border:1px solid var(--b);border-radius:14px;padding:16px 18px;margin:18px 0}
 .checkup-ask h2{margin-top:0}
+.bando-checkup{background:#F4FAF7;border:1px solid var(--b);border-radius:14px;padding:12px 14px;margin:12px 0}
+.bando-checkup p{margin:0}
 dl.kv{display:grid;grid-template-columns:minmax(8rem,max-content) 1fr;gap:8px 16px;margin:12px 0}
 dl.kv dt{font-weight:800;color:var(--m)}
 dl.kv dd{margin:0}
@@ -1046,6 +1068,16 @@ footer nav{margin-top:8px}
 .checkup-form legend{padding:0 4px}
 .livelli{display:flex;flex-wrap:wrap;gap:8px 16px}
 .livelli label{display:flex;align-items:center;gap:8px;min-height:44px;margin:0;font-weight:700}
+.checkup-split{display:grid;gap:18px;align-items:start}
+@media(min-width:900px){.checkup-split{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}}
+.paga{background:#F4FAF7;border:1px solid var(--b);border-radius:14px;padding:16px 18px}
+.paga h2{margin-top:0}
+.pay-level{background:#fff;border:1px solid var(--l);border-radius:12px;padding:12px 14px;margin:12px 0}
+.pay-level h3{margin:0 0 4px;font-size:1.05rem}
+.pay-amt{font-weight:800;color:var(--b);margin:0 0 8px}
+.pay-actions{display:flex;flex-wrap:wrap;gap:8px}
+.pay-actions .btn{text-align:center}
+@media(max-width:600px){.pay-actions{flex-direction:column}.pay-actions .btn{width:100%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 """
 
@@ -1080,6 +1112,70 @@ def checkup_service():
     }
 
 
+def unexpected_gumroad(text, allow_products):
+    """Vero se resta un rimando Gumroad oltre i due prodotti del Check-up."""
+    cleaned = text
+    if allow_products:
+        for url in (GUMROAD_CHECKUP_BASE_URL, GUMROAD_CHECKUP_COMPLETO_URL):
+            cleaned = cleaned.replace(url, "")
+    return "gumroad.com" in cleaned.lower()
+
+
+def mailto_href(subject, body):
+    query = urllib.parse.urlencode(
+        {"subject": subject, "body": body},
+        quote_via=urllib.parse.quote,
+    )
+    return f"mailto:{EMAIL}?{query}"
+
+
+def bonifico_link(level, product, price):
+    subject = f"Richiesta Check-up {level} – pagamento con bonifico istantaneo"
+    body = (
+        f"Livello: {level}\n"
+        f"Prodotto: {product}\n"
+        f"Importo: {price}\n"
+        "Codice di lancio: LANCIO15\n"
+    )
+    return f'<a class="btn" href="{e(mailto_href(subject, body))}">Bonifico istantaneo</a>'
+
+
+def card_pay_link(url):
+    """Link al prodotto Gumroad. URL vuoto: nessun pulsante, così non si apre una pagina rotta."""
+    url = (url or "").strip()
+    prefix = "https://fogliopef.gumroad.com/l/"
+    if not url:
+        return ""
+    if not url.startswith(prefix) or len(url) <= len(prefix):
+        raise ValueError("URL prodotto Gumroad del Check-up non valido")
+    return ext(url, CARD_PAY_LABEL, "btn outline")
+
+
+def pay_level(product, price, level, url):
+    return (
+        '<div class="pay-level">'
+        f"<h3>{e(product)}</h3>"
+        f'<p class="pay-amt">{e(price)}</p>'
+        '<div class="pay-actions">'
+        f"{bonifico_link(level, product, price)}"
+        f"{card_pay_link(url)}"
+        "</div></div>"
+    )
+
+
+def checkup_pay_section():
+    return (
+        '<section class="paga" aria-labelledby="paga-ora">'
+        '<h2 id="paga-ora">Paga ora</h2>'
+        "<p>Il Check-up è una verifica di ammissibilità e non garantisce l'ottenimento del contributo.</p>"
+        + pay_level(CHECKUP_PRODUCT_BASE, "49 €", "Base", GUMROAD_CHECKUP_BASE_URL)
+        + pay_level(CHECKUP_PRODUCT_COMPLETO, "79 €", "Completo", GUMROAD_CHECKUP_COMPLETO_URL)
+        + "<p>Bonifico istantaneo: l'IBAN non è pubblicato sul sito. "
+        + f"Dopo la richiesta lo inviamo per email da {mail_link()}.</p>"
+        + "</section>"
+    )
+
+
 def checkup_body():
     tipi = (
         "Startup", "PMI", "Nuove imprese", "Under 35", "Donne",
@@ -1103,6 +1199,8 @@ def checkup_body():
 </aside>
 <h2>Chi lo prepara</h2>
 <p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>
+<div class="checkup-split">
+<div>
 <form id="checkup-form" class="checkup-form">
 <div><label for="cu-regione">Regione (comprende la provincia)</label><input id="cu-regione" name="regione" type="text" required autocomplete="address-level1"></div>
 <div><label for="cu-tipo">Tipo di impresa</label><select id="cu-tipo" name="tipo" required><option value="">Scegli</option>{tipo_opts}</select></div>
@@ -1121,6 +1219,9 @@ def checkup_body():
 <textarea id="checkup-text" readonly></textarea>
 <button type="button" class="btn outline" id="checkup-copy">Copia</button>
 <p id="checkup-copied" role="status" hidden>Testo copiato.</p>
+</div>
+</div>
+{checkup_pay_section()}
 </div>
 </div>
 <script>
@@ -1369,8 +1470,10 @@ def self_check(written):
             raise ValueError(f"{name}: la parola Invitalia compare nel testo visibile")
         if "essedade.github.io" in text:
             raise ValueError(f"{name}: vecchio indirizzo GitHub Pages")
-        if "fogliopef.gumroad.com" in text:
-            raise ValueError(f"{name}: rimando FoglioPEF ancora su Gumroad")
+        if unexpected_gumroad(text, rel == "check-up.html"):
+            raise ValueError(f"{name}: rimando Gumroad non previsto")
+        if rel.startswith("bando/") and 'class="bando-checkup"' not in text:
+            raise ValueError(f"{name}: manca il riquadro Check-up sul bando")
         if re.search(r'''\b(?:href|src)\s*=\s*["']/incentiviperte/''', text):
             raise ValueError(f"{name}: link assoluto del vecchio percorso GitHub Pages")
         for match in re.finditer("Arezzo-Siena", text):
@@ -1417,6 +1520,23 @@ def self_check(written):
         raise ValueError("home: manca il rimando a FoglioPEF con la disclosure")
     if "fogliopef.gumroad.com" in home or "fogliopef.gumroad.com" in about:
         raise ValueError("rimando FoglioPEF ancora su Gumroad")
+    checkup = (D / "check-up.html").read_text(encoding="utf-8")
+    if "verifica di ammissibilità" not in checkup or "non garantisce l'ottenimento del contributo" not in checkup:
+        raise ValueError("check-up: manca l'avvertenza sulla verifica di ammissibilità")
+    if re.search(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b", checkup):
+        raise ValueError("check-up: compare un IBAN")
+    if 'rel="canonical" href="https://incentiviperte.github.io/check-up"' not in checkup:
+        raise ValueError("check-up: il canonical non è su github.io")
+    for url in (GUMROAD_CHECKUP_BASE_URL, GUMROAD_CHECKUP_COMPLETO_URL):
+        if f'href="{url}"' not in checkup:
+            raise ValueError("check-up: manca il link al prodotto Gumroad")
+    for path in (p for p in htmls if p.startswith("bando/")):
+        scheda = (D / path).read_text(encoding="utf-8")
+        box = scheda.split('class="bando-checkup"', 1)[-1].split("</aside>", 1)[0]
+        if "Check-up Bandi" not in box or 'href="/check-up"' not in box:
+            raise ValueError(f"{path}: il riquadro Check-up non rimanda a /check-up")
+        if f'rel="canonical" href="{BASE}bando/' not in scheda:
+            raise ValueError(f"{path}: canonical fuori da github.io")
     if FPEF_LI not in home:
         raise ValueError("home: manca il link LinkedIn di FoglioPEF")
     if "link affiliato" in home.lower():
@@ -1604,6 +1724,7 @@ def build(today=None):
             + "</dl>"
             + f"<p>{e(b['sintesi'])}</p>"
             + official_bando_link(b["url"])
+            + bando_checkup_box()
             + checkup_ask()
             + '<p class="note">Sintesi indicativa. Fa fede esclusivamente il testo ufficiale pubblicato dall&#39;ente. <a href="/disclaimer">Disclaimer</a></p></article>'
             + related_html

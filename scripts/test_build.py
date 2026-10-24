@@ -6,6 +6,7 @@ import pathlib
 import re
 import sys
 import unittest
+import urllib.parse
 import xml.etree.ElementTree as ET
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -481,7 +482,13 @@ class Sito(unittest.TestCase):
                 continue
             raw = path.read_bytes()
             self.assertNotIn(b"essedade.github.io", raw, path.as_posix())
-            self.assertNotIn(b"fogliopef.gumroad.com", raw, path.as_posix())
+            if b"fogliopef.gumroad.com" in raw:
+                self.assertEqual(path.name, "check-up.html", path.as_posix())
+                leftover = raw
+                for url in (build.GUMROAD_CHECKUP_BASE_URL, build.GUMROAD_CHECKUP_COMPLETO_URL):
+                    self.assertIn(url.encode(), raw, path.as_posix())
+                    leftover = leftover.replace(url.encode(), b"")
+                self.assertNotIn(b"gumroad.com", leftover.lower(), path.as_posix())
             if path.suffix.lower() not in {".html", ".css", ".svg", ".txt", ".xml"}:
                 continue
             text = raw.decode("utf-8")
@@ -660,6 +667,65 @@ class Sito(unittest.TestCase):
         footer = home.split("<footer>", 1)[1]
         self.assertNotIn("check-up-bandi", footer)
         self.assertNotIn('href="/check-up"', footer)
+
+    def test_pagamento_checkup_e_riquadro_bando(self):
+        page = (DIST / "check-up.html").read_text(encoding="utf-8")
+        self.assertIn('rel="canonical" href="https://incentiviperte.github.io/check-up"', page)
+        self.assertIn('property="og:url" content="https://incentiviperte.github.io/check-up"', page)
+        self.assertNotIn("pages.dev", page)
+        self.assertNotIn("essedade.github.io", page)
+        self.assertIn("Il Check-up è una verifica di ammissibilità e non garantisce l'ottenimento del contributo.", page)
+        self.assertIn("l'IBAN non è pubblicato sul sito", page)
+        self.assertIn("Dopo la richiesta lo inviamo per email da", page)
+        self.assertIn("incentiviperte.team@gmail.com", page)
+        self.assertIsNone(re.search(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b", page))
+        self.assertIsNone(re.search(r"\b[A-Z]{2}\d{2}(?:\s[A-Z0-9]{4}){3,8}\b", page))
+        self.assertIn('<p class="code">LANCIO15</p>', page)
+        self.assertIn("15% di sconto, valido fino al 30/10/2026. Indicalo nell'email.", page)
+        self.assertIn(">Invia richiesta<", page)
+        self.assertEqual(build.GUMROAD_CHECKUP_BASE_URL, "https://fogliopef.gumroad.com/l/checkup-bandi-base")
+        self.assertEqual(build.GUMROAD_CHECKUP_COMPLETO_URL, "https://fogliopef.gumroad.com/l/checkup-bandi-completo")
+        self.assertEqual(build.CHECKUP_PRODUCT_BASE, "IncentiviPerTe – Check-up Bandi Base")
+        self.assertEqual(build.CHECKUP_PRODUCT_COMPLETO, "IncentiviPerTe – Check-up Bandi Completo")
+        paga = page.split('id="paga-ora"', 1)[1].split("</section>", 1)[0]
+        self.assertIn("Paga ora", paga)
+        self.assertIn("IncentiviPerTe – Check-up Bandi Base", paga)
+        self.assertIn("IncentiviPerTe – Check-up Bandi Completo", paga)
+        base = paga.split("IncentiviPerTe – Check-up Bandi Base", 1)[1].split("IncentiviPerTe – Check-up Bandi Completo", 1)[0]
+        completo = paga.split("IncentiviPerTe – Check-up Bandi Completo", 1)[1]
+        self.assertIn("49 €", base)
+        self.assertIn("79 €", completo)
+        self.assertIn('href="https://fogliopef.gumroad.com/l/checkup-bandi-base"', base)
+        self.assertIn('href="https://fogliopef.gumroad.com/l/checkup-bandi-completo"', completo)
+        self.assertEqual(paga.count("Pagamento sicuro con carta tramite Gumroad"), 2)
+        self.assertEqual(paga.count(">Bonifico istantaneo<"), 2)
+        for subject in (
+            "Richiesta Check-up Base – pagamento con bonifico istantaneo",
+            "Richiesta Check-up Completo – pagamento con bonifico istantaneo",
+        ):
+            self.assertIn(urllib.parse.quote(subject), page)
+        self.assertIn(
+            'mailto:incentiviperte.team@gmail.com?subject=" + encodeURIComponent("Richiesta Check-up Bandi")',
+            page,
+        )
+        for banned in ("Sorbolini", "Frascadore", "Invitalia"):
+            self.assertNotIn(banned, page)
+        bandi = sorted((DIST / "bando").glob("*.html"))
+        self.assertGreaterEqual(len(bandi), 56)
+        phrase = "Documenti da preparare, calendario ed errori da evitare per questo bando"
+        for path in bandi:
+            text = path.read_text(encoding="utf-8")
+            self.assertIn('class="bando-checkup"', text, path.name)
+            box = text.split('class="bando-checkup"', 1)[1].split("</aside>", 1)[0]
+            self.assertIn(phrase, box, path.name)
+            self.assertIn("(da 49 €)", box, path.name)
+            self.assertIn("Verifica di ammissibilità, non garantisce il contributo.", box, path.name)
+            self.assertIn('href="/check-up"', box, path.name)
+            self.assertIn(f'rel="canonical" href="https://incentiviperte.github.io/bando/{path.stem}"', text, path.name)
+            self.assertNotIn("pages.dev", text, path.name)
+            self.assertNotIn("essedade.github.io", text, path.name)
+            self.assertIsNone(re.search(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b", text), path.name)
+        self.assertNotIn('class="bando-checkup"', (DIST / "index.html").read_text(encoding="utf-8"))
 
     def test_privacy_cita_github(self):
         privacy = (DIST / "privacy.html").read_text(encoding="utf-8")
