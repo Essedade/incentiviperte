@@ -48,15 +48,11 @@ CHECKUP_COMPLETO = (
     "con tutto il Base più " + ", ".join(CHECKUP_EXTRA[:-1]) + " e " + CHECKUP_EXTRA[-1]
 )
 CHECKUP_IVA_NOTE = (
-    "Con bonifico istantaneo: Base 49 €, Completo 79 € (prestazione occasionale, senza IVA). "
-    "Con carta su Gumroad: al prezzo si aggiunge l'IVA del tuo Paese, calcolata e versata da Gumroad."
+    "Prezzi + IVA. Con carta su Gumroad l'IVA del tuo Paese è calcolata e versata da Gumroad."
 )
 CHECKUP_LANCIO = (
-    "Con LANCIO15 fino al 30/10/2026: Base 41,65 €, Completo 67,15 €. "
-    "Con bonifico il prezzo è senza IVA; con carta su Gumroad si aggiunge l'IVA."
+    "Con LANCIO15 fino al 30/10/2026: Base 41,65 € + IVA, Completo 67,15 € + IVA."
 )
-BANDO_CHECKUP_IVA = "Con bonifico senza IVA; con carta su Gumroad + IVA."
-BONIFICO_IVA = "prezzo senza IVA, prestazione occasionale"
 SPONSOR_DA = "Da 49 € + IVA al mese · prezzo di lancio"
 REG = ["Nazionale", "Toscana", "Umbria", "Emilia-Romagna"]
 REQUIRED = (
@@ -638,8 +634,8 @@ def bando_checkup_box():
         "<p>Documenti da preparare, calendario ed errori da evitare per questo bando: "
         "li verifichiamo per la tua impresa con il "
         f'<a href="{site_href("check-up.html")}">Check-up Bandi</a> '
-        "(da 49 €). Verifica di ammissibilità, non garantisce il contributo.</p>"
-        f"<p>{BANDO_CHECKUP_IVA}</p>"
+        "(da 49 € + IVA). Verifica di ammissibilità, non garantisce il contributo.</p>"
+        f"<p>{CHECKUP_IVA_NOTE}</p>"
         "</aside>"
     )
 
@@ -1156,7 +1152,7 @@ def checkup_service():
         "serviceType": "Relazione scritta sui bandi adatti all'impresa",
         "description": (
             "Relazione scritta sui bandi adatti all'impresa. "
-            f"Base, 49 €: {CHECKUP_BASE}. Completo, 79 €: {CHECKUP_COMPLETO}. "
+            f"Base, 49 € + IVA: {CHECKUP_BASE}. Completo, 79 € + IVA: {CHECKUP_COMPLETO}. "
             f"{CHECKUP_IVA_NOTE}"
         ),
         "url": public_url("check-up.html"),
@@ -1167,14 +1163,14 @@ def checkup_service():
                 "name": "Base",
                 "price": "49",
                 "priceCurrency": "EUR",
-                "description": f"Base, 49 €: {CHECKUP_BASE}. {CHECKUP_IVA_NOTE}",
+                "description": f"Base, 49 € + IVA: {CHECKUP_BASE}. {CHECKUP_IVA_NOTE}",
             },
             {
                 "@type": "Offer",
                 "name": "Completo",
                 "price": "79",
                 "priceCurrency": "EUR",
-                "description": f"Completo, 79 €: {CHECKUP_COMPLETO}. {CHECKUP_IVA_NOTE}",
+                "description": f"Completo, 79 € + IVA: {CHECKUP_COMPLETO}. {CHECKUP_IVA_NOTE}",
             },
         ],
     }
@@ -1198,11 +1194,11 @@ def mailto_href(subject, body):
 
 
 def bonifico_link(level, product, price):
-    subject = f"Richiesta Check-up {level} – pagamento con bonifico istantaneo, {BONIFICO_IVA}"
+    subject = f"Richiesta Check-up {level} – pagamento con bonifico istantaneo"
     body = (
         f"Livello: {level}\n"
         f"Prodotto: {product}\n"
-        f"Importo: {price}, {BONIFICO_IVA}\n"
+        f"Importo: {price}\n"
         "Codice di lancio: LANCIO15\n"
     )
     return f'<a class="btn" href="{e(mailto_href(subject, body))}">Bonifico istantaneo</a>'
@@ -1229,12 +1225,13 @@ def pay_choice(link_html, amount):
 
 
 def pay_level(product, price, level, url):
+    amount = price + " + IVA"
     return (
         '<div class="pay-level">'
         f"<h3>{e(product)}</h3>"
         '<div class="pay-actions">'
-        f"{pay_choice(bonifico_link(level, product, price), price)}"
-        f"{pay_choice(card_pay_link(url), price + ' + IVA')}"
+        f"{pay_choice(bonifico_link(level, product, amount), amount)}"
+        f"{pay_choice(card_pay_link(url), amount)}"
         "</div></div>"
     )
 
@@ -1266,8 +1263,8 @@ def checkup_body():
 <p>Ricevi una relazione scritta sui bandi adatti alla tua impresa: tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali per avviare e far crescere l'impresa.</p>
 <h2>Livelli del servizio</h2>
 <ul>
-<li><strong>Base</strong>, 49 €: {e(CHECKUP_BASE)}.</li>
-<li><strong>Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi. Include tutto il Base, più:<ul>{extra}</ul></li>
+<li><strong>Base</strong>, 49 € + IVA: {e(CHECKUP_BASE)}.</li>
+<li><strong>Completo</strong>, 79 € + IVA: report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi. Include tutto il Base, più:<ul>{extra}</ul></li>
 </ul>
 <p>{CHECKUP_IVA_NOTE}</p>
 <aside class="promo" aria-label="Codice di lancio">
@@ -1285,8 +1282,8 @@ def checkup_body():
 <div><label for="cu-stadio">Stadio</label><select id="cu-stadio" name="stadio" required><option value="">Scegli</option>{stadio_opts}</select></div>
 <div><label for="cu-importo">Importo indicativo</label><input id="cu-importo" name="importo" type="text" required inputmode="decimal" placeholder="es. 50.000 €"></div>
 <fieldset><legend>Livello</legend><div class="livelli">
-<label><input type="radio" name="livello" value="Base" required> Base · 49 €</label>
-<label><input type="radio" name="livello" value="Completo"> Completo · 79 €</label>
+<label><input type="radio" name="livello" value="Base" required> Base · 49 € + IVA</label>
+<label><input type="radio" name="livello" value="Completo"> Completo · 79 € + IVA</label>
 </div></fieldset>
 <button type="submit" class="btn">Invia richiesta</button>
 </form>
