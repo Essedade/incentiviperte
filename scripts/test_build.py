@@ -150,7 +150,7 @@ class Sito(unittest.TestCase):
         self.assertNotIn("Disallow: /", robots)
         ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
         locs = [el.text for el in ET.parse(DIST / "sitemap.xml").findall("s:url/s:loc", ns)]
-        for loc in (BASE, BASE + "nazionale", BASE + "toscana", BASE + "settore/startup", BASE + "settore/pmi", BASE + "sponsor", BASE + "check-up"):
+        for loc in (BASE, BASE + "nazionale", BASE + "toscana", BASE + "settore/startup", BASE + "settore/pmi", BASE + "sponsor", BASE + "check-up", BASE + "check-up-bandi"):
             self.assertIn(loc, locs)
         self.assertNotIn(".html", "\n".join(locs))
         for loc in locs:
@@ -623,6 +623,40 @@ class Sito(unittest.TestCase):
             desc = re.search(r'<meta name="description" content="([^"]*)"', text).group(1)
             self.assertNotRegex(title + " " + desc, r"\d+ bandi aperti")
             self.assertIsNone(re.search(r'''(?:href|src)="(?!https?:|mailto:)[^"]*\.html''', text), path.name)
+
+    def test_pagina_check_up_bandi(self):
+        path = DIST / "check-up-bandi.html"
+        self.assertTrue(path.is_file())
+        page = path.read_text(encoding="utf-8")
+        self.assertIn("49 €", page)
+        self.assertIn("79 €", page)
+        self.assertNotIn("Invitalia", page)
+        self.assertIsNone(re.search(r"invitalia", build.visible_text(page), re.I))
+        self.assertIn(
+            'rel="canonical" href="https://incentiviperte.github.io/check-up-bandi"',
+            page,
+        )
+        self.assertIn(
+            'property="og:url" content="https://incentiviperte.github.io/check-up-bandi"',
+            page,
+        )
+        self.assertIn("LANCIO15", page)
+        self.assertIn("30/10/2026", page)
+        self.assertIn(
+            "mailto:incentiviperte.team@gmail.com?subject=Richiesta%20Check-up%20Bandi",
+            page,
+        )
+        self.assertIn('href="/sponsor"', page)
+        self.assertIn("https://fogliopef.github.io", page)
+        self.assertIn("team di esperti professionisti con esperienza pluriennale", page)
+        self.assertNotIn("<form", page)
+        self.assertNotIn("<script src=", page)
+        sitemap = (DIST / "sitemap.xml").read_text(encoding="utf-8")
+        self.assertIn("<loc>https://incentiviperte.github.io/check-up-bandi</loc>", sitemap)
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        self.assertIn('href="/check-up-bandi">Check-up Bandi</a>', home)
+        nav = home.split("<nav", 1)[1].split("</nav>", 1)[0]
+        self.assertIn('href="/check-up-bandi">Check-up Bandi</a>', nav)
 
     def test_privacy_cita_github(self):
         privacy = (DIST / "privacy.html").read_text(encoding="utf-8")
