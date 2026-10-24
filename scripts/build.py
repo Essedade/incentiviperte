@@ -16,12 +16,12 @@ import urllib.parse
 R = pathlib.Path(__file__).resolve().parent.parent
 D = R / "dist"
 DATA = R / "data" / "bandi.json"
-BASE = "https://incentiviperte.pages.dev/"
+BASE = "https://incentiviperte.github.io/"
 SITE = "IncentiviPerTe"
 LINKEDIN = "https://www.linkedin.com/company/incentiviperte/"
 EMAIL = "incentiviperte.team@gmail.com"
 FPEF_EMAIL = "fogliopef.team@gmail.com"
-FPEF = "https://fogliopef.pages.dev"
+FPEF = "https://fogliopef.github.io"
 FPEF_LI = "https://www.linkedin.com/company/fogliopef"
 FPEF_DESC = "FoglioPEF: modelli Excel per business plan, immobiliare e finanza d'impresa."
 CHECKUP_BASE = "report di circa 3-4 pagine, entro 5 giorni lavorativi dalla ricezione dei dati completi"
@@ -93,12 +93,14 @@ NAV = (
     ("check-up.html", "Check-up", "cta"),
 )
 KEEP = {
-    "style.css", "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-512.png",
-    "apple-touch-icon.png", "logo-header.svg", "og.png", "robots.txt", "sitemap.xml", ".nojekyll",
+    "style.css", "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-48.png",
+    "favicon-512.png", "apple-touch-icon.png", "logo-header.svg", "logo-header-80.png",
+    "logo-header-160.png", "og.png", "robots.txt", "sitemap.xml", ".nojekyll",
 }
 STATIC_ASSETS = (
-    "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-512.png",
-    "apple-touch-icon.png", "logo-header.svg", "og.png",
+    "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-48.png", "favicon-512.png",
+    "apple-touch-icon.png", "logo-header.svg", "logo-header-80.png", "logo-header-160.png",
+    "og.png",
 )
 e = html.escape
 
@@ -748,6 +750,34 @@ def faq_html():
     return '<section class="faq" aria-labelledby="faq-title"><h2 id="faq-title">Domande frequenti</h2>' + "".join(blocks) + "</section>"
 
 
+def head_icons(pre):
+    """Favicon del marchio A: SVG, PNG 16/32/48/512 e apple-touch da 180."""
+    icons = (
+        ("icon", "favicon.svg", ' type="image/svg+xml"'),
+        ("icon", "favicon-48.png", ' type="image/png" sizes="48x48"'),
+        ("icon", "favicon-32.png", ' type="image/png" sizes="32x32"'),
+        ("icon", "favicon-16.png", ' type="image/png" sizes="16x16"'),
+        ("apple-touch-icon", "apple-touch-icon.png", ' sizes="180x180"'),
+        ("icon", "favicon-512.png", ' type="image/png" sizes="512x512"'),
+    )
+    return "\n".join(
+        f'<link rel="{rel}" href="{pre}{name}"{extra}>' for rel, name, extra in icons
+    )
+
+
+def brand_link(pre):
+    """Wordmark di testata: SVG del marchio A, PNG 80/160 come fallback."""
+    return (
+        f'<a class="brand" href="{site_href("index.html")}">'
+        f"<picture>"
+        f'<source srcset="{pre}logo-header.svg" type="image/svg+xml">'
+        f'<img src="{pre}logo-header-80.png" '
+        f'srcset="{pre}logo-header-80.png 1x, {pre}logo-header-160.png 2x" '
+        f'alt="IncentiviPerTe" width="222" height="40">'
+        f"</picture></a>"
+    )
+
+
 def page(path, title, desc, body, hero="", ld=None, robots=None):
     pre = prefix(path)
     url = public_url(path)
@@ -795,18 +825,14 @@ def page(path, title, desc, body, hero="", ld=None, robots=None):
 <meta name="twitter:description" content="{desc_e}">
 <meta name="twitter:image" content="{BASE}og.png">
 <meta name="theme-color" content="#0F7A5C">
-<link rel="icon" href="{pre}favicon.svg" type="image/svg+xml">
-<link rel="icon" href="{pre}favicon-32.png" type="image/png" sizes="32x32">
-<link rel="icon" href="{pre}favicon-16.png" type="image/png" sizes="16x16">
-<link rel="apple-touch-icon" href="{pre}apple-touch-icon.png" sizes="180x180">
-<link rel="icon" href="{pre}favicon-512.png" type="image/png" sizes="512x512">
+{head_icons(pre)}
 <link rel="stylesheet" href="{pre}style.css">
 {ld_html}
 </head>
 <body>
 <a class="skip" href="#main">Vai al contenuto</a>
 <header class="top"><div class="wrap bar">
-<a class="brand" href="{site_href("index.html")}"><img src="{pre}logo-header.svg" alt="IncentiviPerTe" height="40"></a>
+{brand_link(pre)}
 <nav class="dnav" aria-label="Principale"><ul>{nav}</ul></nav>
 <a class="btn head-cta" href="{site_href("check-up.html")}"{cta_current}>Check-up</a>
 <details class="menu"><summary><span class="when-closed">Menu</span><span class="when-open">Chiudi</span></summary>
@@ -870,7 +896,9 @@ header .wrap{max-width:1180px}
 header.top{background:#fff;border-bottom:1px solid var(--l);position:sticky;top:0;z-index:5}
 .bar{display:flex;align-items:center;justify-content:space-between;min-height:64px;gap:12px;position:relative}
 .brand{display:flex;align-items:center;min-height:44px;min-width:0;color:var(--t);text-decoration:none}
-.brand img{display:block;height:auto;max-height:40px;width:auto;max-width:min(222px,calc(100vw - 230px))}
+.brand picture{display:block;min-width:0;max-width:100%}
+.brand img{display:block;height:auto;max-height:40px;width:auto;max-width:min(222px,100%)}
+@media(max-width:1179px){.brand{flex:1 1 auto}}
 nav ul{list-style:none;margin:0;padding:0;display:flex;gap:2px;flex-wrap:wrap}
 nav a{display:flex;align-items:center;min-height:44px;padding:8px;border-radius:8px;text-decoration:none;color:var(--t);font-weight:700;font-size:15px}
 .dnav ul{flex-wrap:nowrap;width:100%;align-items:center}
@@ -1169,7 +1197,7 @@ def static_pages(today):
 <p>I prezzi qui sotto sono per uno spazio pubblicitario etichettato Sponsorizzato. Non sono il prezzo dei modelli Excel.</p>
 <div class="offers">
 <div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 €</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € per i primi 3 sponsor, poi 79 €, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{ipt_btn}{li_btn}{mail}</div></div>
-<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.pages.dev")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{fpef_space}</div></div>
+<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.github.io")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{fpef_space}</div></div>
 <div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{fpef_btn}{fpef_pack}</div></div>
 </div>
 <h2>Regole</h2>
@@ -1636,6 +1664,20 @@ def build(today=None):
         not_found,
         flags=re.I,
     )
+
+    def root_srcset(match):
+        parts = []
+        for item in match.group(1).split(","):
+            bits = item.split()
+            if not bits:
+                continue
+            url, rest = bits[0], bits[1:]
+            if not re.match(r"(?:[a-z][a-z0-9+.-]*:|/|#)", url, re.I):
+                url = "/" + url
+            parts.append(" ".join([url, *rest]))
+        return 'srcset="' + ", ".join(parts) + '"'
+
+    not_found = re.sub(r'\bsrcset="([^"]*)"', root_srcset, not_found, flags=re.I)
     (D / "404.html").write_text(not_found, encoding="utf-8")
     written.add("404.html")
 

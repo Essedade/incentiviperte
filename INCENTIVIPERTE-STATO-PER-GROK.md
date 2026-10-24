@@ -1,7 +1,7 @@
 # INCENTIVIPERTE – STATO PER GROK (aggiornato 13/10/2026)
 
 **Cos'è:** sito gratuito con bandi e incentivi per startup e PMI di Toscana, Umbria, Emilia-Romagna e nazionali. Si finanzia con sponsor (studi, consulenti, banche, software) e rimanda a FoglioPEF.
-**Sito:** https://incentiviperte.pages.dev/ · **Repo:** GitHub Essedade/incentiviperte
+**Sito:** https://incentiviperte.github.io/ · **Mirror:** https://incentiviperte.pages.dev/ · **Repo:** GitHub Essedade/incentiviperte
 **Coordinatore:** Projects Manager.
 
 ## Stato al 13/10
