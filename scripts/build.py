@@ -1297,7 +1297,7 @@ def static_pages(today):
     contacts = f'<p class="contact-links">{li_btn}{mail}</p>'
     sponsor_contacts = (
         f'<p class="contact-links">{li_btn}{mail}{fpef_mail}</p>'
-        f"<p>Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti "
+        f"<p>Per le sponsorizzazioni FoglioPEF (39 € + IVA al mese) e per il pacchetto entrambi i siti "
         f"(69 € + IVA al mese) scrivi a {fpef_mail}.</p>"
     )
     fpef_space = f'<span class="for">Contatto per FoglioPEF: {fpef_mail}</span>'
@@ -1324,7 +1324,7 @@ def static_pages(today):
         ),
         "sponsor.html": (
             "Sponsor e pubblicità",
-            "Spazi sponsor su IncentiviPerTe da 49 € + IVA al mese, su FoglioPEF da 39 € e su entrambi i siti a 69 € + IVA al mese.",
+            "Spazi sponsor su IncentiviPerTe da 49 € + IVA al mese, su FoglioPEF da 39 € + IVA al mese e su entrambi i siti a 69 € + IVA al mese.",
             f"""<h1>Sponsor e pubblicità</h1><div class="box">
 <p>IncentiviPerTe è letto da imprenditori, startup e PMI che cercano finanziamenti. Gli spazi sono per <strong>commercialisti, consulenti di finanza agevolata, banche e software</strong> per le imprese.</p>
 {sponsor_contacts}
@@ -1334,12 +1334,12 @@ def static_pages(today):
 <p>I prezzi qui sotto sono per uno spazio pubblicitario etichettato Sponsorizzato. Non sono il prezzo dei modelli Excel.</p>
 <div class="offers">
 <div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 € + IVA</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 € + IVA al mese</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € + IVA al mese per i primi 3 sponsor, poi 79 € + IVA al mese, poi 99 € + IVA al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{ipt_btn}{li_btn}{mail}</div></div>
-<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.github.io")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{fpef_space}</div></div>
+<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 € + IVA</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.github.io")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{fpef_space}</div></div>
 <div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 € + IVA</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{fpef_btn}{fpef_pack}</div></div>
 </div>
 <h2>Regole</h2>
 <ul><li>Ogni contenuto a pagamento è etichettato <strong>Sponsorizzato</strong>.</li><li>Gli sponsor non influenzano quali bandi pubblichiamo né come li descriviamo.</li><li>Nessun tracciamento degli utenti: niente pixel, cookie o script di terze parti.</li></ul>
-<p>Domande? Scrivici a {mail} o in un messaggio alla {ext(LINKEDIN, "nostra pagina LinkedIn")}. Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € + IVA al mese): {fpef_mail}.</p>
+<p>Domande? Scrivici a {mail} o in un messaggio alla {ext(LINKEDIN, "nostra pagina LinkedIn")}. Per le sponsorizzazioni FoglioPEF (39 € + IVA al mese) e per il pacchetto entrambi i siti (69 € + IVA al mese): {fpef_mail}.</p>
 </div>""",
             False,
         ),

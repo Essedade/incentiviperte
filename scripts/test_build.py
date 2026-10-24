@@ -207,7 +207,7 @@ class Sito(unittest.TestCase):
         self.assertIn("Prezzo di lancio: 3 posti, poi 79 €", sponsor)
         self.assertIn(f'href="mailto:{build.FPEF_EMAIL}"', sponsor)
         self.assertIn(
-            "Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € + IVA al mese)",
+            "Per le sponsorizzazioni FoglioPEF (39 € + IVA al mese) e per il pacchetto entrambi i siti (69 € + IVA al mese)",
             sponsor,
         )
         foglio = sponsor.split("<h3>FoglioPEF</h3>", 1)[1].split("<h3>", 1)[0]
@@ -787,10 +787,18 @@ class Sito(unittest.TestCase):
             self.assertIn(line, box, path.name)
             self.assertNotRegex(box, r"da 49 €\s*\+ IVA", path.name)
         sponsor = re.sub(r"<[^>]+>", "", (DIST / "sponsor.html").read_text(encoding="utf-8"))
-        for price in ("49 € + IVA al mese", "69 € + IVA al mese", "79 € + IVA al mese", "99 € + IVA al mese"):
+        for price in ("49 € + IVA al mese", "39 € + IVA al mese", "69 € + IVA al mese", "79 € + IVA al mese", "99 € + IVA al mese"):
             self.assertIn(price, sponsor)
-        self.assertIn("39 € al mese", sponsor)
-        self.assertNotIn("39 € + IVA", sponsor)
+        self.assertNotIn("39 € al mese", sponsor)
+        for path in DIST.rglob("*"):
+            if path.suffix.lower() not in {".html", ".css", ".xml", ".txt", ".svg"}:
+                continue
+            visible = re.sub(r"<[^>]+>", "", path.read_text(encoding="utf-8"))
+            for match in re.finditer(r"39 €", visible):
+                self.assertTrue(
+                    visible[match.start():].startswith("39 € + IVA al mese"),
+                    f"{path.as_posix()}: {visible[match.start():match.start() + 40]!r}",
+                )
         home = (DIST / "index.html").read_text(encoding="utf-8")
         self.assertIn("da 49 € + IVA al mese", home)
         self.assertNotIn("da 49 € al mese", home)
