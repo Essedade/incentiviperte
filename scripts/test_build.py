@@ -167,15 +167,18 @@ class Sito(unittest.TestCase):
         self.assertIn('type="search"', home)
         self.assertIn(".after(sponsor)", home)
         self.assertIn("Sponsorizzato", home)
-        self.assertIn("https://fogliopef.pages.dev", home)
+        self.assertIn("https://fogliopef.github.io", home)
+        self.assertNotIn("fogliopef.pages.dev", home)
         self.assertNotIn("fogliopef.gumroad.com", home)
         self.assertIn("https://www.linkedin.com/company/fogliopef", home)
         about = (DIST / "chi-siamo.html").read_text(encoding="utf-8")
-        self.assertIn("https://fogliopef.pages.dev", about)
+        self.assertIn("https://fogliopef.github.io", about)
+        self.assertNotIn("fogliopef.pages.dev", about)
         self.assertIn("https://www.linkedin.com/company/fogliopef", about)
         sponsor = (DIST / "sponsor.html").read_text(encoding="utf-8")
-        self.assertIn("https://fogliopef.pages.dev", sponsor)
-        self.assertIn(">fogliopef.pages.dev<", sponsor)
+        self.assertIn("https://fogliopef.github.io", sponsor)
+        self.assertIn(">fogliopef.github.io<", sponsor)
+        self.assertNotIn("fogliopef.pages.dev", sponsor)
         self.assertIn("stesso titolare", home.lower())
         self.assertNotIn("link affiliato", home.lower())
         self.assertIn('href="/settore/startup"', home)
@@ -465,10 +468,14 @@ class Sito(unittest.TestCase):
         self.assertIn("60.000", turismo)
         self.assertIn("50.000", turismo)
 
-    def test_dominio_cloudflare_e_niente_vecchio_percorso(self):
-        self.assertEqual(build.BASE, "https://incentiviperte.pages.dev/")
-        self.assertIn("https://incentiviperte.pages.dev/", (DIST / "index.html").read_text(encoding="utf-8"))
-        self.assertIn("Sitemap: https://incentiviperte.pages.dev/sitemap.xml", (DIST / "robots.txt").read_text(encoding="utf-8"))
+    def test_dominio_pubblico_e_niente_vecchio_percorso(self):
+        self.assertEqual(build.BASE, "https://incentiviperte.github.io/")
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        self.assertIn("https://incentiviperte.github.io/", home)
+        self.assertNotIn("incentiviperte.pages.dev", home)
+        self.assertIn("Sitemap: https://incentiviperte.github.io/sitemap.xml", (DIST / "robots.txt").read_text(encoding="utf-8"))
+        self.assertNotIn("pages.dev", (DIST / "robots.txt").read_text(encoding="utf-8"))
+        self.assertNotIn("pages.dev", (DIST / "sitemap.xml").read_text(encoding="utf-8"))
         for path in DIST.rglob("*"):
             if not path.is_file():
                 continue
@@ -554,7 +561,7 @@ class Sito(unittest.TestCase):
         self.assertEqual(aperti, 6)
         self.assertNotIn("1 bandi", visible)
         page = (DIST / "check-up.html").read_text(encoding="utf-8")
-        self.assertIn('rel="canonical" href="https://incentiviperte.pages.dev/check-up"', page)
+        self.assertIn(f'rel="canonical" href="{BASE}check-up"', page)
         self.assertIn("una relazione scritta sui bandi adatti", page)
         self.assertIn(
             "Base</strong>, 49 €: report di circa 3-4 pagine, entro 5 giorni lavorativi dalla ricezione dei dati completi.",
@@ -593,7 +600,7 @@ class Sito(unittest.TestCase):
         self.assertIn(build.CHECKUP_COMPLETO, offers["Completo"]["description"])
         for item in build.CHECKUP_EXTRA:
             self.assertIn(item, offers["Completo"]["description"])
-        self.assertEqual(services[0]["url"], "https://incentiviperte.pages.dev/check-up")
+        self.assertEqual(services[0]["url"], BASE + "check-up")
         privacy = (DIST / "privacy.html").read_text(encoding="utf-8")
         cookie = (DIST / "cookie.html").read_text(encoding="utf-8")
         for text in (privacy, cookie):
@@ -677,8 +684,9 @@ class Sito(unittest.TestCase):
             for icon in icons:
                 self.assertIn(icon.format(pre=pre), text, rel)
             self.assertIn(brand.format(pre=pre), text, rel)
-            self.assertIn('property="og:image" content="https://incentiviperte.pages.dev/og.png"', text, rel)
-            self.assertIn('name="twitter:image" content="https://incentiviperte.pages.dev/og.png"', text, rel)
+            self.assertIn(f'property="og:image" content="{BASE}og.png"', text, rel)
+            self.assertIn(f'name="twitter:image" content="{BASE}og.png"', text, rel)
+            self.assertNotIn("pages.dev", text, rel)
 
     def test_descrizione_fogliopef_e_mailto_sponsor(self):
         old = "FoglioPEF è un foglio Excel"
