@@ -231,18 +231,13 @@ def is_aperto(b):
     return not b.get("scaduto") and not b.get("in_arrivo")
 
 
-def in_ricerca_default(b):
-    """Card visibile con i filtri azzerati e «Mostra scaduti» spento.
+def conto_aperti(bandi):
+    """Già aperti e non scaduti: apertura assente oppure non successiva a oggi.
 
-    Stessa regola dello script di ricerca (`data-scaduto !== "1"`): tutte le aree,
-    nazionali compresi, i bandi senza scadenza e quelli non ancora aperti.
-    Restano fuori solo i già scaduti.
+    È il numero del hero e dell'etichetta «bandi trovati» con i filtri azzerati.
+    I bandi con apertura futura restano in elenco, ma non entrano nel conto.
     """
-    return not b.get("scaduto")
-
-
-def conto_ricerca_default(bandi):
-    return sum(1 for b in bandi if in_ricerca_default(b))
+    return sum(1 for b in bandi if is_aperto(b))
 
 
 def qty(n, one, many):
@@ -754,7 +749,7 @@ def filter_form(bandi):
         f'<option value="{e(x)}">{e("Nazionali" if x == "Nazionale" else x)}</option>' for x in REG
     )
     dest_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in dests)
-    att = conto_ricerca_default(bandi)
+    att = conto_aperti(bandi)
     label = "1 bando trovato" if att == 1 else f"{att} bandi trovati"
     return f'''<form id="filtri-form" class="filters" role="search" aria-label="Cerca e filtra i bandi" autocomplete="off">
 <div><label for="q">Cerca</label><input id="q" name="q" type="search" placeholder="Titolo, ente o parola chiave" enterkeyhint="search"></div>
@@ -793,11 +788,17 @@ JS = r"""<script>
   function shownByDefault(card) {
     return card.getAttribute("data-scaduto") !== "1";
   }
+  function isOpen(card) {
+    if (!shownByDefault(card)) return false;
+    var apre = card.getAttribute("data-apre") || "";
+    if (apre && daysUntil(apre) > 0) return false;
+    return true;
+  }
   function syncHero() {
     var n = 0;
-    for (var i = 0; i < cards.length; i++) if (shownByDefault(cards[i])) n++;
+    for (var i = 0; i < cards.length; i++) if (isOpen(cards[i])) n++;
     var label = n === 1 ? "1 bando aperto" : n + " bandi aperti";
-    var nodes = document.querySelectorAll("[data-aperti]");
+    var nodes = document.querySelectorAll(".hero [data-aperti]");
     for (var c = 0; c < nodes.length; c++) nodes[c].textContent = label;
   }
   function readUrl() {
@@ -843,8 +844,9 @@ JS = r"""<script>
         visible[Math.min(5, visible.length - 1)].after(sponsor);
       }
     }
-    var n = visible.length;
-    var label = n === 0 ? "Nessun bando con questi filtri. Modifica la ricerca o mostra gli scaduti." : (n === 1 ? "1 bando trovato" : n + " bandi trovati");
+    var n = 0;
+    for (var v = 0; v < visible.length; v++) if (isOpen(visible[v])) n++;
+    var label = visible.length === 0 ? "Nessun bando con questi filtri. Modifica la ricerca o mostra gli scaduti." : (n === 1 ? "1 bando trovato" : n + " bandi trovati");
     if (count.textContent !== label) count.textContent = label;
   }
   readUrl();
@@ -1834,7 +1836,7 @@ def build(today=None):
     hero = hero_block(
         "hero-home",
         "<h1>Bandi e incentivi per startup e PMI</h1>"
-        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(conto_ricerca_default(bandi), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
+        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(conto_aperti(bandi), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
         '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>',
