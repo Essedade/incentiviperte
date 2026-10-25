@@ -1600,6 +1600,156 @@ process.stdout.write(JSON.stringify({
         self.assertIn("og.png", og)
         self.assertNotIn("hero-", og)
 
+    def test_seo_titoli_meta_e_pagine_nuove(self):
+        """Title delle schede entro 60 caratteri, meta entro 155, senza puntini."""
+        for path in (DIST / "bando").glob("*.html"):
+            text = path.read_text(encoding="utf-8")
+            title = html.unescape(re.search(r"<title>(.*?)</title>", text).group(1))
+            desc = html.unescape(re.search(r'<meta name="description" content="([^"]*)"', text).group(1))
+            self.assertLessEqual(len(title), 60, path.name)
+            self.assertLessEqual(len(desc), 155, path.name)
+            self.assertNotIn("…", desc, path.name)
+            self.assertNotIn("...", desc, path.name)
+            self.assertNotIn("Arezzo-Siena", title + desc, path.name)
+            self.assertEqual(title, build.seo_copy.TITOLO_SCHEDA[path.stem], path.name)
+            if path.stem in build.seo_copy.META_FISSA:
+                self.assertEqual(desc, " ".join(build.seo_copy.META_FISSA[path.stem].split()), path.name)
+        premio = (DIST / "bando" / "premio-innovazione-toscana-2026.html").read_text(encoding="utf-8")
+        self.assertNotIn("Amerigo", premio)
+        self.assertNotIn("Vespucci", premio)
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        self.assertNotIn("Amerigo", home)
+        self.assertNotIn("Vespucci", home)
+
+        page = (DIST / "check-up.html").read_text(encoding="utf-8")
+        self.assertIn("<h1>Check-up Bandi: quali bandi sono adatti alla tua impresa</h1>", page)
+        self.assertIn('"@type": "FAQPage"', page)
+        self.assertIn('"@type": "BreadcrumbList"', page)
+        self.assertIn("Check-up Bandi", page)
+        self.assertNotIn("presenta anche la domanda", page.lower())
+        self.assertNotIn("presentazione della domanda", page.lower())
+        for attr in ('name="description"', 'property="og:description"', 'name="twitter:description"'):
+            chunk = page.split(attr, 1)[1].split(">", 1)[0]
+            self.assertIn(build.CHECKUP_IVA_NOTE, html.unescape(chunk))
+        self.assertNotIn('aria-label="Guide"', home)
+        self.assertNotIn("/guida/", home)
+        self.assertIn("Cosa significa bando a sportello?", home)
+        self.assertIn("Scopri il Check-up Bandi", home)
+
+        toscana = (DIST / "toscana.html").read_text(encoding="utf-8")
+        self.assertIn("data-aperti-n", toscana)
+        self.assertIn('querySelectorAll("[data-aperti-n]")', toscana)
+        self.assertIn('href="/aprire-attivita-toscana"', toscana)
+        self.assertIn('href="/bandi-camere-di-commercio-toscana"', toscana)
+        umbria = (DIST / "umbria.html").read_text(encoding="utf-8")
+        self.assertIn("<h2>Bandi Gepafin</h2>", umbria)
+        self.assertIn("<h2>Bandi Sviluppumbria</h2>", umbria)
+
+        hub = (DIST / "bandi-camere-di-commercio-toscana.html").read_text(encoding="utf-8")
+        for titolo in (
+            "Camera di Commercio di Firenze",
+            "Camera di Commercio di Arezzo e Siena",
+            "Camera di Commercio della Maremma e del Tirreno",
+            "Camera di Commercio della Toscana Nord-Ovest",
+            "Camera di Commercio di Pistoia-Prato",
+        ):
+            self.assertIn(f"<h2>{titolo}</h2>", hub)
+        self.assertNotIn('id="elenco"', hub)
+        self.assertIn('"@type": "BreadcrumbList"', hub)
+        self.assertIn('"@type": "FAQPage"', hub)
+        scheda = (DIST / "bando" / "cciaa-arezzo-siena-export-2026-arezzo.html").read_text(encoding="utf-8")
+        self.assertIn('href="/bandi-camere-di-commercio-toscana#arezzo-siena"', scheda)
+        self.assertIn("Altri bandi della Camera di Commercio di Arezzo e Siena", scheda)
+
+        er = (DIST / "bandi-camere-di-commercio-emilia-romagna.html").read_text(encoding="utf-8")
+        self.assertIn("Cosa sono i contributi tramite Confidi?", er)
+        self.assertIn('href="/bandi-camere-di-commercio-emilia-romagna"', (DIST / "emilia-romagna.html").read_text(encoding="utf-8"))
+
+        aprire = (DIST / "aprire-attivita-toscana.html").read_text(encoding="utf-8")
+        self.assertIn("<h1>Contributi per aprire un'attività in Toscana</h1>", html.unescape(aprire))
+        self.assertIn("Regolamento UE 2023/2831", aprire)
+        self.assertIn("eur-lex.europa.eu", aprire)
+        self.assertNotIn("/guida/", aprire)
+        self.assertIn('href="/aprire-attivita-toscana"', (DIST / "settore" / "nuove-imprese.html").read_text(encoding="utf-8"))
+        self.assertIn('href="/aprire-attivita-toscana"', (DIST / "settore" / "under-35.html").read_text(encoding="utf-8"))
+
+        ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+        urls = ET.parse(DIST / "sitemap.xml").findall("s:url", ns)
+
+        def field(node, name):
+            return node.find(f"s:{name}", ns).text
+
+        locs = [field(node, "loc") for node in urls]
+        nuovi = [
+            BASE + "bandi-camere-di-commercio-toscana",
+            BASE + "bandi-camere-di-commercio-emilia-romagna",
+            BASE + "aprire-attivita-toscana",
+        ]
+        self.assertEqual(locs[-3:], nuovi)
+        data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
+        bandi = sorted(data, key=lambda b: b["scadenza"] or "9999-12-31")
+        attesi = [
+            BASE,
+            BASE + "nazionale",
+            BASE + "toscana",
+            BASE + "umbria",
+            BASE + "emilia-romagna",
+        ]
+        for name in (
+            "startup", "pmi", "nuove-imprese", "under-35", "donne",
+            "investitori", "professionisti", "grandi-imprese",
+        ):
+            attesi.append(BASE + "settore/" + name)
+        for bando in bandi:
+            attesi.append(BASE + "bando/" + bando["id"])
+        for slug in ("chi-siamo", "contatti", "sponsor", "check-up", "cookie", "note-legali", "disclaimer", "privacy"):
+            attesi.append(BASE + slug)
+        self.assertEqual(locs[:-3], attesi)
+        by = {field(node, "loc"): node for node in urls}
+        for slug in ("cookie", "note-legali", "disclaimer", "privacy"):
+            self.assertEqual(field(by[BASE + slug], "lastmod"), "2026-10-24", slug)
+            self.assertEqual(field(by[BASE + slug], "changefreq"), "yearly", slug)
+            self.assertEqual(field(by[BASE + slug], "priority"), "0.3", slug)
+        self.assertEqual(field(by[BASE], "changefreq"), "weekly")
+        self.assertEqual(field(by[BASE], "priority"), "1.0")
+        self.assertEqual(field(by[BASE], "lastmod"), "2026-10-25")
+        self.assertEqual(field(by[BASE + "check-up"], "lastmod"), "2026-10-25")
+        self.assertEqual(field(by[BASE + "check-up"], "changefreq"), "monthly")
+        self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "lastmod"), "2026-10-25")
+        self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "changefreq"), "weekly")
+        self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "priority"), "0.7")
+        for loc in nuovi:
+            self.assertEqual(field(by[loc], "lastmod"), "2026-10-25")
+            self.assertEqual(field(by[loc], "changefreq"), "weekly")
+            self.assertEqual(field(by[loc], "priority"), "0.8")
+
+    def test_lancio_e_scheda_scaduta_dopo_il_23_ottobre(self):
+        fino = build.checkup_body(datetime.date(2026, 10, 30))
+        dopo = build.checkup_body(datetime.date(2026, 10, 31))
+        codice = urllib.parse.quote("Codice di lancio: LANCIO15")
+        self.assertIn('<aside class="promo"', fino)
+        self.assertIn(build.CHECKUP_LANCIO, fino)
+        self.assertIn(codice, fino)
+        self.assertNotIn('<aside class="promo"', dopo)
+        self.assertNotIn(build.CHECKUP_LANCIO, dopo)
+        self.assertNotIn(codice, dopo)
+        self.assertIn("LANCIO15", dopo)
+        data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
+        righe = build.prepare(data, datetime.date(2026, 10, 25))
+        eco = next(b for b in righe if b["id"] == "economia-circolare-privati")
+        self.assertTrue(eco["scaduto"])
+        card = build.card(eco, "", datetime.date(2026, 10, 25))
+        self.assertIn(" hidden>", card)
+        self.assertIn(">Scaduto<", card)
+        urls = [item["url"] for item in build.item_list(righe)["itemListElement"]]
+        self.assertNotIn(build.public_url("bando/economia-circolare-privati.html"), urls)
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        visibile = next(
+            block for block in re.findall(r'<article class="card\b.*?</article>', home, re.S)
+            if "/bando/economia-circolare-privati" in block
+        )
+        self.assertNotIn(" hidden>", visibile)
+
 
 class Update(unittest.TestCase):
     def test_match_e_scrittura_atomica(self):
