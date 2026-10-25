@@ -42,6 +42,19 @@ details.menu nav ul{flex-direction:column}
 .hero p{margin:0;color:#fff;max-width:42rem}
 .hero .upd{margin-top:8px;font-weight:700}
 .hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.hero .wrap{display:grid;gap:18px 28px;align-items:center}
+.hero-copy{min-width:0}
+.hero picture{display:block;min-width:0;max-width:100%}
+.hero-img,.sec-img{display:block;max-width:100%;height:auto}
+.hero-img{width:100%;aspect-ratio:16/9}
+@media(max-width:640px){.hero-img{aspect-ratio:4/3}}
+@media(min-width:900px){.hero .wrap{grid-template-columns:minmax(0,1.05fr) minmax(220px,560px);max-width:1180px}}
+.sec-img{border-radius:14px;margin:12px 0}
+.with-illu{display:grid;gap:12px 20px;align-items:center}
+.with-illu>.sec-img{margin:0}
+@media(min-width:800px){.with-illu{grid-template-columns:minmax(0,1fr) minmax(180px,360px)}.with-illu>.sec-img{max-width:360px;justify-self:end}}
+.paga .with-illu{grid-template-columns:minmax(0,1fr)}
+.paga .with-illu>.sec-img{max-width:min(100%,360px);justify-self:start}
 main{padding:0 0 40px}
 main:focus{outline:none}
 main>.wrap{padding-top:20px}
