@@ -13,6 +13,8 @@ import shutil
 import sys
 import urllib.parse
 
+import seo_copy
+
 R = pathlib.Path(__file__).resolve().parent.parent
 D = R / "dist"
 DATA = R / "data" / "bandi.json"
@@ -53,6 +55,15 @@ CHECKUP_IVA_NOTE = (
 CHECKUP_LANCIO = (
     "Con LANCIO15 fino al 30/10/2026: Base 41,65 €, Completo 67,15 €."
 )
+# Il codice resta in pagina fino al 30/10/2026 compreso. Dal 31/10 sparisce in generazione
+# e, se la pagina è già stata pubblicata, anche nello script del browser.
+LANCIO_FINO = datetime.date(2026, 10, 30)
+# Giorno del ritocco SEO. lastmod delle pagine toccate; le pagine legali restano alla data dei dati.
+SEO_LASTMOD = "2026-10-25"
+PAGINE_LASTMOD_DATI = {"cookie.html", "note-legali.html", "disclaimer.html", "privacy.html"}
+# Le guide arrivano nel ramo successivo: finché la tupla è vuota non ci sono link nel footer.
+GUIDE = ()
+EURLEX_DE_MINIMIS = "https://eur-lex.europa.eu/legal-content/IT/TXT/?uri=CELEX%3A32023R2831"
 SPONSOR_DA = "Da 49 € al mese · prezzo di lancio"
 REG = ["Nazionale", "Toscana", "Umbria", "Emilia-Romagna"]
 REQUIRED = (
@@ -229,6 +240,26 @@ def site_href(file_path, query="", fragment=""):
 def is_aperto(b):
     """Un bando in arrivo ha il badge «Apre il …» e non entra nel conto degli aperti."""
     return not b.get("scaduto") and not b.get("in_arrivo")
+
+
+def lancio_attivo(today):
+    """True fino al 30/10/2026 compreso."""
+    return today <= LANCIO_FINO
+
+
+def lastmod_pagina(path, data_lastmod):
+    """Le pagine il cui testo non cambia tengono la data dei dati. Le altre avanzano al ritocco."""
+    if path in PAGINE_LASTMOD_DATI:
+        return data_lastmod
+    return max(data_lastmod, SEO_LASTMOD)
+
+
+def checkup_meta():
+    """La nota Gumroad resta parola per parola. Il resto è accorciato: insieme starebbero a 260 caratteri."""
+    return (
+        "Verifica scritta dei bandi adatti alla tua impresa. 49 € o 79 €. "
+        + CHECKUP_IVA_NOTE
+    )
 
 
 def conto_aperti(bandi):
@@ -496,6 +527,8 @@ BADGE_JS = r"""<script>
   var label = open === 1 ? "1 bando aperto" : open + " bandi aperti";
   var counts = document.querySelectorAll("[data-aperti]");
   for (var c = 0; c < counts.length; c++) counts[c].textContent = label;
+  var numeri = document.querySelectorAll("[data-aperti-n]");
+  for (var u = 0; u < numeri.length; u++) numeri[u].textContent = String(open);
 })();
 </script>"""
 
@@ -622,19 +655,21 @@ def card_note(b):
     return f'<p class="note">{e(" ".join(chosen))}</p>'
 
 
-def card(b, pre, today):
+def card(b, pre, today, mostra_scaduto=False):
     tags = f'<span class="tag area">{e(b["regione"])}</span>'
     tags += "".join(f'<span class="tag">{e(d)}</span>' for d in b["destinatari"])
     note = card_note(b)
     avviso = avviso_fondi(b)
-    search_bits = [b["titolo"], b["sintesi"], b["ente"], b["regione"], " ".join(b["destinatari"])]
+    search_bits = [seo_copy.titolo_in_elenco(b), b["sintesi"], b["ente"], b["regione"], " ".join(b["destinatari"])]
     frase_stato = STATI.get(stato_bando(b)) or ""
     if note or frase_stato:
         search_bits.append(b.get("nota_scadenza") or "")
     if frase_stato:
         search_bits.append(frase_stato)
     search = " ".join(" ".join(search_bits).split())
-    hidden = " hidden" if b["scaduto"] else ""
+    # Negli elenchi predefiniti lo scaduto resta nel DOM ma nascosto (c'è «Mostra scaduti»).
+    # Sulle pagine delle Camere resta visibile, in fondo alla sezione.
+    hidden = "" if mostra_scaduto or not b["scaduto"] else " hidden"
     href = site_href(f'bando/{b["id"]}.html')
     when = f' data-deadline="{b["scadenza"]}"' if b["scadenza"] else ""
     if b.get("apertura"):
@@ -644,7 +679,7 @@ def card(b, pre, today):
         f'data-dest="{e("|".join(b["destinatari"]))}" data-scad="{b["scadenza"] or "9999-12-31"}" '
         f'data-apre="{e(b.get("apertura") or "")}" '
         f'data-scaduto="{1 if b["scaduto"] else 0}" data-search="{e(search)}"{hidden}>'
-        f'{badge(b, today)}{avviso}<h3><a class="cardlink" href="{href}">{e(b["titolo"])}</a></h3>'
+        f'{badge(b, today)}{avviso}<h3><a class="cardlink" href="{href}">{e(seo_copy.titolo_in_elenco(b))}</a></h3>'
         f'<p class="amt">{e(b["importo"])}</p><div class="tags">{tags}</div>'
         f'<p class="sum">{e(b["sintesi"])}</p>{note}<div class="meta"><span class="dl"{when}>{e(deadline_text(b))}</span>'
         f'<span class="ente">{e(b["ente"])}</span></div></article>'
@@ -702,15 +737,23 @@ def bando_checkup_box():
     )
 
 
-def checkup_section(pre, con_immagine=False):
-    testo = (
-        "<h2 id=\"checkup-title\">Check-up Bandi</h2>"
-        "<p>Controllo personalizzato di quali bandi regionali e nazionali sono adatti alla tua impresa: "
-        "tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali "
-        "per avviare e far crescere l'impresa, tra cui finanziamenti a tasso zero e contributi a fondo perduto "
-        "per nuove imprese, startup innovative e investimenti. Il risultato è una relazione scritta.</p>"
-        f'<p><a class="btn" href="{site_href("check-up.html")}">Richiedi il Check-up</a></p>'
-    )
+def checkup_section(pre, con_immagine=False, variante="standard"):
+    if variante == "home":
+        testo = (
+            "<h2 id=\"checkup-title\">Check-up Bandi</h2>"
+            "<p>Vuoi sapere quali di questi bandi sono adatti alla tua impresa? "
+            "Con il Check-up Bandi ricevi una relazione scritta: Base 49 €, Completo 79 € (prezzi finali).</p>"
+            f'<p><a class="btn" href="{site_href("check-up.html")}">Scopri il Check-up Bandi</a></p>'
+        )
+    else:
+        testo = (
+            "<h2 id=\"checkup-title\">Check-up Bandi</h2>"
+            "<p>Controllo personalizzato di quali bandi regionali e nazionali sono adatti alla tua impresa: "
+            "tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali "
+            "per avviare e far crescere l'impresa, tra cui finanziamenti a tasso zero e contributi a fondo perduto "
+            "per nuove imprese, startup innovative e investimenti. Il risultato è una relazione scritta.</p>"
+            f'<p><a class="btn" href="{site_href("check-up.html")}">Richiedi il Check-up</a></p>'
+        )
     if con_immagine:
         inner = f'<div class="box with-illu"><div>{testo}</div>{sec_img("verifica-ammissibilita", 800, 600)}</div>'
     else:
@@ -908,11 +951,31 @@ def hubs(bandi, pre):
     )
 
 
-def faq_html():
+def faq_html(pairs=None, raw=False):
+    """pairs: (domanda, risposta). Con raw=False la risposta è testo e viene escapata."""
+    if pairs is None:
+        pairs = FAQ
+        raw = False
     blocks = []
-    for q, a in FAQ:
-        blocks.append(f"<details><summary>{e(q)}</summary><p>{e(a)}</p></details>")
+    for q, a in pairs:
+        answer = a if raw else e(a)
+        blocks.append(f"<details><summary>{e(q)}</summary><p>{answer}</p></details>")
     return '<section class="faq" aria-labelledby="faq-title"><h2 id="faq-title">Domande frequenti</h2>' + "".join(blocks) + "</section>"
+
+
+def faq_ld(pairs):
+    """pairs con risposta già in testo semplice, senza markup."""
+    return {
+        "@type": "FAQPage",
+        "mainEntity": [
+            {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}}
+            for q, a in pairs
+        ],
+    }
+
+
+def link_verifica():
+    return f'<a href="{site_href("check-up.html")}">verifica scritta dei bandi adatti alla tua impresa</a>'
 
 
 def head_icons(pre):
@@ -981,11 +1044,12 @@ def brand_link(pre):
     )
 
 
-def page(path, title, desc, body, hero="", ld=None, robots=None, extra_head=""):
+def page(path, title, desc, body, hero="", ld=None, robots=None, extra_head="", title_as_is=False):
     pre = prefix(path)
     # /check-up-bandi è solo un rimando: canonical e social puntano alla pagina vera.
     url = public_url("check-up.html") if path == "check-up-bandi.html" else public_url(path)
-    full = title if path == "index.html" else f"{title} – {SITE}"
+    # title_as_is: il documento fissa già il title intero (schede entro 60 caratteri, senza il marchio).
+    full = title if path == "index.html" or title_as_is else f"{title} – {SITE}"
     nav_items = []
     for href, label, kind in NAV:
         cls = f' class="{kind}"' if kind else ""
@@ -1063,11 +1127,15 @@ def footer(pre):
         ("note-legali.html", "Note legali"),
     )
     links = "".join(f'<li><a href="{site_href(href)}">{label}</a></li>' for href, label in info)
+    guide = ""
+    if GUIDE:
+        voci = "".join(f'<li><a href="{site_href(href)}">{e(label)}</a></li>' for href, label in GUIDE)
+        guide = f'<nav aria-label="Guide"><p><strong>Guide</strong></p><ul>{voci}</ul></nav>\n'
     return f"""<footer><div class="wrap">
 <p><strong>{SITE}</strong> · raccolta gratuita e indipendente di bandi per startup e PMI, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali. Le schede sono sintesi: fa fede solo il bando ufficiale.</p>
 <nav aria-label="Aree"><p><strong>Aree</strong></p><ul id="foot-aree"></ul></nav>
 <nav aria-label="Destinatari"><p><strong>Destinatari</strong></p><ul id="foot-dest"></ul></nav>
-<nav aria-label="Informazioni"><ul>{links}</ul></nav>
+{guide}<nav aria-label="Informazioni"><ul>{links}</ul></nav>
 <p>Strumento dello stesso titolare: {FPEF_DESC.replace("FoglioPEF", ext(FPEF, "FoglioPEF"), 1)} ({ext(FPEF_LI, "LinkedIn")}). Contatti: {ext(LINKEDIN, "messaggi della Pagina LinkedIn IncentiviPerTe")} o {mail_link()}. Nessun cookie, nessun tracker.</p>
 </div></footer>"""
 
@@ -1332,14 +1400,15 @@ def mailto_href(subject, body):
     return f"mailto:{EMAIL}?{query}"
 
 
-def bonifico_link(level, product, price):
+def bonifico_link(level, product, price, today):
     subject = f"Richiesta Check-up {level} – pagamento con bonifico istantaneo"
     body = (
         f"Livello: {level}\n"
         f"Prodotto: {product}\n"
         f"Importo: {price}\n"
-        "Codice di lancio: LANCIO15\n"
     )
+    if lancio_attivo(today):
+        body += "Codice di lancio: LANCIO15\n"
     return f'<a class="btn" href="{e(mailto_href(subject, body))}">Bonifico istantaneo</a>'
 
 
@@ -1363,19 +1432,19 @@ def pay_choice(link_html, amount):
     )
 
 
-def pay_level(product, price, level, url):
+def pay_level(product, price, level, url, today):
     final = f"{price} (prezzo finale, nessuna IVA aggiunta)"
     return (
         '<div class="pay-level">'
         f"<h3>{e(product)}</h3>"
         '<div class="pay-actions">'
-        f"{pay_choice(bonifico_link(level, product, price), final)}"
+        f"{pay_choice(bonifico_link(level, product, price, today), final)}"
         f"{pay_choice(card_pay_link(url), price)}"
         "</div></div>"
     )
 
 
-def checkup_pay_section():
+def checkup_pay_section(today):
     return (
         '<section class="paga" aria-labelledby="paga-ora">'
         '<h2 id="paga-ora">Paga ora</h2>'
@@ -1385,15 +1454,79 @@ def checkup_pay_section():
         "</div>"
         + sec_img("verifica-ammissibilita", 800, 600)
         + "</div>"
-        + pay_level(CHECKUP_PRODUCT_BASE, "49 €", "Base", GUMROAD_CHECKUP_BASE_URL)
-        + pay_level(CHECKUP_PRODUCT_COMPLETO, "79 €", "Completo", GUMROAD_CHECKUP_COMPLETO_URL)
+        + pay_level(CHECKUP_PRODUCT_BASE, "49 €", "Base", GUMROAD_CHECKUP_BASE_URL, today)
+        + pay_level(CHECKUP_PRODUCT_COMPLETO, "79 €", "Completo", GUMROAD_CHECKUP_COMPLETO_URL, today)
         + "<p>Bonifico istantaneo: l'IBAN non è pubblicato sul sito. "
         + f"Dopo la richiesta lo inviamo per email da {mail_link()}.</p>"
         + "</section>"
     )
 
 
-def checkup_body():
+def checkup_faq():
+    """Solo ciò che la pagina Check-up dice già. Niente presentazione della domanda."""
+    extra = ", ".join(CHECKUP_EXTRA[:-1]) + " e " + CHECKUP_EXTRA[-1]
+    return (
+        (
+            "Che cos'è il Check-up Bandi?",
+            "Una relazione scritta che indica quali bandi regionali, camerali e nazionali aperti sono adatti alla tua impresa.",
+        ),
+        (
+            "Quanto costa?",
+            "Base 49 €, Completo 79 €. Sono prezzi finali.",
+        ),
+        (
+            "Cosa cambia tra Base e Completo?",
+            "Il Completo aggiunge " + extra + ".",
+        ),
+        (
+            "Quali territori copre?",
+            "Tutta la Toscana (Regione e Camere di Commercio toscane), Umbria, Emilia-Romagna e gli incentivi nazionali.",
+        ),
+        (
+            "In quanto tempo ricevo la relazione?",
+            "Base entro 5 giorni lavorativi, Completo entro 7-10 giorni lavorativi, dalla ricezione dei dati completi.",
+        ),
+        (
+            "Come si paga?",
+            "Con carta su Gumroad oppure con bonifico istantaneo; l'IBAN viene inviato per email dopo la richiesta.",
+        ),
+    )
+
+
+LANCIO_JS = r"""<script>
+(function () {
+  var ultimo = new Date(2026, 9, 30);
+  var now = window.INCENTIVI_OGGI ? new Date(window.INCENTIVI_OGGI) : new Date();
+  var start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (start <= ultimo) return;
+  var promo = document.querySelector("aside.promo");
+  if (promo && promo.parentNode) promo.parentNode.removeChild(promo);
+  var links = document.querySelectorAll("a[href]");
+  for (var i = 0; i < links.length; i++) {
+    var href = links[i].getAttribute("href") || "";
+    if (href.indexOf("LANCIO15") === -1) continue;
+    var q = href.split("?");
+    if (q.length < 2) continue;
+    var params = q[1].split("&");
+    var out = [];
+    for (var p = 0; p < params.length; p++) {
+      var kv = params[p].split("=");
+      var key = decodeURIComponent((kv[0] || "").replace(/\+/g, " "));
+      var val = decodeURIComponent((kv.slice(1).join("=") || "").replace(/\+/g, " "));
+      if (key === "body") {
+        val = val.split("\n").filter(function (line) {
+          return line.indexOf("LANCIO15") === -1;
+        }).join("\n");
+      }
+      out.push(encodeURIComponent(key) + "=" + encodeURIComponent(val));
+    }
+    links[i].setAttribute("href", q[0] + "?" + out.join("&"));
+  }
+})();
+</script>"""
+
+
+def checkup_body(today):
     tipi = (
         "Startup", "PMI", "Nuove imprese", "Under 35", "Donne",
         "Professionisti", "Grandi imprese", "Altro",
@@ -1402,8 +1535,20 @@ def checkup_body():
     tipo_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in tipi)
     stadio_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in stadi)
     extra = "".join(f"<li>{e(item)}</li>" for item in CHECKUP_EXTRA)
-    return f"""<div class="box">
-<p>Ricevi una relazione scritta sui bandi adatti alla tua impresa: tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali per avviare e far crescere l'impresa.</p>
+    if lancio_attivo(today):
+        promo = (
+            '<aside class="promo" aria-label="Codice di lancio">'
+            '<p class="lab">Codice di lancio</p>'
+            '<p class="code">LANCIO15</p>'
+            f"<p>{CHECKUP_LANCIO}</p></aside>\n"
+        )
+    else:
+        promo = ""
+    percorso = crumbs([("index.html", "Home"), ("", "Check-up Bandi")], "")
+    domande = faq_html(checkup_faq())
+    return f"""{percorso}<div class="box">
+<p>Il Check-up Bandi è una verifica scritta dei bandi adatti alla tua impresa: bandi della Regione Toscana e delle Camere di Commercio toscane, dell'Umbria, dell'Emilia-Romagna e incentivi nazionali. Ci mandi i dati dell'impresa e ricevi una relazione scritta sui bandi adatti e cosa serve per partecipare. Base 49 €, relazione di circa 3-4 pagine entro 5 giorni lavorativi. Completo 79 €, 6-10 pagine entro 7-10 giorni lavorativi, con call di 30 minuti. Prezzi finali.</p>
+<p>Il Check-up è una verifica di ammissibilità e non garantisce l'ottenimento del contributo.</p>
 <h2>Livelli del servizio</h2>
 <div class="with-illu"><div>
 <ul>
@@ -1414,12 +1559,7 @@ def checkup_body():
 </div>
 {sec_img("relazione-scritta", 800, 600)}
 </div>
-<aside class="promo" aria-label="Codice di lancio">
-<p class="lab">Codice di lancio</p>
-<p class="code">LANCIO15</p>
-<p>{CHECKUP_LANCIO}</p>
-</aside>
-<h2>Chi lo prepara</h2>
+{promo}<h2>Chi lo prepara</h2>
 <p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>
 <div class="checkup-split">
 <div>
@@ -1443,9 +1583,11 @@ def checkup_body():
 <p id="checkup-copied" role="status" hidden>Testo copiato.</p>
 </div>
 </div>
-{checkup_pay_section()}
+{checkup_pay_section(today)}
 </div>
 </div>
+{domande}
+{LANCIO_JS}
 <script>
 (function () {{
   var form = document.getElementById("checkup-form");
@@ -1502,10 +1644,11 @@ def static_pages(today):
     owner = f"Davide Davoglio, Arezzo (Italia) – contattabile tramite i messaggi della {li} o all'indirizzo {mail}."
     return {
         "chi-siamo.html": (
-            "Chi siamo",
-            "IncentiviPerTe, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna e per gli incentivi nazionali: metodo, team e Check-up Bandi.",
-            "<h1>Chi siamo</h1><div class='box'>"
-            "<p>IncentiviPerTe è una raccolta gratuita e indipendente di bandi e incentivi per startup e PMI, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali. In Toscana la copertura è tutta la regione: bandi regionali e delle Camere di Commercio toscane.</p>"
+            "Chi siamo: metodo e fonti di IncentiviPerTe",
+            "Raccolta gratuita e indipendente di bandi, da Arezzo: come scegliamo e controlliamo le schede, quali fonti ufficiali usiamo e cos'è il Check-up Bandi.",
+            "<h1>Chi siamo e come controlliamo i bandi</h1><div class='box'>"
+            "<p>IncentiviPerTe è una raccolta gratuita e indipendente di bandi per startup e PMI, nata ad Arezzo. Ogni scheda riassume un bando ufficiale, indica la data dell'ultimo controllo e rimanda al testo dell'ente: fa fede sempre il bando ufficiale.</p>"
+            "<p>La copertura è tutta la Toscana: bandi regionali e delle Camere di Commercio toscane, più l'Umbria, l'Emilia-Romagna e gli incentivi nazionali.</p>"
             "<p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>"
             "<h2>Metodo</h2><div class=\"with-illu\"><p>Ogni scheda è redatta partendo dalla fonte ufficiale (ministeri, Regioni, Sviluppo Toscana, Camere di Commercio toscane, Gepafin e altri enti) e riporta il link al bando e la data dell'ultimo controllo. Le pagine ufficiali vengono ricontrollate periodicamente e ogni anomalia è verificata a mano. I bandi scaduti vengono rimossi.</p>"
             + sec_img("metodo-fonti-ufficiali", 800, 600)
@@ -1516,14 +1659,14 @@ def static_pages(today):
             True,
         ),
         "contatti.html": (
-            "Contatti",
-            "Come contattare IncentiviPerTe: segnalazioni di bandi, Check-up Bandi e richieste sponsor.",
+            "Contatti – IncentiviPerTe",
+            "Scrivici per segnalare un bando o un errore, chiedere il Check-up Bandi o uno spazio sponsor: email e messaggi alla Pagina LinkedIn.",
             f"<h1>Contatti</h1><div class='box'><div class='with-illu'><div><p>Per segnalare un bando, una correzione o per informazioni sugli spazi sponsor scrivici tramite i messaggi della Pagina LinkedIn IncentiviPerTe oppure all'indirizzo email:</p>{contacts}<p>Le schede pubblicate restano sintesi: requisiti e domanda si verificano sull'ente che gestisce la misura. Il Check-up Bandi è la relazione scritta sui bandi adatti: <a href='/check-up'>Richiedi il Check-up</a>. Gli spazi pubblicitari sono descritti nella pagina <a href='/sponsor'>Sponsor</a>.</p></div>{sec_img('contatti', 800, 600)}</div></div>",
             False,
         ),
         "sponsor.html": (
-            "Sponsor e pubblicità",
-            "Spazi sponsor su IncentiviPerTe da 49 € al mese, su FoglioPEF da 39 € al mese e su entrambi i siti a 69 € al mese.",
+            "Pubblicità per studi e consulenti – IncentiviPerTe",
+            "Spazi sponsor per studi, consulenti e banche davanti a chi cerca bandi: da 49 € al mese su IncentiviPerTe, 39 € su FoglioPEF, 69 € su entrambi i siti.",
             f"""<div class="box">
 <p>IncentiviPerTe è letto da imprenditori, startup e PMI che cercano finanziamenti. Gli spazi sono per <strong>commercialisti, consulenti di finanza agevolata, banche e software</strong> per le imprese.</p>
 {sponsor_contacts}
@@ -1543,10 +1686,9 @@ def static_pages(today):
             False,
         ),
         "check-up.html": (
-            "Check-up Bandi",
-            "Check-up Bandi: relazione scritta sui bandi adatti. Base entro 5 giorni lavorativi, Completo entro 7-10 giorni lavorativi. "
-            + CHECKUP_IVA_NOTE,
-            checkup_body(),
+            "Check-up Bandi per imprese: verifica scritta da 49 €",
+            checkup_meta(),
+            checkup_body(today),
             False,
         ),
         "cookie.html": (
@@ -1584,7 +1726,7 @@ def item_list(items):
                 "@type": "ListItem",
                 "position": i,
                 "url": public_url(f"bando/{b['id']}.html"),
-                "name": b["titolo"],
+                "name": seo_copy.titolo_in_elenco(b),
             }
             for i, b in enumerate((b for b in items if not b["scaduto"]), start=1)
         ],
@@ -1815,6 +1957,500 @@ def self_check(written):
             raise ValueError(f"{rel}: manca il meta di verifica Search Console")
 
 
+def span_n(n):
+    return f'<span data-aperti-n>{n}</span>'
+
+
+def riga_aperti(n):
+    return f'In elenco: <span data-aperti>{qty(n, "bando aperto", "bandi aperti")}</span>'
+
+
+def link_bando(b):
+    return f'<a href="{site_href(f"bando/{b["id"]}.html")}">{e(seo_copy.titolo_in_elenco(b))}</a>'
+
+
+def lista_bandi(rows):
+    if not rows:
+        return "<p>Nessuna scheda in questo elenco.</p>"
+    voci = "".join(f"<li>{link_bando(b)} — {e(deadline_text(b))}</li>" for b in rows)
+    return f"<ul>{voci}</ul>"
+
+
+def chiave_camera(bando):
+    ente = bando["ente"].lower()
+    if bando["regione"] == "Toscana" and "camera di commercio" in ente:
+        if "firenze" in ente:
+            return "firenze"
+        if "arezzo" in ente:
+            return "arezzo-siena"
+        if "maremma" in ente:
+            return "maremma"
+        if "nord-ovest" in ente:
+            return "tno"
+        if "pistoia" in ente:
+            return "pistoia"
+    if bando["regione"] == "Emilia-Romagna" and ("camera di commercio" in ente or "ferrara" in ente):
+        if "bologna" in ente:
+            return "bologna"
+        if "dell'emilia" in ente:
+            return "emilia"
+        if "ferrara" in ente:
+            return "ferrara"
+        if "modena" in ente:
+            return "modena"
+        if "romagna" in ente:
+            return "romagna"
+    return ""
+
+
+CAMERE_TOSCANA = (
+    ("firenze", "Camera di Commercio di Firenze", "Altri bandi della Camera di Commercio di Firenze"),
+    ("arezzo-siena", "Camera di Commercio di Arezzo e Siena", "Altri bandi della Camera di Commercio di Arezzo e Siena"),
+    ("maremma", "Camera di Commercio della Maremma e del Tirreno", "Altri bandi della Camera di Commercio della Maremma e del Tirreno"),
+    ("tno", "Camera di Commercio della Toscana Nord-Ovest", "Altri bandi della Camera di Commercio della Toscana Nord-Ovest"),
+    ("pistoia", "Camera di Commercio di Pistoia-Prato", "Altri bandi della Camera di Commercio di Pistoia-Prato"),
+)
+CAMERE_ER = (
+    ("bologna", "Camera di Commercio di Bologna", "Altri bandi della Camera di Commercio di Bologna"),
+    ("emilia", "Camera di Commercio dell'Emilia", "Altri bandi della Camera di Commercio dell'Emilia"),
+    ("ferrara", "Camera di Commercio di Ferrara e Ravenna", "Altri bandi della Camera di Commercio di Ferrara e Ravenna"),
+    ("modena", "Camera di Commercio di Modena", "Altri bandi della Camera di Commercio di Modena"),
+    ("romagna", "Camera di Commercio della Romagna", "Altri bandi della Camera di Commercio della Romagna"),
+)
+HUB_TOSCANA = "bandi-camere-di-commercio-toscana.html"
+HUB_ER = "bandi-camere-di-commercio-emilia-romagna.html"
+PAGINA_APRIRE = "aprire-attivita-toscana.html"
+
+
+def rimando_camera(bando):
+    chiave = chiave_camera(bando)
+    if not chiave:
+        return ""
+    tabella = CAMERE_TOSCANA if bando["regione"] == "Toscana" else CAMERE_ER
+    pagina = HUB_TOSCANA if bando["regione"] == "Toscana" else HUB_ER
+    for cid, _h2, etichetta in tabella:
+        if cid == chiave:
+            return f'<p><a href="{site_href(pagina, fragment=cid)}">{e(etichetta)}</a></p>'
+    return ""
+
+
+def faq_scheda_html(bando):
+    plain, html_pairs = [], []
+    for domanda, risposta in seo_copy.faq_scheda(bando):
+        if bando["id"] == "autoimpiego-centro-nord" and domanda.startswith("Vale anche"):
+            href = site_href("bando/resto-al-sud-2.html")
+            testo = "No: al Sud c'è Resto al Sud 2.0."
+            marcato = f'No: al Sud c\'è <a href="{href}">Resto al Sud 2.0</a>.'
+        else:
+            testo, marcato = risposta, e(risposta)
+        plain.append((domanda, testo))
+        html_pairs.append((domanda, marcato))
+    return plain, html_pairs
+
+
+def home_faq():
+    sportello = (
+        "Cosa significa bando a sportello?",
+        "Le domande vengono esaminate in ordine di arrivo finché ci sono risorse: il bando può chiudere prima della scadenza.",
+    )
+    resto = (
+        "Resto al Sud 2.0 vale in Toscana?",
+        "No, vale solo nelle otto regioni del Mezzogiorno. Al Centro-Nord la misura per gli under 35 è Autoimpiego Centro-Nord.",
+    )
+    plain = list(FAQ) + [sportello, resto]
+    resto_html = (
+        "No, vale solo nelle otto regioni del Mezzogiorno. Al Centro-Nord la misura per gli under 35 è "
+        f'<a href="{site_href("bando/autoimpiego-centro-nord.html")}">Autoimpiego Centro-Nord</a>.'
+    )
+    marcate = [(q, e(a)) for q, a in list(FAQ) + [sportello]] + [(resto[0], resto_html)]
+    return plain, marcate
+
+
+def _schede(bandi, ids):
+    ordine = {bid: i for i, bid in enumerate(ids)}
+    return sorted((b for b in bandi if b["id"] in ordine), key=lambda b: ordine[b["id"]])
+
+
+def sezioni_toscana(rows):
+    doppia = _schede(rows, (
+        "cciaa-maremma-tirreno-doppia-transizione-2026",
+        "cciaa-tno-doppia-transizione-2-2026",
+    ))
+    doppia_html = " e ".join(link_bando(b) for b in doppia)
+    aperti_perduto = [
+        b for b in rows
+        if is_aperto(b) and "fondo perduto" in f'{b["importo"]} {b["sintesi"]}'.lower()
+    ]
+    if aperti_perduto:
+        nomi = ", ".join(seo_copy.titolo_in_elenco(b) for b in aperti_perduto)
+        links = ", ".join(link_bando(b) for b in aperti_perduto)
+    else:
+        nomi = "In questo momento non ci sono schede toscane aperte con contributo a fondo perduto."
+        links = e(nomi)
+    faq_plain = (
+        ("Quali bandi a fondo perduto sono aperti in Toscana?", nomi),
+        (
+            "Dove si presenta la domanda per i bandi della Regione Toscana?",
+            "Per i bandi gestiti da Sviluppo Toscana sul Sistema Fondi Toscana (sft.sviluppo.toscana.it), "
+            "con identità digitale e imposta di bollo; per i bandi camerali di solito su ReStart.",
+        ),
+        (
+            "Ci sono bandi per l'imprenditoria femminile in Toscana?",
+            "Sì: per esempio la linea A1 del Bando 1.3.2 è dedicata anche alla creazione di imprese femminili. "
+            "L'elenco completo è nella pagina Bandi per l'imprenditoria femminile.",
+        ),
+    )
+    donne = site_href("settore/donne.html")
+    faq_html_pairs = [
+        (faq_plain[0][0], links),
+        (faq_plain[1][0], e(faq_plain[1][1])),
+        (
+            faq_plain[2][0],
+            "Sì: per esempio la linea A1 del Bando 1.3.2 è dedicata anche alla creazione di imprese femminili. "
+            f'L\'elenco completo è nella pagina <a href="{donne}">Bandi per l\'imprenditoria femminile</a>.',
+        ),
+    ]
+    blocchi = (
+        '<section><h2>Bandi della Regione Toscana e di Sviluppo Toscana</h2>'
+        "<p>Nell'elenco qui sotto ci sono le misure della Regione gestite da Sviluppo Toscana, come il Bando 1.3.2, "
+        "e i contributi di ARTI per le assunzioni.</p></section>"
+        '<section><h2>Bandi delle Camere di Commercio toscane</h2>'
+        "<p>Tutta la Toscana: bandi regionali e delle Camere di Commercio toscane. "
+        f'La raccolta per Camera è nella pagina <a href="{site_href(HUB_TOSCANA)}">Bandi delle Camere di Commercio in Toscana</a>.</p></section>'
+        '<section><h2>Digitalizzazione e transizione</h2>'
+        f"<p>Schede sulla doppia transizione: {doppia_html}.</p></section>"
+        '<section><h2>Per chi apre un\'impresa in Toscana</h2>'
+        f'<p><a href="{site_href(PAGINA_APRIRE)}">Contributi per aprire un\'attività in Toscana</a>.</p></section>'
+    )
+    return blocchi, faq_plain, faq_html_pairs
+
+
+def sezioni_umbria(rows):
+    def gruppo(pred):
+        return [b for b in rows if pred(b) and is_aperto(b)]
+    gepafin = gruppo(lambda b: "Gepafin" in b["ente"])
+    svilupp = gruppo(lambda b: "Sviluppumbria" in b["ente"])
+    altri = gruppo(lambda b: "Gepafin" not in b["ente"] and "Sviluppumbria" not in b["ente"])
+    faq = (
+        (
+            "Cosa vuol dire finanziamento con remissione?",
+            "È un prestito agevolato di cui una parte, a certe condizioni, non va restituita: "
+            "per esempio l'Avviso STEP prevede una remissione fino al 50%.",
+        ),
+        (
+            "Dove trovo i bandi non scaduti della Regione Umbria?",
+            "In questa pagina sono elencati solo i bandi con scadenza futura o a sportello aperto, "
+            "con la data dell'ultimo controllo.",
+        ),
+    )
+    # Il secondo punto del documento vale per l'elenco predefinito: gli scaduti restano raggiungibili
+    # con «Mostra scaduti» in home e con la propria scheda. Qui si dice come è fatta questa pagina.
+    blocchi = (
+        "<section><h2>Bandi Gepafin</h2>" + lista_bandi(gepafin) + "</section>"
+        "<section><h2>Bandi Sviluppumbria</h2>" + lista_bandi(svilupp) + "</section>"
+        "<section><h2>Altri bandi della Regione Umbria</h2>" + lista_bandi(altri) + "</section>"
+    )
+    return blocchi, faq
+
+
+def sezioni_emilia():
+    return (
+        (
+            "Cos'è il Fondo Multiscopo dell'Emilia-Romagna?",
+            "Un fondo regionale di finanza agevolata: il 75% del finanziamento è a tasso zero e il 25% è bancario "
+            "a tasso convenzionato. Ha sezioni diverse, come StartER per le imprese giovani e GreenER per energia "
+            "ed economia circolare.",
+        ),
+        (
+            "Dove si presenta la domanda per i bandi FESR?",
+            "Di solito sulla piattaforma regionale Sfinge 2020, indicata nel bando.",
+        ),
+    )
+
+
+SETTORE_SEO = {
+    "PMI": (
+        "Bandi per PMI 2026: Toscana, Umbria, Emilia-Romagna",
+        "Bandi aperti per PMI: contributi a fondo perduto e finanziamenti agevolati regionali, camerali e nazionali, con scadenze e link al bando ufficiale.",
+        "Bandi aperti per PMI in Toscana, Umbria ed Emilia-Romagna",
+        "Qui trovi i bandi aperti per le piccole e medie imprese di Toscana, Umbria ed Emilia-Romagna e quelli nazionali: contributi a fondo perduto, aiuti su interessi e garanzie, finanziamenti agevolati.",
+    ),
+    "Startup": (
+        "Bandi per startup 2026: incentivi regionali e nazionali",
+        "Bandi e incentivi per startup e startup innovative: Smart&Start Italia, StartER in Emilia-Romagna e bandi toscani. Requisiti, scadenze e link ufficiali.",
+        "Bandi aperti per startup e startup innovative",
+        "Qui trovi i bandi aperti per le startup in Toscana, Umbria, Emilia-Romagna e a livello nazionale: finanziamenti a tasso zero come Smart&Start Italia, finanza agevolata come StartER e i bandi per chi investe in startup innovative.",
+    ),
+    "Donne": (
+        "Imprenditoria femminile 2026: bandi a fondo perduto",
+        "Bandi per imprese femminili e donne che aprono un'attività in Toscana, Emilia-Romagna e in Italia: fondo perduto e tasso zero, requisiti e link ufficiali.",
+        "Bandi per l'imprenditoria femminile",
+        "Qui trovi i bandi aperti per le imprese femminili e per le donne che avviano un'attività in Toscana, Emilia-Romagna e a livello nazionale: per esempio la linea A1 del Bando 1.3.2 in Toscana, la quota a tasso zero più alta per le imprese femminili in StartER (Emilia-Romagna) e ON Nuove imprese a tasso zero.",
+    ),
+    "Nuove imprese": (
+        "Bandi per nuove imprese 2026: contributi aperti",
+        "Contributi a fondo perduto e finanziamenti a tasso zero per chi apre una nuova impresa: bandi camerali, regionali e nazionali, requisiti e link ufficiali.",
+        "Bandi aperti per nuove imprese",
+        "Qui trovi i contributi aperti per chi ha appena aperto o sta per aprire un'impresa: voucher delle Camere di Commercio, aiuti regionali e misure nazionali come Autoimpiego Centro-Nord e ON tasso zero.",
+    ),
+    "Under 35": (
+        "Bandi per under 35 che aprono un'impresa nel 2026",
+        "Incentivi per giovani under 35 che avviano un'attività: Autoimpiego Centro-Nord, ON tasso zero e bandi camerali per imprese giovanili, requisiti e link.",
+        "Bandi per giovani under 35",
+        "Qui trovi i bandi aperti per i giovani under 35 in Toscana, Umbria, Emilia-Romagna e a livello nazionale, con importo, scadenza e link al bando ufficiale.",
+    ),
+    "Professionisti": (
+        "Bandi per liberi professionisti 2026",
+        "Bandi aperti anche ai liberi professionisti in Toscana, Umbria, Emilia-Romagna e Italia: contributi e aiuti sui finanziamenti, scadenze e link ufficiali.",
+        "Bandi aperti per liberi professionisti",
+        "Qui trovi i bandi aperti per i liberi professionisti in Toscana, Umbria, Emilia-Romagna e a livello nazionale, con importo, scadenza e link al bando ufficiale.",
+    ),
+    "Grandi imprese": (
+        "Bandi per grandi imprese 2026: misure aperte",
+        "Bandi aperti anche alle grandi imprese in Toscana, Umbria ed Emilia-Romagna: cosa finanziano, importi, scadenze e link al bando ufficiale.",
+        "Bandi aperti per grandi imprese",
+        "Qui trovi i bandi aperti per le grandi imprese in Toscana, Umbria, Emilia-Romagna e a livello nazionale, con importo, scadenza e link al bando ufficiale.",
+    ),
+    "Investitori": (
+        "Agevolazioni per chi investe in startup innovative",
+        "Detrazione IRPEF del 65% per chi investe in startup innovative, fino a 100.000 € l'anno: requisiti, limiti de minimis e link alla norma ufficiale.",
+        "Agevolazioni per chi investe in startup",
+        "Qui trovi i bandi aperti per chi investe in startup innovative in Toscana, Umbria, Emilia-Romagna e a livello nazionale, con importo, scadenza e link al bando ufficiale.",
+    ),
+}
+
+FAQ_DONNE = (
+    (
+        "Cosa si intende per impresa femminile?",
+        "Dipende dal bando: di solito un'impresa in cui le donne hanno la maggioranza delle quote e degli organi di amministrazione. La definizione esatta è nel testo di ogni bando.",
+    ),
+)
+
+FAQ_CAMERE = (
+    (
+        "Chi può partecipare ai bandi della Camera di Commercio?",
+        "Le micro, piccole e medie imprese con sede o unità locale nella provincia della Camera, iscritte al Registro delle imprese. Ogni bando ha requisiti propri.",
+    ),
+    (
+        "Serve essere in regola con il diritto annuale?",
+        "Quasi sempre sì, insieme al DURC regolare. Alcuni bandi permettono di regolarizzare il diritto annuale entro pochi giorni.",
+    ),
+    (
+        "Come si presenta la domanda?",
+        "Di solito online sulla piattaforma ReStart, con firma digitale, oppure via PEC: il bando indica quale.",
+    ),
+    (
+        'Cosa vuol dire "risorse esaurite, lista d\'attesa"?',
+        "Che i fondi sono finiti: le nuove domande vengono finanziate solo se si liberano risorse o se la Camera rifinanzia il bando.",
+    ),
+    (
+        "Quando escono i nuovi bandi?",
+        "Molte Camere pubblicano i bandi in primavera; la data varia da Camera a Camera.",
+    ),
+)
+FAQ_CONFIDI = (
+    "Cosa sono i contributi tramite Confidi?",
+    "Contributi della Camera che riducono il costo della garanzia o degli interessi su un finanziamento con la garanzia di un Confidi; di solito la domanda la presenta il Confidi.",
+)
+
+
+def griglia_camera(gruppo, today):
+    aperti = [b for b in gruppo if not b["scaduto"]]
+    chiusi = [b for b in gruppo if b["scaduto"]]
+    blocchi = "".join(card(b, "", today, mostra_scaduto=True) for b in aperti + chiusi)
+    if not blocchi:
+        return "<p>Nessuna scheda in questa sezione.</p>"
+    return f'<div class="grid">{blocchi}</div>'
+
+
+def corpo_camere(titolo_h1, paragrafo, voci, bandi, today, faq):
+    sezioni = []
+    for cid, h2, _etichetta in voci:
+        gruppo = [b for b in bandi if chiave_camera(b) == cid]
+        sezioni.append(f'<section id="{cid}"><h2>{e(h2)}</h2>{griglia_camera(gruppo, today)}</section>')
+    return (
+        crumbs([("index.html", "Home"), ("", titolo_h1)], "")
+        + f"<h1>{e(titolo_h1)}</h1><p>{e(paragrafo)}</p>"
+        + "".join(sezioni)
+        + "<section><h2>Come si presenta la domanda</h2>"
+        + "<p>Di solito online sulla piattaforma ReStart, con firma digitale, oppure via PEC: il bando indica quale. "
+        + f"Per orientarti prima, puoi chiedere una {link_verifica()}.</p></section>"
+        + faq_html(faq)
+        + BADGE_JS
+    )
+
+
+def ld_raccolta(path, title, crumb_label, items, faq=()):
+    graph = [
+        {"@type": "CollectionPage", "name": title, "url": public_url(path), "inLanguage": "it-IT", "isPartOf": BASE},
+        breadcrumb_ld([("", "Home"), (path, crumb_label)]),
+        item_list([b for b in items if not b["scaduto"]]),
+    ]
+    if faq:
+        graph.append(faq_ld(faq))
+    return {"@context": "https://schema.org", "@graph": graph}
+
+
+AREA_SEO = {
+    "Nazionale": (
+        "Incentivi nazionali 2026 per nuove imprese e PMI",
+        "Incentivi nazionali aperti nel 2026: Autoimpiego Centro-Nord, ON tasso zero, Smart&Start Italia, Nuova Sabatini, Fondo di garanzia. Requisiti e link.",
+        "Incentivi nazionali aperti per nuove imprese e PMI",
+    ),
+    "Toscana": (
+        "Bandi Toscana 2026 per imprese: fondo perduto e scadenze",
+        "Bandi aperti in Toscana per PMI e startup: Regione, Sviluppo Toscana, ARTI e Camere di Commercio. Contributi a fondo perduto e finanziamenti, con scadenze.",
+        "Bandi aperti in Toscana per imprese e startup",
+    ),
+    "Umbria": (
+        "Contributi a fondo perduto Umbria 2026: bandi aperti",
+        "Bandi aperti in Umbria per imprese: Regione, Gepafin e Sviluppumbria. Fondo perduto e finanziamenti agevolati con remissione, scadenze e link ufficiali.",
+        "Bandi aperti in Umbria per imprese",
+    ),
+    "Emilia-Romagna": (
+        "Bandi Emilia-Romagna 2026 per imprese e startup",
+        "Bandi aperti in Emilia-Romagna per PMI e startup: PR FESR, Fondo Multiscopo (StartER, GreenER) e Camere di Commercio, con scadenze e link ufficiali.",
+        "Bandi aperti in Emilia-Romagna per imprese e startup",
+    ),
+}
+
+HUB_TITOLO_TOSCANA = "Bandi delle Camere di Commercio in Toscana"
+HUB_TITOLO_ER = "Bandi delle Camere di Commercio in Emilia-Romagna"
+APRIRE_TITOLO = "Contributi per aprire un'attività in Toscana"
+APRIRE_TITLE = "Contributi per aprire un'attività in Toscana nel 2026"
+
+
+def apertura_area(reg, n, data):
+    """Paragrafi di apertura. Il numero è quello dei bandi già aperti, non scaduti."""
+    num = span_n(n)
+    quando = e(it_date(data))
+    if reg == "Nazionale":
+        testo = (
+            "Qui trovi gli incentivi nazionali aperti che valgono anche in Toscana, Umbria ed Emilia-Romagna: "
+            "per chi apre un'impresa (Autoimpiego Centro-Nord, ON Nuove imprese a tasso zero), per le startup "
+            "innovative (Smart&amp;Start Italia) e per gli investimenti delle PMI (Nuova Sabatini, Fondo di garanzia). "
+            f"Per ogni misura: importo, requisiti e link al bando ufficiale. Aggiornato al {quando}."
+        )
+    elif reg == "Toscana":
+        testo = (
+            f"Al {quando} in Toscana sono aperti {num} bandi per imprese: misure della Regione Toscana gestite da "
+            "Sviluppo Toscana (come il Bando 1.3.2 per le PMI), contributi di ARTI per le assunzioni e voucher "
+            "delle Camere di Commercio toscane. La maggior parte sono contributi a fondo perduto o aiuti sul costo "
+            "dei finanziamenti. Per ogni bando trovi importo, destinatari, scadenza e link al bando ufficiale."
+        )
+    elif reg == "Umbria":
+        testo = (
+            f"Al {quando} in Umbria sono aperti {num} bandi per imprese della Regione Umbria, "
+            "gestiti da Gepafin e Sviluppumbria: soprattutto finanziamenti agevolati con remissione parziale "
+            "del debito (Avviso STEP, efficienza energetica, fonti rinnovabili) e contributi a fondo perduto. "
+            "Per ogni bando: importo, destinatari, scadenza e link al bando ufficiale."
+        )
+    else:
+        testo = (
+            f"Al {quando} in Emilia-Romagna sono aperti {num} bandi per imprese: misure regionali del PR FESR "
+            "2021-2027, il Fondo Multiscopo con le sezioni StartER (nuove imprese) e GreenER (energia), e i bandi "
+            f"delle Camere di Commercio. Per ogni bando: importo, destinatari, scadenza e link al bando ufficiale."
+        )
+    return f"<p>{testo}</p><p>{riga_aperti(n)}. Puoi chiedere una {link_verifica()}.</p>"
+
+
+def _faq_aprire():
+    resto = "No. Al Centro-Nord la misura equivalente per gli under 35 è Autoimpiego Centro-Nord."
+    piano = "Molti bandi chiedono un piano degli investimenti e delle spese; per costruirlo in Excel c'è FoglioPEF."
+    cumulo = (
+        "A volte sì, se riguardano spese diverse e se il bando lo permette, nel limite del regime de minimis. "
+        "Il testo del regolamento è il Regolamento UE 2023/2831."
+    )
+    plain = (
+        (
+            "Ci sono contributi a fondo perduto per aprire un'attività in Toscana?",
+            "Sì, soprattutto dalle Camere di Commercio e per gli under 35 con Autoimpiego Centro-Nord. "
+            "Gli importi e i requisiti cambiano da bando a bando.",
+        ),
+        ("Resto al Sud 2.0 vale in Toscana?", resto),
+        (
+            "Posso chiedere il contributo prima di aprire la partita IVA?",
+            "Dipende dal bando: Autoimpiego Centro-Nord, per esempio, richiede che l'attività sia già avviata "
+            "nel mese della domanda o in quello precedente; altri bandi accettano imprese da costituire.",
+        ),
+        ("Serve un business plan?", piano + " È su fogliopef.github.io."),
+        ("Posso cumulare più contributi?", cumulo),
+    )
+    resto_html = (
+        'No. Al Centro-Nord la misura equivalente per gli under 35 è '
+        f'<a href="{site_href("bando/autoimpiego-centro-nord.html")}">Autoimpiego Centro-Nord</a>.'
+    )
+    piano_html = (
+        "Molti bandi chiedono un piano degli investimenti e delle spese; per costruirlo in Excel c'è "
+        f"{ext(FPEF, 'FoglioPEF')}."
+    )
+    cumulo_html = (
+        "A volte sì, se riguardano spese diverse e se il bando lo permette, nel limite del regime de minimis. "
+        f"Il testo del regolamento è il {ext(EURLEX_DE_MINIMIS, 'Regolamento UE 2023/2831')}."
+    )
+    html_pairs = [
+        (plain[0][0], e(plain[0][1])),
+        (plain[1][0], resto_html),
+        (plain[2][0], e(plain[2][1])),
+        (plain[3][0], piano_html),
+        (plain[4][0], cumulo_html),
+    ]
+    return plain, html_pairs
+
+
+def corpo_aprire(bandi, data):
+    """Pagina per chi apre un'attività in Toscana. Solo bandi già in archivio."""
+    def prendi(*ids):
+        return _schede(bandi, ids)
+
+    camere = prendi(
+        "cciaa-firenze-nuove-imprese-2026",
+        "cciaa-maremma-tirreno-creazione-impresa-2026",
+        "cciaa-maremma-tirreno-societa-benefit-2026",
+    )
+    regione = prendi("bando-132-50k-2026")
+    nazionali = prendi("autoimpiego-centro-nord", "on-nuove-imprese-tasso-zero")
+    plain, html_pairs = _faq_aprire()
+    apertura = (
+        "Per aprire un'attività in Toscana nel 2026 ci sono tre tipi di aiuto: i contributi a fondo perduto "
+        "delle Camere di Commercio per le nuove imprese (per esempio Firenze: 50% delle spese di avvio, fino a "
+        "5.000 €), gli aiuti della Regione sul costo dei finanziamenti (Bando 1.3.2, linea A1) e le misure "
+        "nazionali per gli under 35 e le nuove imprese (Autoimpiego Centro-Nord, ON tasso zero). Qui li trovi "
+        f"divisi per tipo, con requisiti e link ufficiali. Aggiornato al {it_date(data)}."
+    )
+    corpo = (
+        crumbs([("index.html", "Home"), ("", APRIRE_TITOLO)], "")
+        + f"<h1>{e(APRIRE_TITOLO)}</h1><p>{e(apertura)}</p>"
+        + "<section><h2>Risposta breve: quali aiuti ci sono oggi</h2>"
+        + "<p>Oggi gli aiuti per aprire un'attività in Toscana sono di tre tipi: contributi delle Camere di "
+        + "Commercio per le nuove imprese, aiuti della Regione sul costo dei finanziamenti (Bando 1.3.2, linea A1) "
+        + "e misure nazionali per gli under 35 e le nuove imprese (Autoimpiego Centro-Nord, ON tasso zero). "
+        + f"Per la tua impresa puoi chiedere una {link_verifica()}.</p></section>"
+        + '<section><h2>Contributi delle Camere di Commercio per le nuove imprese</h2>'
+        + f'<p>L\'elenco completo per Camera è nella pagina <a href="{site_href(HUB_TOSCANA)}">{e(HUB_TITOLO_TOSCANA)}</a>.</p>'
+        + lista_bandi(camere)
+        + "</section>"
+        + "<section><h2>Aiuti della Regione Toscana</h2>"
+        + "<p>Il Bando 1.3.2, linea A1, riguarda le nuove imprese giovanili, femminili o di persone in ammortizzatori sociali.</p>"
+        + lista_bandi(regione)
+        + "</section>"
+        + "<section><h2>Misure nazionali valide anche in Toscana</h2>"
+        + lista_bandi(nazionali)
+        + "</section>"
+        + '<section><h2>Under 35 e imprese femminili</h2>'
+        + f'<p>Pagine dedicate: <a href="{site_href("settore/under-35.html")}">bandi per giovani under 35</a> e '
+        + f'<a href="{site_href("settore/donne.html")}">bandi per l\'imprenditoria femminile</a>.</p>'
+        + lista_bandi(nazionali)
+        + "</section>"
+        + "<section><h2>Documenti che servono di solito</h2>"
+        + "<p>Quasi sempre servono il DURC regolare e il diritto annuale in regola, insieme all'iscrizione al "
+        + "Registro delle imprese. La domanda si presenta di solito online sulla piattaforma ReStart, con firma "
+        + "digitale, oppure via PEC: il bando indica quale.</p></section>"
+        + faq_html(html_pairs, raw=True)
+    )
+    return corpo, plain, camere + regione + nazionali
+
+
 def build(today=None):
     today = today or datetime.date.today()
     bandi = prepare(json.loads(DATA.read_text(encoding="utf-8")), today)
@@ -1833,52 +2469,61 @@ def build(today=None):
         urls.append((path, lastmod, freq, priority))
 
     urls = []
+    aperti_home = qty(conto_aperti(bandi), "bando aperto", "bandi aperti")
     hero = hero_block(
         "hero-home",
-        "<h1>Bandi e incentivi per startup e PMI</h1>"
-        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(conto_aperti(bandi), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
+        "<h1>Bandi aperti per startup e PMI in Toscana, Umbria ed Emilia-Romagna</h1>"
+        "<p>IncentiviPerTe raccoglie gratis i bandi aperti per startup e PMI di Toscana, Umbria ed Emilia-Romagna "
+        "e gli incentivi nazionali: contributi a fondo perduto, finanziamenti agevolati e voucher delle Camere di "
+        "Commercio. Ogni scheda indica importo, destinatari, scadenza, data dell'ultimo controllo e link al bando "
+        f"ufficiale. Aggiornato al {it_date(agg)}.</p>"
+        f"<p><span data-aperti>{aperti_home}</span>, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
         '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>',
     )
-    home_desc = clip(
-        "Bandi aperti per startup e PMI, da Arezzo: tutta la Toscana, Umbria, Emilia-Romagna e incentivi nazionali, con scadenze e link ufficiali."
+    home_title = "Bandi per imprese in Toscana, Umbria ed Emilia-Romagna"
+    home_desc = (
+        "Bandi e contributi aperti per startup e PMI in Toscana, Umbria, Emilia-Romagna e incentivi nazionali: "
+        "fondo perduto, scadenze e link ai bandi ufficiali."
     )
+    home_plain, home_marcate = home_faq()
     home_ld = {
         "@context": "https://schema.org",
         "@graph": [
             {"@type": "WebSite", "name": SITE, "url": BASE, "inLanguage": "it-IT", "publisher": org_ld()},
             org_ld(),
             item_list(att),
-            {
-                "@type": "FAQPage",
-                "mainEntity": [
-                    {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}}
-                    for q, a in FAQ
-                ],
-            },
+            faq_ld(home_plain),
         ],
     }
+    raccolte = (
+        "<p>Raccolte: "
+        f'<a href="{site_href(HUB_TOSCANA)}">{e(HUB_TITOLO_TOSCANA)}</a>, '
+        f'<a href="{site_href(HUB_ER)}">{e(HUB_TITOLO_ER)}</a>, '
+        f'<a href="{site_href(PAGINA_APRIRE)}">{e(APRIRE_TITOLO).replace("Contributi", "contributi", 1)}</a>.</p>'
+    )
     home_body = (
         f'<p class="note">Queste sono sintesi. Prima di fare domanda, controlla requisiti e scadenze sul sito dell&#39;ente.</p>'
+        f"{raccolte}"
         f'<div id="filtri">{filter_form(bandi)}</div>'
         '<noscript><p class="note">Senza JavaScript restano visibili tutti i bandi aperti. I filtri girano solo sul tuo dispositivo e non inviano dati.</p></noscript>'
-        f"{grid(bandi, '', today)}{JS}{hubs(bandi, '')}{checkup_section('', con_immagine=True)}{faq_html()}{fpef_box()}"
+        f"{grid(bandi, '', today)}{JS}{hubs(bandi, '')}{checkup_section('', con_immagine=True, variante='home')}{faq_html(home_marcate, raw=True)}{fpef_box()}"
     )
     emit(
         "index.html",
         page(
-            "index.html", f"{SITE} – Bandi e incentivi per startup e PMI", home_desc, home_body,
+            "index.html", home_title, home_desc, home_body,
             hero, home_ld, extra_head=hero_home_preload(),
         ),
-        agg, "weekly", "1.0",
+        lastmod_pagina("index.html", agg), "weekly", "1.0",
     )
     for reg in REG:
         rows = [b for b in att if b["regione"] == reg]
         path = region_path(reg)
         label = "Nazionali" if reg == "Nazionale" else reg
-        title = "Bandi e incentivi nazionali" if reg == "Nazionale" else f"Bandi e incentivi in {reg}"
-        desc = clip(f"{title}: misure aperte, con scadenze, destinatari e link alle fonti ufficiali.")
+        title, desc, h1_fix = AREA_SEO[reg]
+        n_area = sum(1 for b in rows if is_aperto(b))
         others = pills(area_links(bandi, "", reg))
         sectors_here = sort_dest({d for b in rows for d in b["destinatari"]})
         sector_pills = pills([
@@ -1886,25 +2531,46 @@ def build(today=None):
             for name in sectors_here
         ]) if sectors_here else ""
         listing = grid(rows, "", today) if rows else '<p class="note">Nessun bando aperto in questa area. Guarda le altre aree qui sotto.</p>'
-        h1_fix = "Bandi nazionali aperti" if reg == "Nazionale" else f"Bandi aperti in {reg}"
+        sezioni = ""
+        faq_plain = ()
+        faq_block = ""
+        if reg == "Toscana":
+            sezioni, faq_plain, faq_html_pairs = sezioni_toscana(rows)
+            faq_block = faq_html(faq_html_pairs, raw=True)
+        elif reg == "Umbria":
+            sezioni, faq_plain = sezioni_umbria(rows)
+            faq_block = faq_html(faq_plain)
+        elif reg == "Emilia-Romagna":
+            faq_plain = sezioni_emilia()
+            faq_block = faq_html(faq_plain)
+        extra_link = ""
+        if reg == "Emilia-Romagna":
+            extra_link = (
+                f'<p>I bandi camerali, Camera per Camera: '
+                f'<a href="{site_href(HUB_ER)}">{e(HUB_TITOLO_ER)}</a>.</p>'
+            )
         body = (
             crumbs([("index.html", "Bandi"), ("", label)], "")
-            + f"<h1>{e(h1_fix)}</h1><p>{e(INTRO_REG[reg])} In elenco: <span data-aperti>{qty(sum(1 for b in rows if is_aperto(b)), 'bando aperto', 'bandi aperti')}</span>.</p>"
+            + f"<h1>{e(h1_fix)}</h1>"
+            + apertura_area(reg, n_area, agg)
+            + extra_link
             + f'<p><a href="{site_href("index.html", urllib.parse.urlencode({"area": reg}), "filtri")}">Trova il tuo bando</a></p>'
+            + sezioni
             + listing
             + (f'<section aria-labelledby="dest-qui"><h2 id="dest-qui">Destinatari</h2>{sector_pills}</section>' if sector_pills else "")
             + f'<section aria-labelledby="altre-aree"><h2 id="altre-aree">Altre aree</h2>{sec_img("bandi-per-area", 800, 308)}{others}</section>'
             + fpef_box()
+            + faq_block
         )
-        ld = {
-            "@context": "https://schema.org",
-            "@graph": [
-                {"@type": "CollectionPage", "name": title, "url": public_url(path), "inLanguage": "it-IT", "isPartOf": BASE},
-                breadcrumb_ld([("", "Bandi"), (path, label)]),
-                item_list(rows),
-            ],
-        }
-        emit(path, page(path, title, desc, body, ld=ld), agg, "weekly", "0.8")
+        graph = [
+            {"@type": "CollectionPage", "name": title, "url": public_url(path), "inLanguage": "it-IT", "isPartOf": BASE},
+            breadcrumb_ld([("", "Bandi"), (path, label)]),
+            item_list(rows),
+        ]
+        if faq_plain:
+            graph.append(faq_ld(faq_plain))
+        ld = {"@context": "https://schema.org", "@graph": graph}
+        emit(path, page(path, title, desc, body, ld=ld, title_as_is=True), lastmod_pagina(path, agg), "weekly", "0.8")
 
     names = sort_dest({d for b in bandi for d in b["destinatari"]})
     for name in names:
@@ -1912,14 +2578,26 @@ def build(today=None):
         path = sector_path(name)
         regs = [reg for reg in REG if any(b["regione"] == reg for b in rows)]
         where = join_it(["nazionali" if r == "Nazionale" else r for r in regs]) or "nessuna area"
-        intro = INTRO_DEST.get(name, f"Misure che indicano {name} tra i destinatari.")
-        title = f"Bandi per {name}"
-        desc = clip(f"{title}: bandi aperti ({where}), con scadenze e link ufficiali.")
+        title, desc, h1_fix, paragrafo = SETTORE_SEO[name]
+        n_settore = sum(1 for b in rows if is_aperto(b))
+        extra = ""
+        if name == "Nuove imprese":
+            extra = (
+                " Per la Toscana c'è anche la pagina "
+                f'<a href="{site_href(PAGINA_APRIRE)}">{e(APRIRE_TITOLO)}</a>.'
+            )
+        elif name == "Under 35":
+            extra = (
+                " In Toscana: "
+                f'<a href="{site_href(PAGINA_APRIRE)}">{e(APRIRE_TITOLO).replace("Contributi", "contributi", 1)}</a>.'
+            )
         listing = grid(rows, "../", today) if rows else '<p class="note">Nessun bando aperto per questo destinatario. Guarda gli altri destinatari qui sotto.</p>'
+        faq_block = faq_html(FAQ_DONNE) if name == "Donne" else ""
         body = (
             crumbs([("index.html", "Bandi"), ("", name)], "../")
-            + f"<h1>Bandi aperti per {e(name)}</h1>"
-            + f"<p>{e(intro)} In elenco: <span data-aperti>{qty(sum(1 for b in rows if is_aperto(b)), 'bando aperto', 'bandi aperti')}</span>, aree {e(where)}.</p>"
+            + f"<h1>{e(h1_fix)}</h1>"
+            + f"<p>{e(paragrafo)}{extra} Aggiornato al {e(it_date(agg))}.</p>"
+            + f"<p>{riga_aperti(n_settore)}, aree {e(where)}.</p>"
             + f'<p><a href="{site_href("index.html", urllib.parse.urlencode({"dest": name}), "filtri")}">Trova il tuo bando</a></p>'
             + listing
             + '<section aria-labelledby="altre-aree"><h2 id="altre-aree">Aree</h2>'
@@ -1931,21 +2609,23 @@ def build(today=None):
             + sec_img("bandi-per-destinatario", 800, 600)
             + "</div></section>"
             + fpef_box()
+            + faq_block
         )
-        ld = {
-            "@context": "https://schema.org",
-            "@graph": [
-                {"@type": "CollectionPage", "name": title, "url": public_url(path), "inLanguage": "it-IT", "about": name},
-                breadcrumb_ld([("", "Bandi"), (path, name)]),
-                item_list(rows),
-            ],
-        }
-        emit(path, page(path, title, desc, body, ld=ld), agg, "weekly", "0.8")
+        graph = [
+            {"@type": "CollectionPage", "name": title, "url": public_url(path), "inLanguage": "it-IT", "about": name},
+            breadcrumb_ld([("", "Bandi"), (path, name)]),
+            item_list(rows),
+        ]
+        if name == "Donne":
+            graph.append(faq_ld(FAQ_DONNE))
+        ld = {"@context": "https://schema.org", "@graph": graph}
+        emit(path, page(path, title, desc, body, ld=ld, title_as_is=True), lastmod_pagina(path, agg), "weekly", "0.8")
 
     for b in bandi:
         path = f'bando/{b["id"]}.html'
         area_href = region_path(b["regione"])
         area_label = "Nazionali" if b["regione"] == "Nazionale" else b["regione"]
+        nome = seo_copy.h1_scheda(b)
         dest_html = ", ".join(
             f'<a href="{site_href(sector_path(d))}">{e(d)}</a>' for d in b["destinatari"]
         )
@@ -1953,7 +2633,7 @@ def build(today=None):
         related_html = ""
         if sibs:
             lis = "".join(
-                f'<li><a href="{site_href(f"bando/{o["id"]}.html")}">{e(o["titolo"])}<span>{e(o["regione"])} · {e(deadline_text(o))}</span></a></li>'
+                f'<li><a href="{site_href(f"bando/{o["id"]}.html")}">{e(seo_copy.titolo_in_elenco(o))}<span>{e(o["regione"])} · {e(deadline_text(o))}</span></a></li>'
                 for o in sibs
             )
             related_html = f'<section class="related" aria-labelledby="collegati"><h2 id="collegati">Bandi collegati</h2><ul>{lis}</ul></section>'
@@ -1963,9 +2643,24 @@ def build(today=None):
         when = f' data-deadline="{b["scadenza"]}"' if b["scadenza"] else ""
         if b.get("apertura"):
             when += f' data-apre="{b["apertura"]}"'
+        lead = seo_copy.lead_scheda(b, deadline_text(b))
+        if b["id"] == "resto-al-sud-2":
+            lead_html = e(lead).replace(
+                "Autoimpiego Centro-Nord",
+                f'<a href="{site_href("bando/autoimpiego-centro-nord.html")}">Autoimpiego Centro-Nord</a>',
+                1,
+            )
+        else:
+            lead_html = e(lead)
+        chiuso = ""
+        if b["scaduto"]:
+            chiuso = "<p>Questo bando è chiuso. Più sotto, i bandi collegati sono misure aperte simili.</p>"
+        faq_plain, faq_html_pairs = faq_scheda_html(b)
+        faq_block = faq_html(faq_html_pairs, raw=True) if faq_html_pairs else ""
         body = (
-            crumbs([("index.html", "Bandi"), (area_href, area_label), ("", b["titolo"])], "../")
-            + f'<article class="box">{badge(b, today)}<div class="tags">{tags}</div><h1>{e(b["titolo"])}</h1>'
+            crumbs([("index.html", "Bandi"), (area_href, area_label), ("", nome)], "../")
+            + f'<article class="box">{badge(b, today)}<div class="tags">{tags}</div><h1>{e(nome)}</h1>'
+            + chiuso
             + avviso_fondi(b, con_link=True)
             + "<dl class=\"kv\">"
             + f"<dt>Ente</dt><dd>{e(b['ente'])}</dd>"
@@ -1975,12 +2670,15 @@ def build(today=None):
             + f"<dt>Scadenza</dt><dd><strong{when}>{e(deadline_text(b))}</strong><br><small>{e(b['nota_scadenza'])}</small></dd>"
             + f"<dt>Ultimo controllo</dt><dd>{it_date(b['ultimo_controllo'])}</dd>"
             + "</dl>"
+            + f"<p>{lead_html}</p>"
             + f"<p>{e(b['sintesi'])}</p>"
             + official_bando_link(b["url"])
             + fonte_fuori_avviso(b)
+            + rimando_camera(b)
             + bando_checkup_box()
             + checkup_ask()
             + '<p class="note">Sintesi indicativa. Fa fede esclusivamente il testo ufficiale pubblicato dall&#39;ente. <a href="/disclaimer">Disclaimer</a></p></article>'
+            + faq_block
             + related_html
             + '<aside class="sp" aria-label="Spazio sponsor"><span class="lab">Sponsorizzato</span>'
             + '<p class="spt">Spazio disponibile per commercialisti, consulenti, banche e software</p>'
@@ -1989,33 +2687,40 @@ def build(today=None):
             + fpef_box()
             + BADGE_JS
         )
-        desc = clip(f"{b['titolo']} ({b['ente']}): {b['sintesi']}")
+        desc = seo_copy.meta_scheda(b)
+        modificato = lastmod_pagina(path, b["ultimo_controllo"])
         grant = {
             "@type": "MonetaryGrant",
-            "name": b["titolo"],
+            "name": nome,
             "description": b["sintesi"],
             "url": b["url"],
             "funder": {"@type": "Organization", "name": b["ente"]},
             "areaServed": "Italia" if b["regione"] == "Nazionale" else b["regione"],
         }
-        ld = {
-            "@context": "https://schema.org",
-            "@graph": [
-                {
-                    "@type": "WebPage",
-                    "name": b["titolo"],
-                    "url": public_url(path),
-                    "inLanguage": "it-IT",
-                    "dateModified": b["ultimo_controllo"],
-                    "isBasedOn": b["url"],
-                    "publisher": org_ld(),
-                    "about": grant,
-                },
-                breadcrumb_ld([("", "Bandi"), (area_href, area_label), (path, b["titolo"])]),
-                grant,
-            ],
-        }
-        emit(path, page(path, b["titolo"], desc, body, ld=ld), b["ultimo_controllo"], "weekly", "0.7")
+        graph = [
+            {
+                "@type": "WebPage",
+                "name": nome,
+                "url": public_url(path),
+                "inLanguage": "it-IT",
+                "dateModified": modificato,
+                "isBasedOn": b["url"],
+                "publisher": org_ld(),
+                "about": grant,
+            },
+            breadcrumb_ld([("", "Bandi"), (area_href, area_label), (path, nome)]),
+            grant,
+        ]
+        if faq_plain:
+            graph.append(faq_ld(faq_plain))
+        ld = {"@context": "https://schema.org", "@graph": graph}
+        emit(
+            path,
+            page(path, seo_copy.titolo_scheda(b), desc, body, ld=ld, title_as_is=True),
+            modificato,
+            "weekly",
+            "0.7",
+        )
 
     for path, (title, desc, body, with_tool) in static_pages(today).items():
         if with_tool:
@@ -2030,15 +2735,94 @@ def build(today=None):
         }
         if path == "check-up.html":
             webpage = {k: v for k, v in ld.items() if k != "@context"}
-            ld = {"@context": "https://schema.org", "@graph": [webpage, checkup_service()]}
+            ld = {
+                "@context": "https://schema.org",
+                "@graph": [
+                    webpage,
+                    checkup_service(),
+                    faq_ld(checkup_faq()),
+                    breadcrumb_ld([("", "Home"), ("check-up.html", "Check-up Bandi")]),
+                ],
+            }
         freq = "monthly" if path in ("sponsor.html", "check-up.html") else "yearly"
         priority = "0.8" if path in ("sponsor.html", "check-up.html") else "0.3"
         hero = ""
         if path == "check-up.html":
-            hero = hero_block("hero-check-up", "<h1>Check-up Bandi</h1>")
+            hero = hero_block(
+                "hero-check-up",
+                "<h1>Check-up Bandi: quali bandi sono adatti alla tua impresa</h1>",
+            )
         elif path == "sponsor.html":
             hero = hero_block("hero-sponsor", "<h1>Sponsor e pubblicità</h1>")
-        emit(path, page(path, title, desc, body, hero, ld=ld), agg, freq, priority)
+        as_is = path in ("chi-siamo.html", "contatti.html", "sponsor.html", "check-up.html")
+        emit(
+            path,
+            page(path, title, desc, body, hero, ld=ld, title_as_is=as_is),
+            lastmod_pagina(path, agg),
+            freq,
+            priority,
+        )
+
+    # Pagine nuove, in coda alla sitemap: le URL già pubblicate restano davanti, nello stesso ordine.
+    para_t = (
+        "Le Camere di Commercio toscane finanziano ogni anno le imprese della propria provincia con voucher "
+        "e contributi a fondo perduto, di solito tra 1.500 € e 5.000 € per impresa, per avvio d'impresa, "
+        "digitale, sostenibilità, fiere e sicurezza. Qui trovi i bandi aperti, Camera per Camera, con scadenza "
+        f"e link al bando ufficiale. Aggiornato al {it_date(agg)}."
+    )
+    meta_t = (
+        "Voucher e contributi a fondo perduto delle Camere di Commercio toscane: Firenze, Arezzo e Siena, "
+        "Livorno-Grosseto, Pisa-Lucca-Massa, Pistoia-Prato."
+    )
+    title_t = "Bandi Camere di Commercio Toscana 2026: voucher aperti"
+    toscane = [b for b in bandi if b["regione"] == "Toscana" and chiave_camera(b)]
+    emit(
+        HUB_TOSCANA,
+        page(
+            HUB_TOSCANA, title_t, meta_t,
+            corpo_camere(HUB_TITOLO_TOSCANA, para_t, CAMERE_TOSCANA, bandi, today, FAQ_CAMERE),
+            ld=ld_raccolta(HUB_TOSCANA, title_t, HUB_TITOLO_TOSCANA, toscane, FAQ_CAMERE),
+            title_as_is=True,
+        ),
+        SEO_LASTMOD, "weekly", "0.8",
+    )
+    para_er = (
+        "Le Camere di Commercio dell'Emilia-Romagna sostengono le imprese del territorio con contributi a fondo "
+        "perduto e con aiuti sul costo del credito tramite i Confidi. Qui trovi i bandi aperti di Bologna, "
+        "dell'Emilia (Parma, Piacenza, Reggio Emilia), di Ferrara e Ravenna, di Modena e della Romagna "
+        f"(Forlì-Cesena e Rimini), con scadenza e link ufficiale. Aggiornato al {it_date(agg)}."
+    )
+    meta_er = (
+        "Contributi e voucher delle Camere di Commercio di Bologna, Emilia, Ferrara-Ravenna, Modena e Romagna: "
+        "bandi aperti, importi, scadenze e link ufficiali."
+    )
+    title_er = "Bandi Camere di Commercio Emilia-Romagna 2026"
+    faq_er = FAQ_CAMERE + (FAQ_CONFIDI,)
+    emiliane = [b for b in bandi if b["regione"] == "Emilia-Romagna" and chiave_camera(b)]
+    emit(
+        HUB_ER,
+        page(
+            HUB_ER, title_er, meta_er,
+            corpo_camere(HUB_TITOLO_ER, para_er, CAMERE_ER, bandi, today, faq_er),
+            ld=ld_raccolta(HUB_ER, title_er, HUB_TITOLO_ER, emiliane, faq_er),
+            title_as_is=True,
+        ),
+        SEO_LASTMOD, "weekly", "0.8",
+    )
+    corpo_a, faq_a, voci_a = corpo_aprire(bandi, agg)
+    meta_a = (
+        "Fondo perduto, tasso zero e voucher per chi apre un'impresa in Toscana: bandi delle Camere di Commercio, "
+        "della Regione e nazionali. Requisiti e scadenze."
+    )
+    emit(
+        PAGINA_APRIRE,
+        page(
+            PAGINA_APRIRE, APRIRE_TITLE, meta_a, corpo_a,
+            ld=ld_raccolta(PAGINA_APRIRE, APRIRE_TITLE, APRIRE_TITOLO, voci_a, faq_a),
+            title_as_is=True,
+        ),
+        SEO_LASTMOD, "weekly", "0.8",
+    )
 
     # Il vecchio indirizzo resta raggiungibile, ma non è una seconda pagina: rimanda a /check-up
     # e non entra nella sitemap.
