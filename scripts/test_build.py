@@ -148,6 +148,26 @@ class Validazione(unittest.TestCase):
         self.assertIn("Fonte ufficiale", avviso)
         self.assertEqual(build.avviso_fondi(build.prepare([sample()], TODAY)[0]), "")
 
+    def test_conto_aperti_esclude_in_arrivo(self):
+        rows = build.prepare(
+            [
+                sample(id="aperto", scadenza="2026-12-01"),
+                sample(id="scaduto", scadenza="2020-01-01"),
+                sample(id="arrivo", apertura="2026-12-02", scadenza="2027-03-31", nota_scadenza="Dal 02/12/2026"),
+                sample(id="sportello", scadenza=None),
+                sample(id="apre-oggi", apertura=TODAY.isoformat(), scadenza="2026-12-01"),
+            ],
+            TODAY,
+        )
+        self.assertTrue(next(b for b in rows if b["id"] == "arrivo")["in_arrivo"])
+        self.assertFalse(build.is_aperto(next(b for b in rows if b["id"] == "arrivo")))
+        self.assertTrue(build.is_aperto(next(b for b in rows if b["id"] == "apre-oggi")))
+        self.assertEqual(build.conto_aperti(rows), 3)
+        self.assertEqual(
+            {b["id"] for b in rows if build.is_aperto(b)},
+            {"aperto", "sportello", "apre-oggi"},
+        )
+
 
 class Sito(unittest.TestCase):
     @classmethod
@@ -423,6 +443,183 @@ class Sito(unittest.TestCase):
                 self.assertNotIn(banned, text, path.as_posix())
             visible = build.visible_text(text)
             self.assertIsNone(re.search(r"invitalia", visible, re.I), path.as_posix())
+
+    def test_hero_uguale_alla_ricerca_predefinita(self):
+        """Hero e «bandi trovati» contano solo i bandi già aperti e non scaduti."""
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        hero = re.search(
+            r'<section class="hero">.*?<span data-aperti>(\d+) band(?:o aperto|i aperti)</span>',
+            home,
+            re.S,
+        )
+        found = re.search(
+            r'<p class="count" id="n"[^>]*>(\d+) band(?:o trovato|i trovati)</p>',
+            home,
+        )
+        self.assertIsNotNone(hero)
+        self.assertIsNotNone(found)
+        cards = re.findall(r'<article class="card\b.*?</article>', home, re.S)
+        upcoming = []
+        open_cards = []
+        for card in cards:
+            if 'data-scaduto="1"' in card:
+                continue
+            opening = re.search(r'data-apre="(\d{4}-\d{2}-\d{2})"', card)
+            if opening and opening.group(1) > TODAY.isoformat():
+                upcoming.append(card)
+            else:
+                open_cards.append(card)
+        data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
+        prepared = build.prepare(data, TODAY)
+        self.assertGreaterEqual(len(upcoming), 1)
+        self.assertEqual(int(hero.group(1)), len(open_cards))
+        self.assertEqual(int(found.group(1)), len(open_cards))
+        self.assertEqual(len(open_cards), build.conto_aperti(prepared))
+        self.assertEqual(len(open_cards), sum(1 for b in prepared if build.is_aperto(b)))
+        for card in upcoming:
+            self.assertIn('data-scaduto="0"', card)
+            self.assertNotRegex(card[:card.find(">") + 1], r"\shidden(?:\s|>|$)")
+            self.assertIn("Apre il ", card)
+        for bid in ("cciaa-modena-occupazione-giovanile-2026", "eureca-er-tutti-settori-2026"):
+            self.assertTrue(any(f"/bando/{bid}" in card for card in upcoming), bid)
+        script = re.search(
+            r"<script>\s*(\(function \(\) \{\s*var form = document\.getElementById\(\"filtri-form\"\);.*?\}\)\(\);)\s*</script>",
+            home,
+            re.S,
+        )
+        self.assertIsNotNone(script)
+        self.assertIn("syncHero();", script.group(1))
+        self.assertIn('getAttribute("data-apre")', script.group(1))
+        runner = r"""
+const fs = require("fs");
+const script = fs.readFileSync(process.argv[2], "utf8");
+const RealDate = Date;
+function mockDate(iso) {
+  const fixed = new RealDate(iso + "T12:00:00");
+  function D(...args) {
+    if (args.length === 0) return new RealDate(fixed.getTime());
+    return new RealDate(...args);
+  }
+  D.prototype = RealDate.prototype;
+  D.now = function () { return fixed.getTime(); };
+  D.parse = RealDate.parse;
+  D.UTC = RealDate.UTC;
+  return D;
+}
+function el(attrs) {
+  const node = {
+    attrs: Object.assign({}, attrs),
+    hidden: false,
+    value: attrs.value || "",
+    checked: false,
+    _text: attrs.text || "",
+    options: attrs.options || [],
+    listeners: {}
+  };
+  node.getAttribute = function (name) {
+    return Object.prototype.hasOwnProperty.call(node.attrs, name) ? node.attrs[name] : null;
+  };
+  node.addEventListener = function (type, fn) {
+    (node.listeners[type] = node.listeners[type] || []).push(fn);
+  };
+  node.dispatch = function (type) {
+    (node.listeners[type] || []).forEach(function (fn) { fn(); });
+  };
+  Object.defineProperty(node, "textContent", {
+    get: function () { return node._text; },
+    set: function (value) { node._text = String(value); }
+  });
+  return node;
+}
+function card(id, extra) {
+  return el(Object.assign({
+    class: "card",
+    id: id,
+    "data-scaduto": "0",
+    "data-reg": "Toscana",
+    "data-dest": "PMI",
+    "data-scad": "2026-12-01",
+    "data-apre": "",
+    "data-search": id
+  }, extra));
+}
+function run(iso) {
+  if (iso) Date = mockDate(iso);
+  else Date = RealDate;
+  const area = el({ id: "r", options: [{ value: "" }, { value: "Toscana" }, { value: "Emilia-Romagna" }, { value: "Nazionale" }] });
+  const dest = el({ id: "d", options: [{ value: "" }, { value: "PMI" }] });
+  const scad = el({ id: "s", options: [{ value: "" }, { value: "30" }, { value: "90" }, { value: "none" }] });
+  const q = el({ id: "q" });
+  const expired = el({ id: "x" });
+  const count = el({ id: "n", text: "0 bandi trovati" });
+  const reset = el({ id: "z" });
+  const form = el({ id: "filtri-form" });
+  const hero = el({ "data-aperti": "", text: "0 bandi aperti" });
+  const cards = [
+    card("aperto"),
+    card("arrivo", { "data-apre": "2026-12-02", "data-reg": "Emilia-Romagna", "data-scad": "2027-03-31" }),
+    card("modena", { "data-apre": "2026-11-02", "data-reg": "Emilia-Romagna", "data-scad": "2026-11-30" }),
+    card("scaduto", { "data-scaduto": "1", "data-scad": "2020-01-01" }),
+    card("sportello", { "data-scad": "9999-12-31", "data-reg": "Nazionale" })
+  ];
+  const byId = { r: area, d: dest, s: scad, q: q, x: expired, n: count, z: reset, "filtri-form": form };
+  const document = {
+    getElementById: function (id) { return byId[id] || null; },
+    querySelectorAll: function (sel) {
+      if (sel === "#elenco .card:not(.spc)") return cards.slice();
+      if (sel === ".hero [data-aperti]") return [hero];
+      return [];
+    },
+    querySelector: function () { return null; }
+  };
+  const location = { search: "", pathname: "/", hash: "" };
+  const history = { replaceState: function () {} };
+  eval(script);
+  const initial = {
+    hero: hero.textContent,
+    count: count.textContent,
+    hidden: cards.map(function (item) { return item.hidden; })
+  };
+  area.value = "Emilia-Romagna";
+  area.dispatch("change");
+  const filtered = {
+    hero: hero.textContent,
+    count: count.textContent,
+    hidden: cards.map(function (item) { return item.hidden; })
+  };
+  Date = RealDate;
+  return { initial: initial, filtered: filtered };
+}
+const today = run("2026-10-25");
+const opening = run("2026-11-02");
+process.stdout.write(JSON.stringify({ today: today, opening: opening }));
+"""
+        script_path = DIST / "_ricerca.js"
+        runner_path = DIST / "_ricerca_runner.js"
+        script_path.write_text(script.group(1), encoding="utf-8")
+        runner_path.write_text(runner, encoding="utf-8")
+        try:
+            import subprocess
+            out = subprocess.run(
+                ["node", str(runner_path), str(script_path)],
+                check=True, capture_output=True, text=True,
+            )
+        finally:
+            script_path.unlink(missing_ok=True)
+            runner_path.unlink(missing_ok=True)
+        runtime = json.loads(out.stdout)
+        today = runtime["today"]
+        self.assertEqual(today["initial"]["hero"], "2 bandi aperti")
+        self.assertEqual(today["initial"]["count"], "2 bandi trovati")
+        self.assertEqual(today["initial"]["hidden"], [False, False, False, True, False])
+        self.assertEqual(today["filtered"]["hero"], "2 bandi aperti")
+        self.assertEqual(today["filtered"]["count"], "0 bandi trovati")
+        self.assertEqual(today["filtered"]["hidden"], [True, False, False, True, True])
+        opened = runtime["opening"]
+        self.assertEqual(opened["initial"]["hero"], "3 bandi aperti")
+        self.assertEqual(opened["initial"]["count"], "3 bandi trovati")
+        self.assertEqual(opened["filtered"]["hero"], "3 bandi aperti")
+        self.assertEqual(opened["filtered"]["count"], "1 bando trovato")
 
     def test_bandi_20_ottobre_e_conto_alla_rovescia(self):
         home = (DIST / "index.html").read_text(encoding="utf-8")
