@@ -148,6 +148,25 @@ class Validazione(unittest.TestCase):
         self.assertIn("Fonte ufficiale", avviso)
         self.assertEqual(build.avviso_fondi(build.prepare([sample()], TODAY)[0]), "")
 
+    def test_conto_ricerca_default_include_in_arrivo(self):
+        rows = build.prepare(
+            [
+                sample(id="aperto", scadenza="2026-12-01"),
+                sample(id="scaduto", scadenza="2020-01-01"),
+                sample(id="arrivo", apertura="2026-12-02", scadenza="2027-03-31", nota_scadenza="Dal 02/12/2026"),
+                sample(id="sportello", scadenza=None),
+            ],
+            TODAY,
+        )
+        self.assertTrue(next(b for b in rows if b["id"] == "arrivo")["in_arrivo"])
+        self.assertFalse(build.is_aperto(next(b for b in rows if b["id"] == "arrivo")))
+        self.assertEqual(sum(1 for b in rows if build.is_aperto(b)), 2)
+        self.assertEqual(build.conto_ricerca_default(rows), 3)
+        self.assertEqual(
+            {b["id"] for b in rows if build.in_ricerca_default(b)},
+            {"aperto", "arrivo", "sportello"},
+        )
+
 
 class Sito(unittest.TestCase):
     @classmethod
@@ -423,6 +442,127 @@ class Sito(unittest.TestCase):
                 self.assertNotIn(banned, text, path.as_posix())
             visible = build.visible_text(text)
             self.assertIsNone(re.search(r"invitalia", visible, re.I), path.as_posix())
+
+    def test_hero_uguale_alla_ricerca_predefinita(self):
+        """Il numero nel hero è quello dei bandi visibili con i filtri azzerati."""
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        hero = re.search(
+            r'<section class="hero">.*?<span data-aperti>(\d+) band(?:o aperto|i aperti)</span>',
+            home,
+            re.S,
+        )
+        found = re.search(
+            r'<p class="count" id="n"[^>]*>(\d+) band(?:o trovato|i trovati)</p>',
+            home,
+        )
+        self.assertIsNotNone(hero)
+        self.assertIsNotNone(found)
+        cards = re.findall(r'<article class="card\b.*?</article>', home, re.S)
+        shown = [card for card in cards if 'data-scaduto="0"' in card]
+        expired = [card for card in cards if 'data-scaduto="1"' in card]
+        self.assertEqual(len(shown) + len(expired), len(cards))
+        self.assertEqual(int(hero.group(1)), len(shown))
+        self.assertEqual(int(found.group(1)), len(shown))
+        data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
+        prepared = build.prepare(data, TODAY)
+        self.assertEqual(len(shown), build.conto_ricerca_default(prepared))
+        in_arrivo = [b for b in prepared if b["in_arrivo"]]
+        self.assertGreaterEqual(len(in_arrivo), 1)
+        for bando in in_arrivo:
+            self.assertTrue(
+                any(f'/bando/{bando["id"]}' in card for card in shown),
+                bando["id"],
+            )
+        self.assertEqual(
+            int(hero.group(1)),
+            sum(1 for b in prepared if build.is_aperto(b)) + len(in_arrivo),
+        )
+        script = re.search(
+            r"<script>\s*(\(function \(\) \{\s*var form = document\.getElementById\(\"filtri-form\"\);.*?\}\)\(\);)\s*</script>",
+            home,
+            re.S,
+        )
+        self.assertIsNotNone(script)
+        self.assertIn("syncHero();", script.group(1))
+        runner = r"""
+const fs = require("fs");
+const script = fs.readFileSync(process.argv[2], "utf8");
+function el(attrs) {
+  const node = {
+    attrs: Object.assign({}, attrs),
+    hidden: false,
+    value: attrs.value || "",
+    checked: false,
+    _text: attrs.text || "",
+    options: attrs.options || []
+  };
+  node.getAttribute = function (name) {
+    return Object.prototype.hasOwnProperty.call(node.attrs, name) ? node.attrs[name] : null;
+  };
+  node.addEventListener = function () {};
+  Object.defineProperty(node, "textContent", {
+    get: function () { return node._text; },
+    set: function (value) { node._text = String(value); }
+  });
+  return node;
+}
+function card(id, scaduto) {
+  return el({
+    class: "card",
+    id: id,
+    "data-scaduto": scaduto,
+    "data-reg": "Toscana",
+    "data-dest": "PMI",
+    "data-scad": scaduto === "1" ? "2020-01-01" : "2026-12-01",
+    "data-search": id
+  });
+}
+const area = el({ id: "r", options: [{ value: "" }, { value: "Toscana" }, { value: "Nazionale" }] });
+const dest = el({ id: "d", options: [{ value: "" }, { value: "PMI" }] });
+const scad = el({ id: "s", options: [{ value: "" }, { value: "30" }, { value: "90" }, { value: "none" }] });
+const q = el({ id: "q" });
+const expired = el({ id: "x" });
+const count = el({ id: "n", text: "0 bandi trovati" });
+const reset = el({ id: "z" });
+const form = el({ id: "filtri-form" });
+const hero = el({ "data-aperti": "", text: "0 bandi aperti" });
+const cards = [card("aperto", "0"), card("arrivo", "0"), card("scaduto", "1"), card("sportello", "0")];
+const byId = { r: area, d: dest, s: scad, q: q, x: expired, n: count, z: reset, "filtri-form": form };
+const document = {
+  getElementById: function (id) { return byId[id] || null; },
+  querySelectorAll: function (sel) {
+    if (sel === "#elenco .card:not(.spc)") return cards.slice();
+    if (sel === "[data-aperti]") return [hero];
+    return [];
+  },
+  querySelector: function () { return null; }
+};
+const location = { search: "", pathname: "/", hash: "" };
+const history = { replaceState: function () {} };
+eval(script);
+process.stdout.write(JSON.stringify({
+  hero: hero.textContent,
+  count: count.textContent,
+  hidden: cards.map(function (item) { return item.hidden; })
+}));
+"""
+        script_path = DIST / "_ricerca.js"
+        runner_path = DIST / "_ricerca_runner.js"
+        script_path.write_text(script.group(1), encoding="utf-8")
+        runner_path.write_text(runner, encoding="utf-8")
+        try:
+            import subprocess
+            out = subprocess.run(
+                ["node", str(runner_path), str(script_path)],
+                check=True, capture_output=True, text=True,
+            )
+        finally:
+            script_path.unlink(missing_ok=True)
+            runner_path.unlink(missing_ok=True)
+        runtime = json.loads(out.stdout)
+        self.assertEqual(runtime["hero"], "3 bandi aperti")
+        self.assertEqual(runtime["count"], "3 bandi trovati")
+        self.assertEqual(runtime["hidden"], [False, False, True, False])
 
     def test_bandi_20_ottobre_e_conto_alla_rovescia(self):
         home = (DIST / "index.html").read_text(encoding="utf-8")

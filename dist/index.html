@@ -43,7 +43,7 @@
 <details class="menu"><summary><span class="when-closed">Menu</span><span class="when-open">Chiudi</span></summary>
 <nav aria-label="Menu"><ul><li><a href="/" aria-current="page">Bandi</a></li><li><a href="/nazionale">Nazionali</a></li><li><a href="/toscana">Toscana</a></li><li><a href="/umbria">Umbria</a></li><li><a href="/emilia-romagna">Emilia-Romagna</a></li><li><a href="/chi-siamo">Chi siamo</a></li><li><a href="/sponsor">Sponsor</a></li><li><a href="/contatti">Contatti</a></li><li class="cta"><a class="cta" href="/check-up">Check-up</a></li></ul></nav></details>
 </div></header>
-<main id="main" tabindex="-1"><section class="hero"><div class="wrap"><div class="hero-copy"><h1>Bandi e incentivi per startup e PMI</h1><p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>53 bandi aperti</span>, con scadenza e link alla fonte ufficiale.</p><p class="upd">Aggiornato il 24/10/2026 · fonti ufficiali · senza cookie</p><p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a><a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p></div><picture><source media="(max-width: 640px)" srcset="/assets/img/hero-home-mobile.webp" width="800" height="600"><img src="/assets/img/hero-home.webp" srcset="/assets/img/hero-home-800.webp 800w, /assets/img/hero-home.webp 1280w" sizes="(min-width: 900px) 560px, 100vw" width="1280" height="720" alt="Illustrazione di un piccolo borgo produttivo tra colline toscane con cipressi: officina, negozio, ufficio e capannone con pannelli solari, sovrastati da un documento con spunta che diventa freccia verso l&#x27;alto" fetchpriority="high" loading="eager" decoding="async" class="hero-img"></picture></div></section><div class="wrap"><p class="note">Queste sono sintesi. Prima di fare domanda, controlla requisiti e scadenze sul sito dell&#39;ente.</p><div id="filtri"><form id="filtri-form" class="filters" role="search" aria-label="Cerca e filtra i bandi" autocomplete="off">
+<main id="main" tabindex="-1"><section class="hero"><div class="wrap"><div class="hero-copy"><h1>Bandi e incentivi per startup e PMI</h1><p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>55 bandi aperti</span>, con scadenza e link alla fonte ufficiale.</p><p class="upd">Aggiornato il 24/10/2026 · fonti ufficiali · senza cookie</p><p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a><a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p></div><picture><source media="(max-width: 640px)" srcset="/assets/img/hero-home-mobile.webp" width="800" height="600"><img src="/assets/img/hero-home.webp" srcset="/assets/img/hero-home-800.webp 800w, /assets/img/hero-home.webp 1280w" sizes="(min-width: 900px) 560px, 100vw" width="1280" height="720" alt="Illustrazione di un piccolo borgo produttivo tra colline toscane con cipressi: officina, negozio, ufficio e capannone con pannelli solari, sovrastati da un documento con spunta che diventa freccia verso l&#x27;alto" fetchpriority="high" loading="eager" decoding="async" class="hero-img"></picture></div></section><div class="wrap"><p class="note">Queste sono sintesi. Prima di fare domanda, controlla requisiti e scadenze sul sito dell&#39;ente.</p><div id="filtri"><form id="filtri-form" class="filters" role="search" aria-label="Cerca e filtra i bandi" autocomplete="off">
 <div><label for="q">Cerca</label><input id="q" name="q" type="search" placeholder="Titolo, ente o parola chiave" enterkeyhint="search"></div>
 <div><label for="r">Area</label><select id="r" name="area"><option value="">Tutte le aree</option><option value="Nazionale">Nazionali</option><option value="Toscana">Toscana</option><option value="Umbria">Umbria</option><option value="Emilia-Romagna">Emilia-Romagna</option></select></div>
 <div><label for="d">Destinatari</label><select id="d" name="dest"><option value="">Tutti i destinatari</option><option value="Startup">Startup</option><option value="PMI">PMI</option><option value="Nuove imprese">Nuove imprese</option><option value="Under 35">Under 35</option><option value="Donne">Donne</option><option value="Investitori">Investitori</option><option value="Professionisti">Professionisti</option><option value="Grandi imprese">Grandi imprese</option></select></div>
@@ -170,6 +170,16 @@
     var start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     return Math.round((target - start) / 864e5);
   }
+  function shownByDefault(card) {
+    return card.getAttribute("data-scaduto") !== "1";
+  }
+  function syncHero() {
+    var n = 0;
+    for (var i = 0; i < cards.length; i++) if (shownByDefault(cards[i])) n++;
+    var label = n === 1 ? "1 bando aperto" : n + " bandi aperti";
+    var nodes = document.querySelectorAll("[data-aperti]");
+    for (var c = 0; c < nodes.length; c++) nodes[c].textContent = label;
+  }
   function readUrl() {
     var params = new URLSearchParams(location.search);
     if (hasOption(area, params.get("area") || "")) area.value = params.get("area");
@@ -192,7 +202,7 @@
     var text = q.value.trim().toLowerCase();
     var visible = [];
     cards.forEach(function (card) {
-      var ok = expired.checked || card.getAttribute("data-scaduto") !== "1";
+      var ok = expired.checked || shownByDefault(card);
       if (area.value && card.getAttribute("data-reg") !== area.value) ok = false;
       if (dest.value && (card.getAttribute("data-dest") || "").split("|").indexOf(dest.value) === -1) ok = false;
       var iso = card.getAttribute("data-scad") || "";
@@ -219,6 +229,7 @@
   }
   readUrl();
   apply();
+  syncHero();
   [area, dest, scad, expired].forEach(function (el) {
     el.addEventListener("change", function () { apply(); writeUrl(); });
   });

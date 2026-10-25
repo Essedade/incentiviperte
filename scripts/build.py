@@ -231,6 +231,20 @@ def is_aperto(b):
     return not b.get("scaduto") and not b.get("in_arrivo")
 
 
+def in_ricerca_default(b):
+    """Card visibile con i filtri azzerati e «Mostra scaduti» spento.
+
+    Stessa regola dello script di ricerca (`data-scaduto !== "1"`): tutte le aree,
+    nazionali compresi, i bandi senza scadenza e quelli non ancora aperti.
+    Restano fuori solo i già scaduti.
+    """
+    return not b.get("scaduto")
+
+
+def conto_ricerca_default(bandi):
+    return sum(1 for b in bandi if in_ricerca_default(b))
+
+
 def qty(n, one, many):
     return f"{n} {one if n == 1 else many}"
 
@@ -740,7 +754,7 @@ def filter_form(bandi):
         f'<option value="{e(x)}">{e("Nazionali" if x == "Nazionale" else x)}</option>' for x in REG
     )
     dest_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in dests)
-    att = sum(1 for b in bandi if not b["scaduto"])
+    att = conto_ricerca_default(bandi)
     label = "1 bando trovato" if att == 1 else f"{att} bandi trovati"
     return f'''<form id="filtri-form" class="filters" role="search" aria-label="Cerca e filtra i bandi" autocomplete="off">
 <div><label for="q">Cerca</label><input id="q" name="q" type="search" placeholder="Titolo, ente o parola chiave" enterkeyhint="search"></div>
@@ -776,6 +790,16 @@ JS = r"""<script>
     var start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     return Math.round((target - start) / 864e5);
   }
+  function shownByDefault(card) {
+    return card.getAttribute("data-scaduto") !== "1";
+  }
+  function syncHero() {
+    var n = 0;
+    for (var i = 0; i < cards.length; i++) if (shownByDefault(cards[i])) n++;
+    var label = n === 1 ? "1 bando aperto" : n + " bandi aperti";
+    var nodes = document.querySelectorAll("[data-aperti]");
+    for (var c = 0; c < nodes.length; c++) nodes[c].textContent = label;
+  }
   function readUrl() {
     var params = new URLSearchParams(location.search);
     if (hasOption(area, params.get("area") || "")) area.value = params.get("area");
@@ -798,7 +822,7 @@ JS = r"""<script>
     var text = q.value.trim().toLowerCase();
     var visible = [];
     cards.forEach(function (card) {
-      var ok = expired.checked || card.getAttribute("data-scaduto") !== "1";
+      var ok = expired.checked || shownByDefault(card);
       if (area.value && card.getAttribute("data-reg") !== area.value) ok = false;
       if (dest.value && (card.getAttribute("data-dest") || "").split("|").indexOf(dest.value) === -1) ok = false;
       var iso = card.getAttribute("data-scad") || "";
@@ -825,6 +849,7 @@ JS = r"""<script>
   }
   readUrl();
   apply();
+  syncHero();
   [area, dest, scad, expired].forEach(function (el) {
     el.addEventListener("change", function () { apply(); writeUrl(); });
   });
@@ -1809,7 +1834,7 @@ def build(today=None):
     hero = hero_block(
         "hero-home",
         "<h1>Bandi e incentivi per startup e PMI</h1>"
-        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(sum(1 for b in att if is_aperto(b)), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
+        f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(conto_ricerca_default(bandi), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
         '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>',
