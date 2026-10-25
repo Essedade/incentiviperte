@@ -1311,6 +1311,99 @@ process.stdout.write(JSON.stringify({
         self.assertIsNotNone(re.search(r"invitalia", build.visible_text(sample), re.I))
 
 
+    def test_illustrazioni(self):
+        """Ogni img ha alt non vuoto e dimensioni; gli hero non sono lazy."""
+        img_re = re.compile(r"<img\b[^>]*>", re.I)
+        pages = [p for p in DIST.rglob("*.html") if p.name != build.GSC_FILE]
+        seen = 0
+        for path in pages:
+            text = path.read_text(encoding="utf-8")
+            for tag in img_re.findall(text):
+                seen += 1
+                alt = re.search(r'\balt="([^"]*)"', tag)
+                self.assertIsNotNone(alt, (path.name, tag))
+                self.assertTrue(html.unescape(alt.group(1)).strip(), (path.name, tag))
+                self.assertRegex(tag, r'\bwidth="[1-9]\d*"', tag)
+                self.assertRegex(tag, r'\bheight="[1-9]\d*"', tag)
+        self.assertGreater(seen, len(pages))
+        css = (DIST / "style.css").read_text(encoding="utf-8")
+        self.assertIn(".hero-img,.sec-img{display:block;max-width:100%;height:auto}", css)
+        self.assertIn(".sec-img{border-radius:14px;margin:12px 0}", css)
+        for name in build.ILLUSTRAZIONI:
+            src = ROOT / "assets" / "img" / name
+            dst = DIST / "assets" / "img" / name
+            self.assertTrue(src.is_file(), name)
+            self.assertEqual(src.read_bytes(), dst.read_bytes(), name)
+
+        def hero_of(rel):
+            text = (DIST / rel).read_text(encoding="utf-8")
+            self.assertEqual(len(re.findall(r"<h1[\s>]", text)), 1, rel)
+            block = text.split('<section class="hero">', 1)[1].split("</section>", 1)[0]
+            return text, block
+
+        def lazy(page, name, alt_key, width, height):
+            tag = re.search(rf'<img\b[^>]*{re.escape(name)}[^>]*>', page)
+            self.assertIsNotNone(tag, name)
+            tag = tag.group(0)
+            self.assertIn('loading="lazy"', tag)
+            self.assertIn('decoding="async"', tag)
+            self.assertIn(f'width="{width}"', tag)
+            self.assertIn(f'height="{height}"', tag)
+            self.assertIn('class="sec-img"', tag)
+            self.assertNotIn("fetchpriority", tag)
+            self.assertIn(build.ALT[alt_key], html.unescape(tag))
+
+        home, hero = hero_of("index.html")
+        self.assertEqual(home.count('rel="preload"'), 1)
+        self.assertIn('rel="preload" as="image" href="/assets/img/hero-home.webp"', home)
+        self.assertIn("/assets/img/hero-home-800.webp 800w", hero)
+        self.assertIn('media="(max-width: 640px)"', hero)
+        self.assertIn("/assets/img/hero-home-mobile.webp", hero)
+        self.assertIn('fetchpriority="high"', hero)
+        self.assertIn('loading="eager"', hero)
+        self.assertNotIn('loading="lazy"', hero)
+        self.assertIn('width="1280"', hero)
+        self.assertIn('height="720"', hero)
+        self.assertIn(build.ALT["hero-home"], html.unescape(hero))
+        for rel, stem in (("check-up.html", "hero-check-up"), ("sponsor.html", "hero-sponsor")):
+            text, block = hero_of(rel)
+            self.assertNotIn('rel="preload"', text.split("</head>", 1)[0])
+            self.assertIn(f"/assets/img/{stem}-800.webp 800w", block)
+            self.assertIn(f"/assets/img/{stem}-mobile.webp", block)
+            self.assertIn('fetchpriority="high"', block)
+            self.assertIn('loading="eager"', block)
+            self.assertNotIn('loading="lazy"', block)
+            self.assertIn(build.ALT[stem], html.unescape(block))
+        lazy(home, "bandi-per-area.webp", "bandi-per-area", 800, 308)
+        lazy(home, "bandi-per-destinatario.webp", "bandi-per-destinatario", 800, 600)
+        lazy(home, "verifica-ammissibilita.webp", "verifica-ammissibilita", 800, 600)
+        checkup = (DIST / "check-up.html").read_text(encoding="utf-8")
+        lazy(checkup, "relazione-scritta.webp", "relazione-scritta", 800, 600)
+        paga = checkup.split('id="paga-ora"', 1)[1].split("</section>", 1)[0]
+        lazy(paga, "verifica-ammissibilita.webp", "verifica-ammissibilita", 800, 600)
+        livelli = checkup.split("<h2>Livelli del servizio</h2>", 1)[1].split('<aside class="promo"', 1)[0]
+        self.assertIn("relazione-scritta.webp", livelli)
+        about = (DIST / "chi-siamo.html").read_text(encoding="utf-8")
+        lazy(about, "metodo-fonti-ufficiali.webp", "metodo-fonti-ufficiali", 800, 600)
+        contatti = (DIST / "contatti.html").read_text(encoding="utf-8")
+        lazy(contatti, "contatti.webp", "contatti", 800, 600)
+        for name in ("toscana.html", "umbria.html", "emilia-romagna.html", "nazionale.html"):
+            page = (DIST / name).read_text(encoding="utf-8")
+            section = page.split('id="altre-aree"', 1)[1].split("</section>", 1)[0]
+            lazy(section, "bandi-per-area.webp", "bandi-per-area", 800, 308)
+        settori = list((DIST / "settore").glob("*.html"))
+        self.assertGreaterEqual(len(settori), 8)
+        for path in settori:
+            page = path.read_text(encoding="utf-8")
+            section = page.split('id="altri-dest"', 1)[1].split("</section>", 1)[0]
+            lazy(section, "bandi-per-destinatario.webp", "bandi-per-destinatario", 800, 600)
+        preloads = [p.name for p in pages if 'rel="preload"' in p.read_text(encoding="utf-8")]
+        self.assertEqual(preloads, ["index.html"])
+        og = home.split('property="og:image"', 1)[1].split(">", 1)[0]
+        self.assertIn("og.png", og)
+        self.assertNotIn("hero-", og)
+
+
 class Update(unittest.TestCase):
     def test_match_e_scrittura_atomica(self):
         self.assertTrue(update.matches("<p>Attivo</p>", "Attivo"))

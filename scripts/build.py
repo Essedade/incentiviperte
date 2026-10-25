@@ -128,6 +128,55 @@ STATIC_ASSETS = (
     "apple-touch-icon.png", "logo-header.svg", "logo-header-80.png", "logo-header-160.png",
     "og.png",
 )
+# Illustrazioni in assets/img/, copiate in dist/assets/img/ (URL /assets/img/…).
+IMG = "/assets/img"
+ILLUSTRAZIONI = (
+    "hero-home.webp", "hero-home-800.webp", "hero-home-mobile.webp",
+    "hero-check-up.webp", "hero-check-up-800.webp", "hero-check-up-mobile.webp",
+    "hero-sponsor.webp", "hero-sponsor-800.webp", "hero-sponsor-mobile.webp",
+    "bandi-per-area.webp", "bandi-per-destinatario.webp", "verifica-ammissibilita.webp",
+    "relazione-scritta.webp", "metodo-fonti-ufficiali.webp", "contatti.webp",
+)
+ALT = {
+    "hero-home": (
+        "Illustrazione di un piccolo borgo produttivo tra colline toscane con cipressi: "
+        "officina, negozio, ufficio e capannone con pannelli solari, sovrastati da un documento "
+        "con spunta che diventa freccia verso l'alto"
+    ),
+    "hero-check-up": (
+        "Illustrazione di una lista di controllo su un portablocchi con spunte verdi, una lente "
+        "d'ingrandimento, una relazione rilegata, un calendario e uno scudo con spunta, tra rametti d'ulivo"
+    ),
+    "hero-sponsor": (
+        "Illustrazione di un portatile e di uno smartphone con pagine web stilizzate in cui uno "
+        "spazio è evidenziato, con un megafono, una freccia di crescita e una stretta di mano"
+    ),
+    "bandi-per-area": (
+        "Tre paesaggi stilizzati con segnaposto: colline toscane con cipressi e vigneti, colline "
+        "umbre con un borgo medievale e ulivi, pianura emiliana con filari di pioppi e un casolare"
+    ),
+    "bandi-per-destinatario": (
+        "Illustrazione isometrica di edifici d'impresa collegati da un sentiero: un garage di "
+        "startup con una piantina a forma di razzo, una bottega artigiana, un negozio, un ufficio "
+        "moderno e un piccolo stabilimento"
+    ),
+    "verifica-ammissibilita": (
+        "Illustrazione di una verifica di ammissibilità: un documento con lista di requisiti "
+        "spuntati, una lente d'ingrandimento e un imbuto che seleziona una sola scheda tra molte"
+    ),
+    "relazione-scritta": (
+        "Illustrazione di una relazione scritta rilegata con grafici stilizzati, una busta che la "
+        "contiene, un calendario e un orologio"
+    ),
+    "metodo-fonti-ufficiali": (
+        "Illustrazione di un edificio pubblico con colonne e un cipresso, collegato da una linea "
+        "tratteggiata a una scheda verificata con spunta e a un calendario con frecce di aggiornamento"
+    ),
+    "contatti": (
+        "Illustrazione di una busta aperta, due fumetti di conversazione, un aeroplanino di carta "
+        "e una scheda con segnaposto per segnalare un bando o un errore"
+    ),
+}
 e = html.escape
 
 
@@ -644,17 +693,20 @@ def bando_checkup_box():
     )
 
 
-def checkup_section(pre):
-    return (
-        '<section class="checkup" aria-labelledby="checkup-title"><div class="box">'
+def checkup_section(pre, con_immagine=False):
+    testo = (
         "<h2 id=\"checkup-title\">Check-up Bandi</h2>"
         "<p>Controllo personalizzato di quali bandi regionali e nazionali sono adatti alla tua impresa: "
         "tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali "
         "per avviare e far crescere l'impresa, tra cui finanziamenti a tasso zero e contributi a fondo perduto "
         "per nuove imprese, startup innovative e investimenti. Il risultato è una relazione scritta.</p>"
         f'<p><a class="btn" href="{site_href("check-up.html")}">Richiedi il Check-up</a></p>'
-        "</div></section>"
     )
+    if con_immagine:
+        inner = f'<div class="box with-illu"><div>{testo}</div>{sec_img("verifica-ammissibilita", 800, 600)}</div>'
+    else:
+        inner = f'<div class="box">{testo}</div>'
+    return f'<section class="checkup" aria-labelledby="checkup-title">{inner}</section>'
 
 
 def fpef_box():
@@ -818,10 +870,14 @@ def dest_links(bandi, pre, current=None):
 def hubs(bandi, pre):
     return (
         '<section aria-labelledby="aree-title"><h2 id="aree-title">Bandi per area</h2>'
+        + sec_img("bandi-per-area", 800, 308)
         + pills(area_links(bandi, pre))
         + '</section><section aria-labelledby="dest-title"><h2 id="dest-title">Bandi per destinatario</h2>'
+        + '<div class="with-illu"><div>'
         + pills(dest_links(bandi, pre))
-        + "</section>"
+        + "</div>"
+        + sec_img("bandi-per-destinatario", 800, 600)
+        + "</div></section>"
     )
 
 
@@ -847,6 +903,44 @@ def head_icons(pre):
     )
 
 
+def hero_picture(stem):
+    """Hero above-the-fold: niente lazy, srcset 800w e ritaglio 4:3 sotto i 640 px."""
+    alt = e(ALT[stem])
+    return (
+        "<picture>"
+        f'<source media="(max-width: 640px)" srcset="{IMG}/{stem}-mobile.webp" width="800" height="600">'
+        f'<img src="{IMG}/{stem}.webp" '
+        f'srcset="{IMG}/{stem}-800.webp 800w, {IMG}/{stem}.webp 1280w" '
+        f'sizes="(min-width: 900px) 560px, 100vw" '
+        f'width="1280" height="720" alt="{alt}" '
+        'fetchpriority="high" loading="eager" decoding="async" class="hero-img">'
+        "</picture>"
+    )
+
+
+def hero_block(stem, copy):
+    return (
+        '<section class="hero"><div class="wrap">'
+        f'<div class="hero-copy">{copy}</div>{hero_picture(stem)}</div></section>'
+    )
+
+
+def hero_home_preload():
+    return (
+        f'<link rel="preload" as="image" href="{IMG}/hero-home.webp" '
+        f'imagesrcset="{IMG}/hero-home-800.webp 800w, {IMG}/hero-home.webp 1280w" '
+        'imagesizes="(min-width: 900px) 560px, 100vw" fetchpriority="high">\n'
+    )
+
+
+def sec_img(name, width, height):
+    """Illustrazione sotto la piega: lazy, dimensioni esplicite, niente shift."""
+    return (
+        f'<img src="{IMG}/{name}.webp" width="{width}" height="{height}" '
+        f'alt="{e(ALT[name])}" loading="lazy" decoding="async" class="sec-img">'
+    )
+
+
 def brand_link(pre):
     """Wordmark di testata: SVG del marchio A, PNG 80/160 come fallback."""
     return (
@@ -860,7 +954,7 @@ def brand_link(pre):
     )
 
 
-def page(path, title, desc, body, hero="", ld=None, robots=None):
+def page(path, title, desc, body, hero="", ld=None, robots=None, extra_head=""):
     pre = prefix(path)
     # /check-up-bandi è solo un rimando: canonical e social puntano alla pagina vera.
     url = public_url("check-up.html") if path == "check-up-bandi.html" else public_url(path)
@@ -912,7 +1006,7 @@ def page(path, title, desc, body, hero="", ld=None, robots=None):
 <meta name="theme-color" content="#0F7A5C">
 {head_icons(pre)}
 <link rel="stylesheet" href="{pre}style.css">
-{ld_html}
+{extra_head}{ld_html}
 </head>
 <body>
 <a class="skip" href="#main">Vai al contenuto</a>
@@ -1007,6 +1101,19 @@ details.menu nav ul{flex-direction:column}
 .hero p{margin:0;color:#fff;max-width:42rem}
 .hero .upd{margin-top:8px;font-weight:700}
 .hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.hero .wrap{display:grid;gap:18px 28px;align-items:center}
+.hero-copy{min-width:0}
+.hero picture{display:block;min-width:0;max-width:100%}
+.hero-img,.sec-img{display:block;max-width:100%;height:auto}
+.hero-img{width:100%;aspect-ratio:16/9}
+@media(max-width:640px){.hero-img{aspect-ratio:4/3}}
+@media(min-width:900px){.hero .wrap{grid-template-columns:minmax(0,1.05fr) minmax(220px,560px);max-width:1180px}}
+.sec-img{border-radius:14px;margin:12px 0}
+.with-illu{display:grid;gap:12px 20px;align-items:center}
+.with-illu>.sec-img{margin:0}
+@media(min-width:800px){.with-illu{grid-template-columns:minmax(0,1fr) minmax(180px,360px)}.with-illu>.sec-img{max-width:360px;justify-self:end}}
+.paga .with-illu{grid-template-columns:minmax(0,1fr)}
+.paga .with-illu>.sec-img{max-width:min(100%,360px);justify-self:start}
 main{padding:0 0 40px}
 main:focus{outline:none}
 main>.wrap{padding-top:20px}
@@ -1245,8 +1352,12 @@ def checkup_pay_section():
     return (
         '<section class="paga" aria-labelledby="paga-ora">'
         '<h2 id="paga-ora">Paga ora</h2>'
+        '<div class="with-illu"><div>'
         "<p>Il Check-up è una verifica di ammissibilità e non garantisce l'ottenimento del contributo.</p>"
         f"<p>{CHECKUP_IVA_NOTE}</p>"
+        "</div>"
+        + sec_img("verifica-ammissibilita", 800, 600)
+        + "</div>"
         + pay_level(CHECKUP_PRODUCT_BASE, "49 €", "Base", GUMROAD_CHECKUP_BASE_URL)
         + pay_level(CHECKUP_PRODUCT_COMPLETO, "79 €", "Completo", GUMROAD_CHECKUP_COMPLETO_URL)
         + "<p>Bonifico istantaneo: l'IBAN non è pubblicato sul sito. "
@@ -1264,14 +1375,18 @@ def checkup_body():
     tipo_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in tipi)
     stadio_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in stadi)
     extra = "".join(f"<li>{e(item)}</li>" for item in CHECKUP_EXTRA)
-    return f"""<h1>Check-up Bandi</h1><div class="box">
+    return f"""<div class="box">
 <p>Ricevi una relazione scritta sui bandi adatti alla tua impresa: tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali per avviare e far crescere l'impresa.</p>
 <h2>Livelli del servizio</h2>
+<div class="with-illu"><div>
 <ul>
 <li><strong>Base</strong>, 49 €: {e(CHECKUP_BASE)}.</li>
 <li><strong>Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi. Include tutto il Base, più:<ul>{extra}</ul></li>
 </ul>
 <p>{CHECKUP_IVA_NOTE}</p>
+</div>
+{sec_img("relazione-scritta", 800, 600)}
+</div>
 <aside class="promo" aria-label="Codice di lancio">
 <p class="lab">Codice di lancio</p>
 <p class="code">LANCIO15</p>
@@ -1365,7 +1480,9 @@ def static_pages(today):
             "<h1>Chi siamo</h1><div class='box'>"
             "<p>IncentiviPerTe è una raccolta gratuita e indipendente di bandi e incentivi per startup e PMI, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali. In Toscana la copertura è tutta la regione: bandi regionali e delle Camere di Commercio toscane.</p>"
             "<p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>"
-            "<h2>Metodo</h2><p>Ogni scheda è redatta partendo dalla fonte ufficiale (ministeri, Regioni, Sviluppo Toscana, Camere di Commercio toscane, Gepafin e altri enti) e riporta il link al bando e la data dell'ultimo controllo. Le pagine ufficiali vengono ricontrollate periodicamente e ogni anomalia è verificata a mano. I bandi scaduti vengono rimossi.</p>"
+            "<h2>Metodo</h2><div class=\"with-illu\"><p>Ogni scheda è redatta partendo dalla fonte ufficiale (ministeri, Regioni, Sviluppo Toscana, Camere di Commercio toscane, Gepafin e altri enti) e riporta il link al bando e la data dell'ultimo controllo. Le pagine ufficiali vengono ricontrollate periodicamente e ogni anomalia è verificata a mano. I bandi scaduti vengono rimossi.</p>"
+            + sec_img("metodo-fonti-ufficiali", 800, 600)
+            + "</div>"
             "<h2>Indipendenza</h2><p>Non siamo un ente pubblico né siamo affiliati agli enti citati. Le schede gratuite sono sintesi informative e non sostituiscono il testo del bando. Il sito si sostiene con spazi sponsor sempre etichettati come <em>Sponsorizzato</em>, che non influenzano la selezione dei bandi.</p>"
             "<p>Per gli spazi pubblicitari vedi <a href='/sponsor'>Sponsor</a>. Per segnalare un bando o una correzione, <a href='/contatti'>Contatti</a>. Per il Check-up, <a href='/check-up'>Richiedi il Check-up</a>.</p></div>"
             + checkup_section(""),
@@ -1374,13 +1491,13 @@ def static_pages(today):
         "contatti.html": (
             "Contatti",
             "Come contattare IncentiviPerTe: segnalazioni di bandi, Check-up Bandi e richieste sponsor.",
-            f"<h1>Contatti</h1><div class='box'><p>Per segnalare un bando, una correzione o per informazioni sugli spazi sponsor scrivici tramite i messaggi della Pagina LinkedIn IncentiviPerTe oppure all'indirizzo email:</p>{contacts}<p>Le schede pubblicate restano sintesi: requisiti e domanda si verificano sull'ente che gestisce la misura. Il Check-up Bandi è la relazione scritta sui bandi adatti: <a href='/check-up'>Richiedi il Check-up</a>. Gli spazi pubblicitari sono descritti nella pagina <a href='/sponsor'>Sponsor</a>.</p></div>",
+            f"<h1>Contatti</h1><div class='box'><div class='with-illu'><div><p>Per segnalare un bando, una correzione o per informazioni sugli spazi sponsor scrivici tramite i messaggi della Pagina LinkedIn IncentiviPerTe oppure all'indirizzo email:</p>{contacts}<p>Le schede pubblicate restano sintesi: requisiti e domanda si verificano sull'ente che gestisce la misura. Il Check-up Bandi è la relazione scritta sui bandi adatti: <a href='/check-up'>Richiedi il Check-up</a>. Gli spazi pubblicitari sono descritti nella pagina <a href='/sponsor'>Sponsor</a>.</p></div>{sec_img('contatti', 800, 600)}</div></div>",
             False,
         ),
         "sponsor.html": (
             "Sponsor e pubblicità",
             "Spazi sponsor su IncentiviPerTe da 49 € al mese, su FoglioPEF da 39 € al mese e su entrambi i siti a 69 € al mese.",
-            f"""<h1>Sponsor e pubblicità</h1><div class="box">
+            f"""<div class="box">
 <p>IncentiviPerTe è letto da imprenditori, startup e PMI che cercano finanziamenti. Gli spazi sono per <strong>commercialisti, consulenti di finanza agevolata, banche e software</strong> per le imprese.</p>
 {sponsor_contacts}
 <h2>Cosa include lo spazio su IncentiviPerTe</h2>
@@ -1455,6 +1572,16 @@ def write_search_console():
 def write_assets():
     for name in STATIC_ASSETS:
         shutil.copy(R / "assets" / name, D / name)
+    img_src = R / "assets" / "img"
+    img_dst = D / "assets" / "img"
+    if img_dst.exists():
+        shutil.rmtree(img_dst)
+    img_dst.mkdir(parents=True)
+    missing = [name for name in ILLUSTRAZIONI if not (img_src / name).is_file()]
+    if missing:
+        raise ValueError("immagini mancanti: " + ", ".join(missing))
+    for name in ILLUSTRAZIONI:
+        shutil.copy(img_src / name, img_dst / name)
     old_og = D / "og.svg"
     if old_og.exists():
         old_og.unlink()
@@ -1679,14 +1806,13 @@ def build(today=None):
         urls.append((path, lastmod, freq, priority))
 
     urls = []
-    hero = (
-        '<section class="hero"><div class="wrap">'
+    hero = hero_block(
+        "hero-home",
         "<h1>Bandi e incentivi per startup e PMI</h1>"
         f"<p>Raccolta gratuita, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali: <span data-aperti>{qty(sum(1 for b in att if is_aperto(b)), 'bando aperto', 'bandi aperti')}</span>, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
-        '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>'
-        "</div></section>"
+        '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>',
     )
     home_desc = clip(
         "Bandi aperti per startup e PMI, da Arezzo: tutta la Toscana, Umbria, Emilia-Romagna e incentivi nazionali, con scadenze e link ufficiali."
@@ -1710,11 +1836,14 @@ def build(today=None):
         f'<p class="note">Queste sono sintesi. Prima di fare domanda, controlla requisiti e scadenze sul sito dell&#39;ente.</p>'
         f'<div id="filtri">{filter_form(bandi)}</div>'
         '<noscript><p class="note">Senza JavaScript restano visibili tutti i bandi aperti. I filtri girano solo sul tuo dispositivo e non inviano dati.</p></noscript>'
-        f"{grid(bandi, '', today)}{JS}{hubs(bandi, '')}{checkup_section('')}{faq_html()}{fpef_box()}"
+        f"{grid(bandi, '', today)}{JS}{hubs(bandi, '')}{checkup_section('', con_immagine=True)}{faq_html()}{fpef_box()}"
     )
     emit(
         "index.html",
-        page("index.html", f"{SITE} – Bandi e incentivi per startup e PMI", home_desc, home_body, hero, home_ld),
+        page(
+            "index.html", f"{SITE} – Bandi e incentivi per startup e PMI", home_desc, home_body,
+            hero, home_ld, extra_head=hero_home_preload(),
+        ),
         agg, "weekly", "1.0",
     )
     for reg in REG:
@@ -1737,7 +1866,7 @@ def build(today=None):
             + f'<p><a href="{site_href("index.html", urllib.parse.urlencode({"area": reg}), "filtri")}">Trova il tuo bando</a></p>'
             + listing
             + (f'<section aria-labelledby="dest-qui"><h2 id="dest-qui">Destinatari</h2>{sector_pills}</section>' if sector_pills else "")
-            + f'<section aria-labelledby="altre-aree"><h2 id="altre-aree">Altre aree</h2>{others}</section>'
+            + f'<section aria-labelledby="altre-aree"><h2 id="altre-aree">Altre aree</h2>{sec_img("bandi-per-area", 800, 308)}{others}</section>'
             + fpef_box()
         )
         ld = {
@@ -1769,8 +1898,11 @@ def build(today=None):
             + '<section aria-labelledby="altre-aree"><h2 id="altre-aree">Aree</h2>'
             + pills(area_links(bandi, "../"))
             + '</section><section aria-labelledby="altri-dest"><h2 id="altri-dest">Altri destinatari</h2>'
+            + '<div class="with-illu"><div>'
             + pills(dest_links(bandi, "../", name))
-            + "</section>"
+            + "</div>"
+            + sec_img("bandi-per-destinatario", 800, 600)
+            + "</div></section>"
             + fpef_box()
         )
         ld = {
@@ -1874,7 +2006,12 @@ def build(today=None):
             ld = {"@context": "https://schema.org", "@graph": [webpage, checkup_service()]}
         freq = "monthly" if path in ("sponsor.html", "check-up.html") else "yearly"
         priority = "0.8" if path in ("sponsor.html", "check-up.html") else "0.3"
-        emit(path, page(path, title, desc, body, ld=ld), agg, freq, priority)
+        hero = ""
+        if path == "check-up.html":
+            hero = hero_block("hero-check-up", "<h1>Check-up Bandi</h1>")
+        elif path == "sponsor.html":
+            hero = hero_block("hero-sponsor", "<h1>Sponsor e pubblicità</h1>")
+        emit(path, page(path, title, desc, body, hero, ld=ld), agg, freq, priority)
 
     # Il vecchio indirizzo resta raggiungibile, ma non è una seconda pagina: rimanda a /check-up
     # e non entra nella sitemap.
