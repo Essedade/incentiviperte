@@ -61,8 +61,13 @@ LANCIO_FINO = datetime.date(2026, 10, 30)
 # Giorno del ritocco SEO. lastmod delle pagine toccate; le pagine legali restano alla data dei dati.
 SEO_LASTMOD = "2026-10-25"
 PAGINE_LASTMOD_DATI = {"cookie.html", "note-legali.html", "disclaimer.html", "privacy.html"}
-# Le guide arrivano nel ramo successivo: finché la tupla è vuota non ci sono link nel footer.
-GUIDE = ()
+# Link del gruppo «Guide» nel footer. L'ordine è quello del documento.
+GUIDE = (
+    ("guida/bando-a-sportello.html", "Bando a sportello"),
+    ("guida/de-minimis.html", "Regime de minimis"),
+    ("guida/fondo-perduto-o-finanziamento-agevolato.html", "Fondo perduto o finanziamento"),
+)
+RNA_AIUTI = "https://www.rna.gov.it/"
 EURLEX_DE_MINIMIS = "https://eur-lex.europa.eu/legal-content/IT/TXT/?uri=CELEX%3A32023R2831"
 SPONSOR_DA = "Da 49 € al mese · prezzo di lancio"
 REG = ["Nazionale", "Toscana", "Umbria", "Emilia-Romagna"]
@@ -248,8 +253,11 @@ def lancio_attivo(today):
 
 
 def lastmod_pagina(path, data_lastmod):
-    """Le pagine il cui testo non cambia tengono la data dei dati. Le altre avanzano al ritocco."""
-    if path in PAGINE_LASTMOD_DATI:
+    """Le pagine il cui testo non cambia tengono la data dei dati. Le altre avanzano al ritocco.
+
+    Con le guide nel footer ogni pagina, anche quelle legali, cambia: il lastmod avanza.
+    """
+    if path in PAGINE_LASTMOD_DATI and not GUIDE:
         return data_lastmod
     return max(data_lastmod, SEO_LASTMOD)
 
@@ -2051,7 +2059,8 @@ def faq_scheda_html(bando):
 def home_faq():
     sportello = (
         "Cosa significa bando a sportello?",
-        "Le domande vengono esaminate in ordine di arrivo finché ci sono risorse: il bando può chiudere prima della scadenza.",
+        "Le domande vengono esaminate in ordine di arrivo finché ci sono risorse: il bando può chiudere prima della scadenza. "
+        "La guida è Bando a sportello.",
     )
     resto = (
         "Resto al Sud 2.0 vale in Toscana?",
@@ -2062,7 +2071,11 @@ def home_faq():
         "No, vale solo nelle otto regioni del Mezzogiorno. Al Centro-Nord la misura per gli under 35 è "
         f'<a href="{site_href("bando/autoimpiego-centro-nord.html")}">Autoimpiego Centro-Nord</a>.'
     )
-    marcate = [(q, e(a)) for q, a in list(FAQ) + [sportello]] + [(resto[0], resto_html)]
+    sportello_html = (
+        "Le domande vengono esaminate in ordine di arrivo finché ci sono risorse: il bando può chiudere prima della scadenza. "
+        f'<a href="{site_href("guida/bando-a-sportello.html")}">Che cos\'è un bando a sportello</a>.'
+    )
+    marcate = [(q, e(a)) for q, a in FAQ] + [(sportello[0], sportello_html), (resto[0], resto_html)]
     return plain, marcate
 
 
@@ -2359,7 +2372,7 @@ def _faq_aprire():
     piano = "Molti bandi chiedono un piano degli investimenti e delle spese; per costruirlo in Excel c'è FoglioPEF."
     cumulo = (
         "A volte sì, se riguardano spese diverse e se il bando lo permette, nel limite del regime de minimis. "
-        "Il testo del regolamento è il Regolamento UE 2023/2831."
+        "Le regole generali sono nella guida Regime de minimis. Il testo del regolamento è il Regolamento UE 2023/2831."
     )
     plain = (
         (
@@ -2386,6 +2399,7 @@ def _faq_aprire():
     )
     cumulo_html = (
         "A volte sì, se riguardano spese diverse e se il bando lo permette, nel limite del regime de minimis. "
+        f'Le regole generali sono nella guida <a href="{site_href("guida/de-minimis.html")}">Regime de minimis</a>. '
         f"Il testo del regolamento è il {ext(EURLEX_DE_MINIMIS, 'Regolamento UE 2023/2831')}."
     )
     html_pairs = [
@@ -2449,6 +2463,159 @@ def corpo_aprire(bandi, data):
         + faq_html(html_pairs, raw=True)
     )
     return corpo, plain, camere + regione + nazionali
+
+
+def ld_guida(path, title, crumb, faq):
+    return {
+        "@context": "https://schema.org",
+        "@graph": [
+            {"@type": "WebPage", "name": title, "url": public_url(path), "inLanguage": "it-IT", "isPartOf": BASE},
+            breadcrumb_ld([("", "Home"), (path, crumb)]),
+            faq_ld(faq),
+        ],
+    }
+
+
+def _esempi(bandi, ids):
+    return lista_bandi(_schede(bandi, ids))
+
+
+def corpo_guide(bandi):
+    """Tre guide brevi. Nessun parere fiscale sul caso singolo."""
+    sportello_plain = (
+        (
+            "Un bando a sportello può chiudere prima della scadenza?",
+            "Sì, quando le risorse finiscono. L'ente lo comunica sul proprio sito.",
+        ),
+        (
+            'Cosa vuol dire "fino a esaurimento risorse"?',
+            "Che non c'è una data fissa di chiusura: il bando resta aperto finché ci sono fondi.",
+        ),
+        (
+            "Cos'è la lista d'attesa?",
+            "Quando i fondi sono finiti, alcune Camere di Commercio accettano ancora domande, "
+            "che vengono finanziate solo se si liberano risorse.",
+        ),
+        (
+            'Cosa vuol dire "click day"?',
+            "È uno sportello che apre a un'ora precisa: le risorse possono finire in pochi minuti.",
+        ),
+    )
+    deminimis_plain = (
+        (
+            "Qual è il limite de minimis?",
+            "300.000 € per impresa unica in tre anni, per il regolamento generale; agricoltura e pesca hanno limiti propri. "
+            "Il testo è il Regolamento UE 2023/2831.",
+        ),
+        (
+            "Cosa si intende per impresa unica?",
+            "L'insieme delle imprese collegate tra loro, per esempio una società e quelle che controlla: gli aiuti si sommano. "
+            "La definizione è nel regolamento.",
+        ),
+        (
+            "Come si calcolano i tre anni?",
+            "Si guarda il periodo di tre anni che termina con la data della nuova concessione, "
+            "sommando gli aiuti de minimis ricevuti in quel periodo, come indica il regolamento.",
+        ),
+        (
+            "Dove verifico gli aiuti ricevuti?",
+            "Nel Registro nazionale degli aiuti di Stato (RNA), con la visura per codice fiscale.",
+        ),
+        (
+            "Cos'è la dichiarazione de minimis?",
+            "La dichiarazione, richiesta da molti bandi, con cui l'impresa indica gli aiuti de minimis già ricevuti.",
+        ),
+    )
+    # «Il contributo a fondo perduto si tassa?» è un parere da commercialista: non è in pagina.
+    fondo_plain = (
+        (
+            "Che differenza c'è tra contributo a fondo perduto e finanziamento agevolato?",
+            "Il primo non si restituisce, il secondo sì ma a condizioni migliori di un prestito normale.",
+        ),
+        (
+            "Cos'è il contributo in conto interessi?",
+            "Un contributo che paga in tutto o in parte gli interessi di un finanziamento bancario.",
+        ),
+        (
+            "Cos'è la remissione del debito?",
+            "La parte di un finanziamento agevolato che, a certe condizioni, non va restituita.",
+        ),
+        (
+            "Cos'è un voucher?",
+            "Un contributo di importo fisso o in percentuale per comprare un servizio o un bene preciso, "
+            "per esempio consulenza o digitale.",
+        ),
+    )
+    verifica = f"<p>Per la tua impresa puoi chiedere una {link_verifica()}.</p>"
+    sportello = (
+        "guida/bando-a-sportello.html",
+        "Bando a sportello: cosa significa e come funziona",
+        "Cos'è un bando a sportello, come si differenzia da un bando a graduatoria e perché può chiudere prima della scadenza. Con esempi di bandi aperti.",
+        "Bando a sportello: cosa significa",
+        (
+            crumbs([("index.html", "Home"), ("", "Bando a sportello")], "")
+            + "<h1>Bando a sportello: cosa significa</h1>"
+            + "<p>Un bando a sportello esamina le domande in ordine di arrivo e le finanzia finché ci sono risorse. "
+            + "Per questo può chiudere prima della data di scadenza scritta, e conta presentare presto una domanda completa. "
+            + "Nel bando a graduatoria, invece, tutte le domande arrivate entro la scadenza vengono valutate insieme "
+            + "e finanziate in ordine di punteggio.</p>"
+            + "<section><h2>Esempi di bandi aperti</h2>"
+            + "<p>Tra le schede a sportello ci sono il Bando 1.3.2 della Regione Toscana e Nuova Sabatini. "
+            + "Alcuni bandi della Maremma e del Tirreno, a risorse esaurite, tengono una lista d'attesa.</p>"
+            + _esempi(bandi, (
+                "bando-132-50k-2026",
+                "nuova-sabatini",
+                "cciaa-maremma-tirreno-imprese-vicinato-2026",
+            ))
+            + "</section>"
+            + verifica
+            + faq_html(sportello_plain)
+        ),
+        sportello_plain,
+    )
+    deminimis = (
+        "guida/de-minimis.html",
+        "Regime de minimis: cos'è, limite e come si calcola",
+        "Il de minimis in parole semplici: limite di 300.000 € in tre anni per impresa unica, come si calcola, dove si verifica e cosa chiedono i bandi.",
+        "Regime de minimis: cos'è e come funziona",
+        (
+            crumbs([("index.html", "Home"), ("", "Regime de minimis")], "")
+            + "<h1>Regime de minimis: cos'è e come funziona</h1>"
+            + "<p>Il regime de minimis permette di dare alle imprese aiuti pubblici di piccolo importo senza notificarli "
+            + "alla Commissione europea. Ogni impresa unica può ricevere al massimo 300.000 € di aiuti de minimis "
+            + "nell'arco di tre anni (Regolamento UE 2023/2831). Prima di chiedere un contributo conviene controllare "
+            + "quanto si è già ricevuto nel Registro nazionale degli aiuti di Stato (RNA). "
+            + "Quanto segue è un riassunto del regolamento, non un parere sul caso della singola impresa.</p>"
+            + "<p>Fonti: "
+            + ext(EURLEX_DE_MINIMIS, "Regolamento UE 2023/2831 su EUR-Lex")
+            + " e "
+            + ext(RNA_AIUTI, "Registro nazionale degli aiuti di Stato")
+            + ".</p>"
+            + verifica
+            + faq_html(deminimis_plain)
+        ),
+        deminimis_plain,
+    )
+    fondo = (
+        "guida/fondo-perduto-o-finanziamento-agevolato.html",
+        "Fondo perduto o finanziamento agevolato: differenze",
+        "Fondo perduto, tasso zero, finanziamento con remissione, contributo in conto interessi e voucher: cosa sono e come leggerli in un bando.",
+        "Fondo perduto o finanziamento agevolato: le differenze",
+        (
+            crumbs([("index.html", "Home"), ("", "Fondo perduto o finanziamento agevolato")], "")
+            + "<h1>Fondo perduto o finanziamento agevolato: le differenze</h1>"
+            + "<p>Il contributo a fondo perduto non si restituisce; il finanziamento agevolato sì, ma a tasso zero "
+            + "o a un tasso più basso di quello di mercato. Molti bandi mescolano le due cose: per esempio "
+            + f'{link_bando(next(b for b in bandi if b["id"] == "step-2026-umbria"))} in Umbria è un finanziamento all\'1% '
+            + "con una parte che non va restituita, e "
+            + f'{link_bando(next(b for b in bandi if b["id"] == "bando-132-50k-2026"))} in Toscana è un contributo a fondo perduto '
+            + "che paga gli interessi di un prestito bancario.</p>"
+            + verifica
+            + faq_html(fondo_plain)
+        ),
+        fondo_plain,
+    )
+    return (sportello, deminimis, fondo)
 
 
 def build(today=None):
@@ -2823,6 +2990,12 @@ def build(today=None):
         ),
         SEO_LASTMOD, "weekly", "0.8",
     )
+    for path, title, desc, h1, body, faq in corpo_guide(bandi):
+        emit(
+            path,
+            page(path, title, desc, body, ld=ld_guida(path, title, h1, faq), title_as_is=True),
+            SEO_LASTMOD, "monthly", "0.6",
+        )
 
     # Il vecchio indirizzo resta raggiungibile, ma non è una seconda pagina: rimanda a /check-up
     # e non entra nella sitemap.

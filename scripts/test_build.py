@@ -1631,8 +1631,10 @@ process.stdout.write(JSON.stringify({
         for attr in ('name="description"', 'property="og:description"', 'name="twitter:description"'):
             chunk = page.split(attr, 1)[1].split(">", 1)[0]
             self.assertIn(build.CHECKUP_IVA_NOTE, html.unescape(chunk))
-        self.assertNotIn('aria-label="Guide"', home)
-        self.assertNotIn("/guida/", home)
+        self.assertIn('aria-label="Guide"', home)
+        self.assertIn('href="/guida/bando-a-sportello"', home)
+        self.assertIn('href="/guida/de-minimis"', home)
+        self.assertIn('href="/guida/fondo-perduto-o-finanziamento-agevolato"', home)
         self.assertIn("Cosa significa bando a sportello?", home)
         self.assertIn("Scopri il Check-up Bandi", home)
 
@@ -1669,7 +1671,7 @@ process.stdout.write(JSON.stringify({
         self.assertIn("<h1>Contributi per aprire un'attività in Toscana</h1>", html.unescape(aprire))
         self.assertIn("Regolamento UE 2023/2831", aprire)
         self.assertIn("eur-lex.europa.eu", aprire)
-        self.assertNotIn("/guida/", aprire)
+        self.assertIn('href="/guida/de-minimis"', aprire)
         self.assertIn('href="/aprire-attivita-toscana"', (DIST / "settore" / "nuove-imprese.html").read_text(encoding="utf-8"))
         self.assertIn('href="/aprire-attivita-toscana"', (DIST / "settore" / "under-35.html").read_text(encoding="utf-8"))
 
@@ -1684,8 +1686,11 @@ process.stdout.write(JSON.stringify({
             BASE + "bandi-camere-di-commercio-toscana",
             BASE + "bandi-camere-di-commercio-emilia-romagna",
             BASE + "aprire-attivita-toscana",
+            BASE + "guida/bando-a-sportello",
+            BASE + "guida/de-minimis",
+            BASE + "guida/fondo-perduto-o-finanziamento-agevolato",
         ]
-        self.assertEqual(locs[-3:], nuovi)
+        self.assertEqual(locs[-6:], nuovi)
         data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
         bandi = sorted(data, key=lambda b: b["scadenza"] or "9999-12-31")
         attesi = [
@@ -1704,10 +1709,10 @@ process.stdout.write(JSON.stringify({
             attesi.append(BASE + "bando/" + bando["id"])
         for slug in ("chi-siamo", "contatti", "sponsor", "check-up", "cookie", "note-legali", "disclaimer", "privacy"):
             attesi.append(BASE + slug)
-        self.assertEqual(locs[:-3], attesi)
+        self.assertEqual(locs[:-6], attesi)
         by = {field(node, "loc"): node for node in urls}
         for slug in ("cookie", "note-legali", "disclaimer", "privacy"):
-            self.assertEqual(field(by[BASE + slug], "lastmod"), "2026-10-24", slug)
+            self.assertEqual(field(by[BASE + slug], "lastmod"), "2026-10-25", slug)
             self.assertEqual(field(by[BASE + slug], "changefreq"), "yearly", slug)
             self.assertEqual(field(by[BASE + slug], "priority"), "0.3", slug)
         self.assertEqual(field(by[BASE], "changefreq"), "weekly")
@@ -1718,10 +1723,27 @@ process.stdout.write(JSON.stringify({
         self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "lastmod"), "2026-10-25")
         self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "changefreq"), "weekly")
         self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "priority"), "0.7")
-        for loc in nuovi:
+        for loc in nuovi[:3]:
             self.assertEqual(field(by[loc], "lastmod"), "2026-10-25")
             self.assertEqual(field(by[loc], "changefreq"), "weekly")
             self.assertEqual(field(by[loc], "priority"), "0.8")
+        for loc in nuovi[3:]:
+            self.assertEqual(field(by[loc], "lastmod"), "2026-10-25")
+            self.assertEqual(field(by[loc], "changefreq"), "monthly")
+            self.assertEqual(field(by[loc], "priority"), "0.6")
+        fondo = (DIST / "guida" / "fondo-perduto-o-finanziamento-agevolato.html").read_text(encoding="utf-8")
+        self.assertNotIn("Il contributo a fondo perduto si tassa", fondo)
+        self.assertNotIn("commercialista", fondo.lower())
+        self.assertIn('"@type": "FAQPage"', fondo)
+        self.assertIn('"@type": "BreadcrumbList"', fondo)
+        de_minimis = (DIST / "guida" / "de-minimis.html").read_text(encoding="utf-8")
+        self.assertIn("eur-lex.europa.eu", de_minimis)
+        self.assertIn("rna.gov.it", de_minimis)
+        self.assertIn("non un parere sul caso della singola impresa", de_minimis)
+        sportello = (DIST / "guida" / "bando-a-sportello.html").read_text(encoding="utf-8")
+        self.assertIn('href="/bando/nuova-sabatini"', sportello)
+        self.assertIn('href="/bando/bando-132-50k-2026"', sportello)
+        self.assertIn("lista d'attesa", html.unescape(sportello).lower())
 
     def test_lancio_e_scheda_scaduta_dopo_il_23_ottobre(self):
         fino = build.checkup_body(datetime.date(2026, 10, 30))
