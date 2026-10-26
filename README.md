@@ -10,7 +10,8 @@ Il Check-up Bandi è un controllo personalizzato di quali bandi regionali e nazi
 - `python3 scripts/test_build.py` controlla etichette sponsor, prezzi, SEO, accessibilità di base e la rimozione delle pagine obsolete.
 - `python3 scripts/update.py` ricontrolla le fonti ufficiali e scrive `report.txt`. Non pubblica il sito.
 - `python3 scripts/build_redirect.py` genera `dist-redirect/`, il rimando dal vecchio indirizzo. Non pubblica il sito.
-- Pagine generate: schede in `bando/`, aree (`nazionale.html`, `toscana.html`, `umbria.html`, `emilia-romagna.html`) e destinatari in `settore/`.
+- Pagine generate: schede in `bando/`, aree (`nazionale.html`, `toscana.html`, `umbria.html`, `emilia-romagna.html`), destinatari in `settore/`, affiancamento, richiesta del Check-up, scadenze (anche `scadenze.ics`) e avvisi.
+- Gli avvisi email usano Brevo solo dopo aver incollato l'URL del modulo in `data/avvisi.json` (campo `azione`). Finché è vuoto, il modulo resta disattivato.
 - L'indirizzo pubblico è https://incentiviperte.github.io/. https://incentiviperte.pages.dev resta un mirror. Il workflow in `.github/workflows/` esegue solo i test.
 
 ## Pubblicazione

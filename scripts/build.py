@@ -2,6 +2,7 @@
 """Genera il sito statico in dist/ da data/bandi.json.
 
 Nessuna dipendenza, nessun tracker, nessun cookie.
+Scrive anche dist/scadenze.ics. L'URL del modulo avvisi sta in data/avvisi.json.
 Uso: python3 scripts/build.py
 """
 import datetime
@@ -128,6 +129,7 @@ NAV = (
     ("chi-siamo.html", "Chi siamo", ""),
     ("sponsor.html", "Sponsor", ""),
     ("contatti.html", "Contatti", ""),
+    ("affiancamento.html", "Affiancamento", ""),
     ("check-up.html", "Check-up", "cta"),
 )
 KEEP = {
@@ -1061,10 +1063,11 @@ def page(path, title, desc, body, hero="", ld=None, robots=None, extra_head="", 
     nav_items = []
     for href, label, kind in NAV:
         cls = f' class="{kind}"' if kind else ""
-        current = ' aria-current="page"' if href == path or (path == "check-up-bandi.html" and href == "check-up.html") else ""
+        richiesta = path == "check-up/richiesta.html" and href == "check-up.html"
+        current = ' aria-current="page"' if href == path or (path == "check-up-bandi.html" and href == "check-up.html") or richiesta else ""
         nav_items.append(f'<li{cls}><a{cls} href="{site_href(href)}"{current}>{label}</a></li>')
     nav = "".join(nav_items)
-    cta_current = ' aria-current="page"' if path in ("check-up.html", "check-up-bandi.html") else ""
+    cta_current = ' aria-current="page"' if path in ("check-up.html", "check-up-bandi.html", "check-up/richiesta.html") else ""
     refresh = '<meta http-equiv="refresh" content="0; url=/check-up">' if path == "check-up-bandi.html" else ""
     ld_html = ""
     if ld:
@@ -1126,6 +1129,9 @@ def page(path, title, desc, body, hero="", ld=None, robots=None, extra_head="", 
 def footer(pre):
     # I link di area e destinatario sono aggiunti dopo, quando i bandi sono noti.
     info = (
+        ("affiancamento.html", "Affiancamento"),
+        ("scadenze.html", "Scadenze"),
+        ("avvisi.html", "Avvisi bandi"),
         ("chi-siamo.html", "Chi siamo"),
         ("contatti.html", "Contatti"),
         ("sponsor.html", "Sponsor"),
@@ -1357,6 +1363,24 @@ footer nav{margin-top:8px}
 .pay-actions .btn{text-align:center}
 @media(max-width:600px){.pay-actions{flex-direction:column;align-items:stretch}.pay-choice{align-items:stretch}.pay-actions .btn{width:100%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media(min-width:1180px){.dnav a{font-size:14px;padding:8px 6px}}
+.pacchetti{display:grid;gap:12px;margin:12px 0}
+@media(min-width:800px){.pacchetti{grid-template-columns:1fr 1fr}}
+.imp{font-weight:800;color:var(--b);margin:8px 0}
+.cal-actions{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.scadenze{list-style:none;padding:0;margin:12px 0;display:grid;gap:8px}
+.scadenze li{display:grid;gap:2px 16px;background:#fff;border:1px solid var(--l);border-radius:12px;padding:12px 14px}
+.scadenze li[hidden]{display:none}
+.scadenze time{font-weight:800}
+.scadenze small{color:var(--m)}
+@media(min-width:700px){.scadenze li{grid-template-columns:7.5rem minmax(0,1fr) auto;align-items:center}.scadenze small{grid-column:2/-1}}
+.checkup-form .coppia{display:grid;gap:12px}
+@media(min-width:800px){.checkup-form .coppia{grid-template-columns:1fr 1fr}}
+.checkup-form .consensi{display:grid;gap:8px;margin:0}
+.checkup-form .consensi label{display:flex;align-items:flex-start;gap:8px;min-height:44px;font-weight:700}
+.checkup-form .consensi input{width:1.15rem;height:1.15rem;margin-top:.35rem;flex:0 0 auto}
+.btn:disabled,.checkup-form fieldset[disabled] .btn{opacity:.55;cursor:not-allowed}
+.checkup-form fieldset[disabled]{border:0;margin:0;padding:0;min-inline-size:0}
 """
 
 
@@ -1720,7 +1744,7 @@ def static_pages(today):
         "privacy.html": (
             "Informativa privacy",
             "Informativa privacy di IncentiviPerTe ai sensi del Regolamento UE 2016/679 (GDPR).",
-            f"<h1>Informativa privacy</h1><div class='box'><p>Ai sensi degli artt. 13-14 del Regolamento UE 2016/679 (GDPR).</p><h2>Titolare del trattamento</h2><p>{owner}</p><h2>Dati trattati</h2><ul><li><strong>Navigazione</strong>: il sito non usa cookie, analytics o tracker. Il sito è ospitato da GitHub Pages (GitHub, Inc., USA, società controllata da Microsoft), con una copia su Cloudflare Pages (Cloudflare, Inc.). GitHub può registrare dati tecnici come l'indirizzo IP nei log per sicurezza, secondo la propria <a href='https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement' rel='noopener noreferrer'>informativa sulla privacy</a>, e Cloudflare può registrare dati tecnici come l'indirizzo IP nei log di server per sicurezza e funzionamento, secondo la propria <a href='https://www.cloudflare.com/privacypolicy/' rel='noopener noreferrer'>privacy policy</a>; base giuridica: legittimo interesse (art. 6.1.f).</li><li><strong>Email</strong>: se ci scrivi trattiamo indirizzo e contenuto del messaggio solo per rispondere; base giuridica: misure su richiesta dell'interessato / legittimo interesse. Conservazione: il tempo necessario a gestire la richiesta e comunque non oltre 24 mesi.</li></ul><h2>Trasferimenti</h2><p>GitHub, Inc. e Cloudflare, Inc. hanno sede negli USA; i trasferimenti al di fuori dell'UE avvengono secondo le garanzie previste dal GDPR (es. EU-US Data Privacy Framework e/o clausole contrattuali standard) indicate dai fornitori.</p><h2>Diritti</h2><p>Puoi chiedere accesso, rettifica, cancellazione, limitazione, opposizione e portabilità (artt. 15-22) scrivendo al titolare tramite i messaggi della {li} o all'indirizzo {mail}, e proporre reclamo al Garante per la protezione dei dati personali (garanteprivacy.it).</p><p>Nessuna newsletter è attiva: se verrà introdotta, sarà con consenso esplicito e informativa dedicata.</p><p><small>Ultimo aggiornamento: {it_date(today.isoformat())}.</small></p></div>",
+            f"<h1>Informativa privacy</h1><div class='box'><p>Ai sensi degli artt. 13-14 del Regolamento UE 2016/679 (GDPR).</p><h2>Titolare del trattamento</h2><p>{owner}</p><h2>Dati trattati</h2><ul><li><strong>Navigazione</strong>: il sito non usa cookie, analytics o tracker. Il sito è ospitato da GitHub Pages (GitHub, Inc., USA, società controllata da Microsoft), con una copia su Cloudflare Pages (Cloudflare, Inc.). GitHub può registrare dati tecnici come l'indirizzo IP nei log per sicurezza, secondo la propria <a href='https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement' rel='noopener noreferrer'>informativa sulla privacy</a>, e Cloudflare può registrare dati tecnici come l'indirizzo IP nei log di server per sicurezza e funzionamento, secondo la propria <a href='https://www.cloudflare.com/privacypolicy/' rel='noopener noreferrer'>privacy policy</a>; base giuridica: legittimo interesse (art. 6.1.f).</li><li><strong>Email</strong>: se ci scrivi trattiamo indirizzo e contenuto del messaggio solo per rispondere; base giuridica: misure su richiesta dell'interessato / legittimo interesse. Conservazione: il tempo necessario a gestire la richiesta e comunque non oltre 24 mesi.</li></ul><h2>Trasferimenti</h2><p>GitHub, Inc. e Cloudflare, Inc. hanno sede negli USA; i trasferimenti al di fuori dell'UE avvengono secondo le garanzie previste dal GDPR (es. EU-US Data Privacy Framework e/o clausole contrattuali standard) indicate dai fornitori.</p><h2>Diritti</h2><p>Puoi chiedere accesso, rettifica, cancellazione, limitazione, opposizione e portabilità (artt. 15-22) scrivendo al titolare tramite i messaggi della {li} o all'indirizzo {mail}, e proporre reclamo al Garante per la protezione dei dati personali (garanteprivacy.it).</p><h2>Modulo di richiesta del Check-up</h2><p>Il modulo per richiedere il Check-up non invia dati a un server: nessun dato è inviato a terzi. Il pulsante compone un messaggio nel programma di posta del dispositivo, all'indirizzo {mail}, con oggetto e testo già compilati. I dati inseriti (ragione sociale o nome del progetto, forma giuridica, regione e comune, settore, anno di avvio, dimensione, investimento, eventuale bando, livello del Check-up, email e consenso) restano sul dispositivo finché la persona non invia l'email.</p><p>Quando il messaggio arriva, trattiamo indirizzo e contenuto solo per esaminare la richiesta, preparare il Check-up e inviare il link al pagamento. Base giuridica: misure precontrattuali su richiesta dell'interessato (art. 6.1.b). Conservazione: il tempo necessario a gestire la richiesta e comunque non oltre 24 mesi.</p><h2>Avvisi email</h2><p>Gli avvisi email segnalano nuovi bandi per la regione e il settore indicati. Il modulo di iscrizione non è ancora attivo. Finché in pagina compare «In arrivo», ci si prenota scrivendo a {mail} con oggetto «Iscrizione avvisi»: in quel caso trattiamo il messaggio come le altre email.</p><p>Quando il modulo sarà collegato, indirizzo email, regione, settore e i due consensi saranno trasmessi a Brevo, come responsabile del trattamento ai sensi dell'art. 28 del GDPR. Brevo userà i dati solo per spedire gli avvisi per conto del titolare, ha sede nell'Unione europea e agisce secondo la propria <a href='https://www.brevo.com/it/legal/privacypolicy/' rel='noopener noreferrer'>informativa</a>. Il doppio consenso è libero e revocabile: uno per ricevere gli avvisi, uno per il trattamento descritto in questa pagina. Base giuridica: consenso (art. 6.1.a). Conservazione: fino alla revoca e comunque non oltre 24 mesi dall'ultima iscrizione. In ogni messaggio ci sarà il modo per annullare l'iscrizione.</p><p>Non sono attive altre liste di invio. I dati non sono ceduti a terzi per finalità loro.</p><p><small>Ultimo aggiornamento: {it_date(today.isoformat())}.</small></p></div>",
             False,
         ),
     }
@@ -1964,6 +1988,7 @@ def self_check(written, bandi):
     for rel in htmls:
         if f'name="google-site-verification" content="{GSC_TOKEN}"' not in (D / rel).read_text(encoding="utf-8"):
             raise ValueError(f"{rel}: manca il meta di verifica Search Console")
+    controlla_servizi(bandi)
 
 
 def span_n(n):
@@ -2619,6 +2644,668 @@ def corpo_guide(bandi):
     return (sportello, deminimis, fondo)
 
 
+def ics_escape(text):
+    return (
+        str(text)
+        .replace("\\", "\\\\")
+        .replace("\r\n", "\n")
+        .replace("\r", "\n")
+        .replace("\n", "\\n")
+        .replace(";", "\\;")
+        .replace(",", "\\,")
+    )
+
+
+def piega_ics(line):
+    """Ripiega le righe oltre 75 ottetti, senza spezzare un carattere UTF-8."""
+    data = line.encode("utf-8")
+    if len(data) <= 75:
+        return line
+    parts = []
+    limit = 75
+    while data:
+        if len(data) <= limit:
+            parts.append(data.decode("utf-8"))
+            break
+        cut = limit
+        while cut > 0 and (data[cut] & 0xC0) == 0x80:
+            cut -= 1
+        if cut <= 0:
+            cut = limit
+        parts.append(data[:cut].decode("utf-8"))
+        data = data[cut:]
+        limit = 74
+    folded = parts[0]
+    for part in parts[1:]:
+        folded += "\r\n " + part
+    return folded
+
+
+def scadenze_aperte(bandi):
+    """Una scadenza ancora valida per bando. Gli sportelli senza data non entrano."""
+    scelte = [b for b in bandi if b.get("scadenza") and not b.get("scaduto")]
+    scelte.sort(key=lambda b: (b["scadenza"], b["id"]))
+    return scelte
+
+
+def testo_ics(bandi, today):
+    """Calendario iCalendar: un evento per scadenza, con la scheda sul sito."""
+    stamp = today.strftime("%Y%m%dT000000Z")
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//IncentiviPerTe//Scadenze bandi//IT",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "X-WR-CALNAME:Scadenze bandi IncentiviPerTe",
+    ]
+    for b in scadenze_aperte(bandi):
+        start = datetime.date.fromisoformat(b["scadenza"])
+        end = start + datetime.timedelta(days=1)
+        url = public_url(f"bando/{b['id']}.html")
+        area = "Nazionali" if b["regione"] == "Nazionale" else b["regione"]
+        nota = (b.get("nota_scadenza") or "").strip()
+        desc = (nota + "\n" if nota else "") + "Scheda: " + url
+        lines.extend([
+            "BEGIN:VEVENT",
+            f"UID:{b['id']}@incentiviperte.github.io",
+            f"DTSTAMP:{stamp}",
+            f"DTSTART;VALUE=DATE:{start:%Y%m%d}",
+            f"DTEND;VALUE=DATE:{end:%Y%m%d}",
+            "SUMMARY:" + ics_escape(seo_copy.titolo_in_elenco(b)),
+            "DESCRIPTION:" + ics_escape(desc),
+            "URL:" + url,
+            "LOCATION:" + ics_escape(area),
+            "END:VEVENT",
+        ])
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(piega_ics(line) for line in lines) + "\r\n"
+
+
+def href_webcal():
+    return "webcal://" + BASE[len("https://"):] + "scadenze.ics"
+
+
+def leggi_avvisi_azione(path=None):
+    """URL di azione del modulo Brevo. Vuoto: il modulo resta disattivato."""
+    path = pathlib.Path(path) if path else (R / "data" / "avvisi.json")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("configurazione avvisi non valida")
+    url = str(data.get("azione") or "").strip()
+    if not url:
+        return ""
+    parts = urllib.parse.urlparse(url)
+    if parts.scheme != "https" or not parts.netloc or " " in url:
+        raise ValueError("URL di azione degli avvisi non valido")
+    return url
+
+
+def ld_pagina(path, title, trail, faq=()):
+    graph = [
+        {
+            "@type": "WebPage",
+            "name": title,
+            "url": public_url(path),
+            "inLanguage": "it-IT",
+            "publisher": org_ld(),
+        },
+        breadcrumb_ld(trail),
+    ]
+    if faq:
+        graph.append(faq_ld(faq))
+    return {"@context": "https://schema.org", "@graph": graph}
+
+
+def faq_affiancamento():
+    return (
+        (
+            "Il Check-up già pagato si scala?",
+            "Sì. Il Check-up già pagato (49 o 79 €) si scala dal prezzo del livello scelto.",
+        ),
+        (
+            "Quando si paga la parte a risultato?",
+            "La parte a risultato si paga solo all'erogazione del contributo. Non si applica ai voucher, al fascicolo e all'agricoltura: in quei casi il compenso è solo fisso.",
+        ),
+        (
+            "Chi firma e invia la domanda?",
+            "Firma, credenziali e invio della domanda restano del legale rappresentante. Non si chiedono credenziali di accesso.",
+        ),
+        (
+            "La consulenza entra nelle spese del bando?",
+            "In alcuni bandi la consulenza non è una spesa ammissibile. In quel caso il compenso resta a carico dell'impresa.",
+        ),
+        (
+            "Garantite il contributo?",
+            "No. Nessuna garanzia di ottenere il contributo. Alcuni enti pubblici offrono un accompagnamento gratuito e la domanda si può presentare anche da soli.",
+        ),
+    )
+
+
+def corpo_affiancamento():
+    cta = (
+        f'<p><a class="btn" href="{site_href("check-up/richiesta.html")}">Richiedi il Check-up</a></p>'
+    )
+    fasi = (
+        "<h2>Dalla verifica alla rendicontazione</h2>"
+        "<ol>"
+        "<li><strong>Verifica dei requisiti.</strong> Si controlla se l'impresa può partecipare. "
+        "In gran parte è il lavoro del Check-up.</li>"
+        "<li><strong>Documenti.</strong> Visura, preventivi, dichiarazioni e gli altri allegati richiesti dal bando.</li>"
+        "<li><strong>Domanda.</strong> Si preparano i testi. "
+        "Firma, credenziali e invio della domanda restano del legale rappresentante.</li>"
+        "<li><strong>Variazioni.</strong> Se il progetto cambia, la richiesta si prepara come chiede il bando.</li>"
+        "<li><strong>Rendicontazione.</strong> Si ordinano le spese e si prepara la domanda di saldo, "
+        "quando il livello la comprende.</li>"
+        "</ol>"
+    )
+    pacchetti = """<h2>Livelli e prezzi</h2>
+<p>Prezzi finali. Il Check-up già pagato (49 o 79 €) si scala dal prezzo.</p>
+<div class="pacchetti">
+<article class="offer"><h3>Voucher camerali</h3>
+<p>Per i voucher delle Camere di Commercio, fra cui digitale, doppia transizione, fiere, export e creazione d'impresa. Comprende verifica dei requisiti, documenti e domanda.</p>
+<p class="imp">Domanda 199 €. Rendicontazione 149 €. Domanda e rendicontazione insieme 329 €. Solo compenso fisso.</p></article>
+<article class="offer"><h3>Avvio d'impresa</h3>
+<p>Per i bandi di avvio, regionali o nazionali. Comprende verifica dei requisiti, documenti, piano d'impresa, domanda e variazioni previste dal livello. La rendicontazione è a parte.</p>
+<p class="imp">690 € + 4% del contributo effettivamente erogato, tetto 4.000 €. Rendicontazione 490 €.</p></article>
+<article class="offer"><h3>Avvio d'impresa plus</h3>
+<p>Per i bandi di avvio più complessi. Comprende le attività dell'Avvio d'impresa, la preparazione a eventuali colloqui e la rendicontazione.</p>
+<p class="imp">1.490 € + 5% del contributo erogato, tetto 8.000 €.</p></article>
+<article class="offer"><h3>Fascicolo per banca o confidi</h3>
+<p>Per le misure in cui l'impresa presenta i documenti a una banca o a un confidi. Prepariamo il fascicolo: lo porti tu allo sportello.</p>
+<p class="imp">290 € solo fisso, senza contatti con la banca e senza compenso a risultato.</p></article>
+<article class="offer"><h3>Agricoltura</h3>
+<p>Solo pre-istruttoria dei requisiti. La domanda non è compresa: la segue il CAA o l'agronomo dell'impresa.</p>
+<p class="imp">Check-up Completo 79 €.</p></article>
+<article class="offer"><h3>Variazioni extra</h3>
+<p>Ogni richiesta di variazione oltre quelle già comprese nel livello scelto.</p>
+<p class="imp">90 € ciascuna.</p></article>
+</div>"""
+    condizioni = (
+        "<h2>Condizioni</h2><ul>"
+        "<li>Il Check-up già pagato (49 o 79 €) si scala dal prezzo.</li>"
+        "<li>La parte a risultato si paga solo all'erogazione del contributo. "
+        "Riguarda Avvio d'impresa e Avvio d'impresa plus. Voucher, fascicolo e agricoltura restano a compenso fisso.</li>"
+        "<li>In alcuni bandi la consulenza non è una spesa ammissibile. "
+        "In quel caso il compenso resta interamente a carico dell'impresa: lo diciamo prima di iniziare.</li>"
+        "<li>Firma, credenziali e invio della domanda restano del legale rappresentante.</li>"
+        "<li>Nessuna garanzia di ottenere il contributo.</li>"
+        "</ul>"
+        "<p>Alcuni enti pubblici offrono un accompagnamento gratuito alla domanda. "
+        "Puoi presentare la domanda anche da solo: l'affiancamento non è una condizione per ottenere il contributo. "
+        "Serve a risparmiare tempo e a controllare documenti, errori e scadenze.</p>"
+    )
+    percorso = crumbs([("index.html", "Home"), ("", "Affiancamento ai bandi")], "")
+    return (
+        f"{percorso}<h1>Affiancamento ai bandi</h1><div class='box'>"
+        "<p>Dopo il Check-up si può chiedere aiuto per la domanda: dalla verifica dei requisiti "
+        "ai documenti, alla domanda, alle variazioni e alla rendicontazione, secondo il livello scelto.</p>"
+        "<p>Le attività sono svolte da un team di esperti professionisti con esperienza pluriennale.</p>"
+        "<p>Nessuna garanzia di ottenere il contributo.</p>"
+        f"{cta}{pacchetti}"
+        f'<div class="with-illu"><div>{fasi}</div>{sec_img("verifica-ammissibilita", 800, 600)}</div>'
+        f"{condizioni}{cta}</div>"
+        f"{faq_html(faq_affiancamento())}"
+    )
+
+
+FORME_GIURIDICHE = (
+    "Ditta individuale",
+    "Libero professionista",
+    "Società di persone (s.n.c., s.a.s.)",
+    "Società di capitali (s.r.l., s.p.a.)",
+    "Società cooperativa",
+    "Ente del terzo settore",
+    "Da costituire",
+    "Altro",
+)
+REGIONI_RICHIESTA = ("Toscana", "Umbria", "Emilia-Romagna", "Altra regione")
+
+
+def meta_richiesta():
+    return "Richiesta del Check-up Bandi, 49 € o 79 €. " + CHECKUP_IVA_NOTE
+
+
+def script_richiesta():
+    return r"""<script>
+(function () {
+  var form = document.getElementById("richiesta-form");
+  var fallback = document.getElementById("richiesta-fallback");
+  var area = document.getElementById("richiesta-text");
+  var copy = document.getElementById("richiesta-copy");
+  var status = document.getElementById("richiesta-copied");
+  if (!form || !fallback || !area || !copy) return;
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var data = new FormData(form);
+    var livello = data.get("livello") || "";
+    var body = [
+      "Ragione sociale o nome del progetto: " + (data.get("ragione") || ""),
+      "Forma giuridica: " + (data.get("forma") || ""),
+      "Regione: " + (data.get("regione") || ""),
+      "Comune: " + (data.get("comune") || ""),
+      "Settore o ATECO: " + (data.get("settore") || ""),
+      "Anno di avvio: " + (data.get("avvio") || ""),
+      "Numero di addetti: " + (data.get("addetti") || ""),
+      "Fatturato indicativo: " + (data.get("fatturato") || ""),
+      "Investimento previsto e importo: " + (data.get("investimento") || ""),
+      "Bando di interesse: " + (data.get("bando") || ""),
+      "Livello del Check-up: " + livello,
+      "Email: " + (data.get("email") || ""),
+      "Consenso privacy: sì"
+    ].join("\n");
+    area.value = body;
+    fallback.hidden = false;
+    var subject = "Richiesta Check-up" + (livello ? " " + livello : "");
+    location.href = "mailto:__EMAIL__?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+  });
+  copy.addEventListener("click", function () {
+    var text = area.value;
+    var done = function () { if (status) status.hidden = false; };
+    var manual = function () {
+      area.focus();
+      area.select();
+      try { document.execCommand("copy"); } catch (err) {}
+      done();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, manual);
+    else manual();
+  });
+})();
+</script>""".replace("__EMAIL__", EMAIL)
+
+
+def corpo_richiesta(today):
+    forme = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in FORME_GIURIDICHE)
+    regioni = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in REGIONI_RICHIESTA)
+    promo = ""
+    if lancio_attivo(today):
+        promo = (
+            '<aside class="promo" aria-label="Codice di lancio">'
+            '<p class="lab">Codice di lancio</p><p class="code">LANCIO15</p>'
+            f"<p>{e(CHECKUP_LANCIO)}</p></aside>"
+        )
+    percorso = crumbs(
+        [("index.html", "Home"), ("check-up.html", "Check-up"), ("", "Richiesta")],
+        "",
+    )
+    return f"""{percorso}<h1>Richiedi il Check-up</h1><div class="box">
+<p>Il Check-up è una verifica di ammissibilità e non garantisce il contributo. Indica quali bandi aperti, tra quelli seguiti dal sito, sono adatti all'impresa e che cosa serve per partecipare.</p>
+<h2>Prezzi</h2>
+<ul>
+<li><strong>Base</strong>, 49 €: {e(CHECKUP_BASE)}.</li>
+<li><strong>Completo</strong>, 79 €: {e(CHECKUP_COMPLETO)}.</li>
+</ul>
+<p>{CHECKUP_IVA_NOTE}</p>
+{promo}
+<p>Nessun dato inviato a terzi. Il pulsante apre il programma di posta sul tuo dispositivo, con oggetto e testo già compilati: i dati non passano da un server. Dopo l'invio ricevi per email il link al pagamento.</p>
+<form id="richiesta-form" class="checkup-form" method="post" action="#">
+<div><label for="rq-ragione">Ragione sociale o nome del progetto</label><input id="rq-ragione" name="ragione" type="text" required autocomplete="organization"></div>
+<div><label for="rq-forma">Forma giuridica</label><select id="rq-forma" name="forma" required><option value="">Scegli</option>{forme}</select></div>
+<div class="coppia">
+<div><label for="rq-regione">Regione</label><select id="rq-regione" name="regione" required><option value="">Scegli</option>{regioni}</select></div>
+<div><label for="rq-comune">Comune</label><input id="rq-comune" name="comune" type="text" required autocomplete="address-level2"></div>
+</div>
+<div><label for="rq-settore">Settore o codice ATECO</label><input id="rq-settore" name="settore" type="text" required placeholder="es. 62.01 oppure sviluppo software"></div>
+<div><label for="rq-avvio">Anno di avvio o «da costituire»</label><input id="rq-avvio" name="avvio" type="text" required placeholder="es. 2024 oppure da costituire"></div>
+<fieldset><legend>Dimensione</legend>
+<div class="coppia">
+<div><label for="rq-addetti">Numero di addetti</label><input id="rq-addetti" name="addetti" type="text" required inputmode="numeric"></div>
+<div><label for="rq-fatturato">Fatturato indicativo</label><input id="rq-fatturato" name="fatturato" type="text" required placeholder="es. 180.000 €"></div>
+</div>
+</fieldset>
+<div><label for="rq-investimento">Investimento previsto e importo</label><input id="rq-investimento" name="investimento" type="text" required placeholder="es. macchinari, 40.000 €"></div>
+<div><label for="rq-bando">Bando di interesse, se già lo conosci (facoltativo)</label><input id="rq-bando" name="bando" type="text"></div>
+<fieldset><legend>Livello del Check-up</legend><div class="livelli">
+<label><input type="radio" name="livello" value="Base" required> Base 49 €</label>
+<label><input type="radio" name="livello" value="Completo"> Completo 79 €</label>
+</div></fieldset>
+<div><label for="rq-email">Email</label><input id="rq-email" name="email" type="email" required autocomplete="email"></div>
+<div class="consensi"><label><input type="checkbox" name="privacy" value="sì" required> Ho letto l'<a href="{site_href("privacy.html")}">informativa privacy</a> e acconsento al trattamento dei dati per questa richiesta.</label></div>
+<button type="submit" class="btn">Invia richiesta</button>
+</form>
+<p>Il pulsante apre il programma di posta con oggetto e testo già compilati.</p>
+<div id="richiesta-fallback" hidden>
+<p>Se non si apre un programma di posta, copia il testo e invialo a {mail_link()}.</p>
+<label for="richiesta-text">Testo della richiesta</label>
+<textarea id="richiesta-text" readonly></textarea>
+<button type="button" class="btn outline" id="richiesta-copy">Copia</button>
+<p id="richiesta-copied" role="status" hidden>Testo copiato.</p>
+</div>
+<noscript><p class="note">Senza JavaScript il modulo non compone il messaggio. Scrivi gli stessi dati a {mail_link()}.</p></noscript>
+</div>
+{script_richiesta()}"""
+
+
+def riga_scadenza(b):
+    area = "Nazionali" if b["regione"] == "Nazionale" else b["regione"]
+    apre = ""
+    if b.get("in_arrivo") and b.get("apertura"):
+        apre = "Apre il " + it_date(b["apertura"]) + ". "
+    nota = apre + (b.get("nota_scadenza") or "")
+    return (
+        f'<li data-reg="{e(b["regione"])}">'
+        f'<time datetime="{e(b["scadenza"])}">{e(it_date(b["scadenza"]))}</time>'
+        f'<a href="{site_href(f"bando/{b["id"]}.html")}">{e(seo_copy.titolo_in_elenco(b))}</a>'
+        f"<span>{e(area)}</span>"
+        f"<small>{e(nota)}</small>"
+        "</li>"
+    )
+
+
+def faq_scadenze():
+    return (
+        (
+            "Ci sono anche i bandi scaduti?",
+            "No. L'elenco e il file del calendario contengono solo le scadenze non ancora passate. Uno sportello aperto senza una data non compare.",
+        ),
+        (
+            "Le date si aggiornano da sole?",
+            "Con l'abbonamento webcal il programma di calendario rilegge il file. Controlla sempre la scheda e il testo ufficiale: una scadenza può cambiare o le risorse possono esaurirsi.",
+        ),
+    )
+
+
+def corpo_scadenze(bandi):
+    scelte = scadenze_aperte(bandi)
+    opzioni = "".join(
+        f'<option value="{e(reg)}">{e("Nazionali" if reg == "Nazionale" else reg)}</option>'
+        for reg in REG
+    )
+    righe = "".join(riga_scadenza(b) for b in scelte)
+    n = len(scelte)
+    etichetta = "1 scadenza" if n == 1 else f"{n} scadenze"
+    percorso = crumbs([("index.html", "Home"), ("", "Scadenze")], "")
+    webcal = href_webcal()
+    return f"""{percorso}<h1>Calendario delle scadenze</h1><div class="box">
+<p>Le scadenze dei bandi ancora aperti, in ordine di data. Ogni voce porta alla scheda sul sito. I bandi scaduti non sono in elenco, e nemmeno gli sportelli senza una data.</p>
+<p class="cal-actions"><a class="btn" href="/scadenze.ics">Aggiungi al calendario</a><a class="btn outline" href="{e(webcal)}">Abbonati al calendario</a></p>
+<p>Il pulsante «Aggiungi al calendario» scarica il file .ics: un evento per ogni scadenza, con il collegamento alla scheda. «Abbonati al calendario» è l'abbonamento webcal, così le date si rileggono quando il file viene aggiornato.</p>
+<form class="filters" action="#elenco-scadenze">
+<div><label for="regione-scadenze">Regione</label>
+<select id="regione-scadenze" name="regione"><option value="">Tutte le regioni</option>{opzioni}</select></div>
+</form>
+<p class="count" id="n-scadenze" aria-live="polite">{etichetta}</p>
+<p id="nessuna-scadenza" class="note" hidden>Nessuna scadenza in questa regione.</p>
+<ol class="scadenze" id="elenco-scadenze">{righe}</ol>
+<noscript><p class="note">Senza JavaScript restano visibili tutte le scadenze. Il filtro per regione gira solo sul tuo dispositivo e non invia dati.</p></noscript>
+</div>
+{faq_html(faq_scadenze())}
+<script>
+(function () {{
+  var area = document.getElementById("regione-scadenze");
+  var rows = document.querySelectorAll("#elenco-scadenze li");
+  var empty = document.getElementById("nessuna-scadenza");
+  var count = document.getElementById("n-scadenze");
+  if (!area) return;
+  function apply() {{
+    var n = 0;
+    for (var i = 0; i < rows.length; i++) {{
+      var ok = !area.value || rows[i].getAttribute("data-reg") === area.value;
+      rows[i].hidden = !ok;
+      if (ok) n++;
+    }}
+    if (empty) empty.hidden = n !== 0;
+    if (count) count.textContent = n === 1 ? "1 scadenza" : n + " scadenze";
+  }}
+  area.addEventListener("change", apply);
+}})();
+</script>"""
+
+
+REGIONI_AVVISI = (
+    ("Toscana", "Toscana"),
+    ("Umbria", "Umbria"),
+    ("Emilia-Romagna", "Emilia-Romagna"),
+    ("Nazionale", "Nazionali"),
+    ("Tutte", "Tutte le aree"),
+)
+SETTORI_AVVISI = (
+    "Tutti i settori",
+    "Agricoltura",
+    "Artigianato",
+    "Commercio",
+    "Industria",
+    "Servizi",
+    "Turismo",
+    "Startup e imprese innovative",
+    "Nuove imprese",
+    "Altro",
+)
+
+
+def corpo_avvisi(azione):
+    azione = (azione or "").strip()
+    attivo = bool(azione)
+    regioni = "".join(
+        f'<option value="{e(value)}">{e(label)}</option>' for value, label in REGIONI_AVVISI
+    )
+    settori = "".join(f'<option value="{e(nome)}">{e(nome)}</option>' for nome in SETTORI_AVVISI)
+    privacy = site_href("privacy.html")
+    if attivo:
+        stato = (
+            "<p>L'iscrizione è gratuita. I dati del modulo (email, regione, settore e i due consensi) "
+            "sono inviati a Brevo, come responsabile del trattamento, solo per spedirti gli avvisi. "
+            f'I dettagli sono nell\'<a href="{privacy}">informativa privacy</a>.</p>'
+        )
+        form_attr = f' method="post" action="{e(azione)}"'
+        dis = ""
+        bottone = "Iscriviti agli avvisi"
+    else:
+        prenota = mailto_href(
+            "Iscrizione avvisi",
+            "Chiedo di prenotare l'iscrizione agli avvisi gratuiti sui bandi.\nRegione:\nSettore:\n",
+        )
+        stato = (
+            '<p class="note"><strong>In arrivo</strong>. Il modulo non è ancora attivo.</p>'
+            "<p>Per prenotarti scrivi a "
+            f"{mail_link()} con oggetto «Iscrizione avvisi», oppure usa il pulsante: "
+            "apre il programma di posta con l'oggetto già compilato. "
+            f'Prima leggi l\'<a href="{privacy}">informativa privacy</a>.</p>'
+            f'<p><a class="btn" href="{e(prenota)}">Prenota per email</a></p>'
+            "<p>Quando il modulo sarà collegato, l'invio degli avvisi sarà affidato a Brevo, "
+            "come responsabile del trattamento. Servono due consensi: uno per ricevere gli avvisi "
+            "e uno per il trattamento dei dati descritto nell'informativa.</p>"
+        )
+        form_attr = ' aria-disabled="true"'
+        dis = " disabled"
+        bottone = "Iscriviti agli avvisi"
+    campi = f"""<form id="avvisi-form" class="checkup-form"{form_attr}>
+<fieldset{dis}>
+<div><label for="av-email">Email</label><input id="av-email" name="EMAIL" type="email" required autocomplete="email"{dis}></div>
+<div><label for="av-regione">Regione</label><select id="av-regione" name="REGIONE" required{dis}><option value="">Scegli</option>{regioni}</select></div>
+<div><label for="av-settore">Settore</label><select id="av-settore" name="SETTORE" required{dis}><option value="">Scegli</option>{settori}</select></div>
+<div class="consensi">
+<label><input type="checkbox" name="CONSENSO_AVVISI" value="sì" required{dis}> Acconsento a ricevere gli avvisi email sui nuovi bandi per la regione e il settore indicati.</label>
+<label><input type="checkbox" name="CONSENSO_PRIVACY" value="sì" required{dis}> Ho letto l'<a href="{privacy}">informativa privacy</a> e acconsento al trattamento dei dati per gli avvisi email.</label>
+</div>
+<button type="submit" class="btn"{dis}>{bottone}</button>
+</fieldset>
+</form>"""
+    if attivo:
+        faq = (
+            (
+                "Che cosa ricevo?",
+                "Un avviso email quando pubblichiamo bandi per la regione e il settore che hai indicato. Non è una consulenza e non garantisce alcun contributo.",
+            ),
+            (
+                "Chi riceve i dati?",
+                "I dati del modulo sono inviati a Brevo, come responsabile del trattamento, solo per spedire gli avvisi. Puoi revocare i due consensi in ogni momento.",
+            ),
+        )
+    else:
+        faq = (
+            (
+                "Posso iscrivermi adesso?",
+                "Il modulo è disattivato. Puoi prenotarti con il pulsante Prenota per email: il messaggio resta fra te e IncentiviPerTe.",
+            ),
+            (
+                "Perché ci sono due consensi?",
+                "Uno serve per ricevere gli avvisi, l'altro per il trattamento dei dati descritto nell'informativa privacy. Servono entrambi.",
+            ),
+        )
+    percorso = crumbs([("index.html", "Home"), ("", "Avvisi bandi gratuiti")], "")
+    body = (
+        f"{percorso}<h1>Avvisi bandi gratuiti</h1><div class='box'>"
+        "<p>Avvisi email gratuiti quando escono bandi per la tua regione e il tuo settore: "
+        "Toscana, Umbria, Emilia-Romagna e misure nazionali. "
+        "Nessuna garanzia di ottenere un contributo: è solo un promemoria per tornare sulle schede.</p>"
+        f"{stato}{campi}</div>{faq_html(faq)}"
+    )
+    return body, faq
+
+
+def pagine_servizio(bandi, today, azione):
+    titolo_a = "Affiancamento ai bandi: livelli e prezzi"
+    desc_a = (
+        "Aiuto per la domanda di bando: voucher, avvio d'impresa, fascicolo e pre-istruttoria agricola. "
+        "Prezzi finali, senza garanzia di esito."
+    )
+    faq_a = faq_affiancamento()
+    titolo_r = "Richiedi il Check-up Bandi"
+    corpo_r = corpo_richiesta(today)
+    titolo_s = "Calendario delle scadenze dei bandi"
+    desc_s = (
+        "Scadenze dei bandi ancora aperti, in ordine di data e filtrabili per regione, "
+        "con file .ics e abbonamento webcal."
+    )
+    faq_s = faq_scadenze()
+    titolo_v = "Avvisi bandi gratuiti per email"
+    desc_v = (
+        "Iscrizione gratuita agli avvisi email sui nuovi bandi, per regione e settore. "
+        "Due consensi e informativa privacy."
+    )
+    corpo_v, faq_v = corpo_avvisi(azione)
+    return (
+        (
+            "affiancamento.html",
+            titolo_a,
+            desc_a,
+            corpo_affiancamento(),
+            ld_pagina(
+                "affiancamento.html",
+                titolo_a,
+                [("", "Home"), ("affiancamento.html", "Affiancamento ai bandi")],
+                faq_a,
+            ),
+            "monthly",
+            "0.8",
+        ),
+        (
+            "check-up/richiesta.html",
+            titolo_r,
+            meta_richiesta(),
+            corpo_r,
+            ld_pagina(
+                "check-up/richiesta.html",
+                titolo_r,
+                [("", "Home"), ("check-up.html", "Check-up"), ("check-up/richiesta.html", "Richiesta")],
+            ),
+            "monthly",
+            "0.8",
+        ),
+        (
+            "scadenze.html",
+            titolo_s,
+            desc_s,
+            corpo_scadenze(bandi),
+            ld_pagina(
+                "scadenze.html",
+                titolo_s,
+                [("", "Home"), ("scadenze.html", "Scadenze")],
+                faq_s,
+            ),
+            "weekly",
+            "0.7",
+        ),
+        (
+            "avvisi.html",
+            titolo_v,
+            desc_v,
+            corpo_v,
+            ld_pagina(
+                "avvisi.html",
+                titolo_v,
+                [("", "Home"), ("avvisi.html", "Avvisi bandi gratuiti")],
+                faq_v,
+            ),
+            "monthly",
+            "0.6",
+        ),
+    )
+
+
+def controlla_servizi(bandi):
+    aff = (D / "affiancamento.html").read_text(encoding="utf-8")
+    for phrase in (
+        "199 €",
+        "149 €",
+        "329 €",
+        "690 €",
+        "4%",
+        "4.000 €",
+        "490 €",
+        "1.490 €",
+        "5%",
+        "8.000 €",
+        "90 €",
+        "290 €",
+        "79 €",
+        "Il Check-up già pagato (49 o 79 €) si scala dal prezzo.",
+        "La parte a risultato si paga solo all'erogazione del contributo.",
+        "In alcuni bandi la consulenza non è una spesa ammissibile.",
+        "Firma, credenziali e invio della domanda restano del legale rappresentante.",
+        "Le attività sono svolte da un team di esperti professionisti con esperienza pluriennale.",
+        "Alcuni enti pubblici offrono un accompagnamento gratuito",
+        "Nessuna garanzia di ottenere il contributo.",
+        'href="/check-up/richiesta">Richiedi il Check-up</a>',
+        "senza contatti con la banca e senza compenso a risultato",
+        "Solo compenso fisso",
+    ):
+        if phrase not in aff:
+            raise ValueError(f"affiancamento: manca {phrase}")
+    richiesta = (D / "check-up" / "richiesta.html").read_text(encoding="utf-8")
+    if CHECKUP_IVA_NOTE not in richiesta:
+        raise ValueError("richiesta Check-up: manca la nota Gumroad")
+    if "Nessun dato inviato a terzi." not in richiesta:
+        raise ValueError("richiesta Check-up: manca l'avviso sui dati")
+    if "non garantisce il contributo" not in richiesta:
+        raise ValueError("richiesta Check-up: manca l'avviso sull'esito")
+    if 'action="http' in richiesta.split("<footer>", 1)[0]:
+        raise ValueError("richiesta Check-up: il modulo non deve inviare dati a un indirizzo esterno")
+    avvisi = (D / "avvisi.html").read_text(encoding="utf-8")
+    if leggi_avvisi_azione():
+        if "In arrivo" in avvisi:
+            raise ValueError("avvisi: il modulo è collegato ma risulta ancora in arrivo")
+    else:
+        if "In arrivo" not in avvisi or "<fieldset disabled>" not in avvisi:
+            raise ValueError("avvisi: modulo non disattivato")
+        if "subject=Iscrizione%20avvisi" not in avvisi:
+            raise ValueError("avvisi: manca il mailto di prenotazione")
+    privacy = (D / "privacy.html").read_text(encoding="utf-8")
+    if "Brevo, come responsabile del trattamento" not in privacy:
+        raise ValueError("privacy: manca Brevo come responsabile")
+    if "Modulo di richiesta del Check-up" not in privacy:
+        raise ValueError("privacy: manca la sezione sulla richiesta")
+    if "Davide Davoglio, Arezzo (Italia)" not in privacy:
+        raise ValueError("privacy: titolare alterato")
+    ics = (D / "scadenze.ics").read_text(encoding="utf-8")
+    if "BEGIN:VCALENDAR" not in ics or "END:VCALENDAR" not in ics:
+        raise ValueError("scadenze.ics non valido")
+    aperti = {b["id"] for b in scadenze_aperte(bandi)}
+    for b in bandi:
+        if b.get("scaduto") and b["id"] in ics:
+            raise ValueError(f"scadenze.ics contiene il bando scaduto {b['id']}")
+        if not b.get("scadenza") and f"UID:{b['id']}@" in ics:
+            raise ValueError(f"scadenze.ics contiene uno sportello senza data {b['id']}")
+    for bid in aperti:
+        if f"UID:{bid}@" not in ics:
+            raise ValueError(f"scadenze.ics: manca {bid}")
+    home = (D / "index.html").read_text(encoding="utf-8")
+    if 'href="/affiancamento"' not in home:
+        raise ValueError("home: manca il collegamento all'affiancamento")
+
+
 def build(today=None):
     today = today or datetime.date.today()
     bandi = prepare(json.loads(DATA.read_text(encoding="utf-8")), today)
@@ -2648,7 +3335,8 @@ def build(today=None):
         f"<p><span data-aperti>{aperti_home}</span>, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
-        '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>',
+        '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a>'
+        '<a class="btn ghost" href="/affiancamento">Affiancamento ai bandi</a></p>',
     )
     home_title = "Bandi per imprese in Toscana, Umbria ed Emilia-Romagna"
     home_desc = (
@@ -2674,6 +3362,9 @@ def build(today=None):
     home_body = (
         f'<p class="note">Queste sono sintesi. Prima di fare domanda, controlla requisiti e scadenze sul sito dell&#39;ente.</p>'
         f"{raccolte}"
+        f'<p>Servizi: <a href="{site_href("affiancamento.html")}">affiancamento ai bandi</a>, '
+        f'<a href="{site_href("scadenze.html")}">scadenze</a> e '
+        f'<a href="{site_href("avvisi.html")}">avvisi bandi gratuiti</a>.</p>'
         f'<div id="filtri">{filter_form(bandi)}</div>'
         '<noscript><p class="note">Senza JavaScript restano visibili tutti i bandi aperti. I filtri girano solo sul tuo dispositivo e non inviano dati.</p></noscript>'
         f"{grid(bandi, '', today)}{JS}{hubs(bandi, '')}{checkup_section('', con_immagine=True, variante='home')}{faq_html(home_marcate, raw=True)}{fpef_box()}"
@@ -2997,6 +3688,16 @@ def build(today=None):
             page(path, title, desc, body, ld=ld_guida(path, title, h1, faq), title_as_is=True),
             SEO_LASTMOD, "monthly", "0.6",
         )
+
+    for path, title, desc, body, ld, freq, priority in pagine_servizio(bandi, today, leggi_avvisi_azione()):
+        emit(
+            path,
+            page(path, title, desc, body, ld=ld, title_as_is=True),
+            lastmod_pagina(path, agg),
+            freq,
+            priority,
+        )
+    (D / "scadenze.ics").write_bytes(testo_ics(bandi, today).encode("utf-8"))
 
     # Il vecchio indirizzo resta raggiungibile, ma non è una seconda pagina: rimanda a /check-up
     # e non entra nella sitemap.
