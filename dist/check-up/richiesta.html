@@ -132,6 +132,37 @@
     else manual();
   });
 })();
+</script>
+<script>
+(function () {
+  var ultimo = new Date(2026, 9, 30);
+  var now = window.INCENTIVI_OGGI ? new Date(window.INCENTIVI_OGGI) : new Date();
+  var start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (start <= ultimo) return;
+  var promo = document.querySelector("aside.promo");
+  if (promo && promo.parentNode) promo.parentNode.removeChild(promo);
+  var links = document.querySelectorAll("a[href]");
+  for (var i = 0; i < links.length; i++) {
+    var href = links[i].getAttribute("href") || "";
+    if (href.indexOf("LANCIO15") === -1) continue;
+    var q = href.split("?");
+    if (q.length < 2) continue;
+    var params = q[1].split("&");
+    var out = [];
+    for (var p = 0; p < params.length; p++) {
+      var kv = params[p].split("=");
+      var key = decodeURIComponent((kv[0] || "").replace(/\+/g, " "));
+      var val = decodeURIComponent((kv.slice(1).join("=") || "").replace(/\+/g, " "));
+      if (key === "body") {
+        val = val.split("\n").filter(function (line) {
+          return line.indexOf("LANCIO15") === -1;
+        }).join("\n");
+      }
+      out.push(encodeURIComponent(key) + "=" + encodeURIComponent(val));
+    }
+    links[i].setAttribute("href", q[0] + "?" + out.join("&"));
+  }
+})();
 </script></div></main>
 <footer><div class="wrap">
 <p><strong>IncentiviPerTe</strong> · raccolta gratuita e indipendente di bandi per startup e PMI, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali. Le schede sono sintesi: fa fede solo il bando ufficiale.</p>

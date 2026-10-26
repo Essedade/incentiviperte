@@ -129,9 +129,20 @@ NAV = (
     ("chi-siamo.html", "Chi siamo", ""),
     ("sponsor.html", "Sponsor", ""),
     ("contatti.html", "Contatti", ""),
-    ("affiancamento.html", "Affiancamento", ""),
     ("check-up.html", "Check-up", "cta"),
 )
+
+
+def voci_nav():
+    """NAV resta quello di base. Affiancamento si aggiunge subito prima del Check-up."""
+    voci = []
+    for item in NAV:
+        if item[0] == "check-up.html":
+            voci.append(("affiancamento.html", "Affiancamento", ""))
+        voci.append(item)
+    return tuple(voci)
+
+
 KEEP = {
     "style.css", "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-48.png",
     "favicon-512.png", "apple-touch-icon.png", "logo-header.svg", "logo-header-80.png",
@@ -1061,7 +1072,7 @@ def page(path, title, desc, body, hero="", ld=None, robots=None, extra_head="", 
     # title_as_is: il documento fissa già il title intero (schede entro 60 caratteri, senza il marchio).
     full = title if path == "index.html" or title_as_is else f"{title} – {SITE}"
     nav_items = []
-    for href, label, kind in NAV:
+    for href, label, kind in voci_nav():
         cls = f' class="{kind}"' if kind else ""
         richiesta = path == "check-up/richiesta.html" and href == "check-up.html"
         current = ' aria-current="page"' if href == path or (path == "check-up-bandi.html" and href == "check-up.html") or richiesta else ""
@@ -1129,9 +1140,6 @@ def page(path, title, desc, body, hero="", ld=None, robots=None, extra_head="", 
 def footer(pre):
     # I link di area e destinatario sono aggiunti dopo, quando i bandi sono noti.
     info = (
-        ("affiancamento.html", "Affiancamento"),
-        ("scadenze.html", "Scadenze"),
-        ("avvisi.html", "Avvisi bandi"),
         ("chi-siamo.html", "Chi siamo"),
         ("contatti.html", "Contatti"),
         ("sponsor.html", "Sponsor"),
@@ -1140,7 +1148,15 @@ def footer(pre):
         ("cookie.html", "Cookie policy"),
         ("note-legali.html", "Note legali"),
     )
-    links = "".join(f'<li><a href="{site_href(href)}">{label}</a></li>' for href, label in info)
+    # Fuori da info: un riallineamento del footer non mescola questi link.
+    servizi = (
+        ("affiancamento.html", "Affiancamento"),
+        ("scadenze.html", "Scadenze"),
+        ("avvisi.html", "Avvisi bandi"),
+    )
+    links = "".join(
+        f'<li><a href="{site_href(href)}">{label}</a></li>' for href, label in servizi + info
+    )
     guide = ""
     if GUIDE:
         voci = "".join(f'<li><a href="{site_href(href)}">{e(label)}</a></li>' for href, label in GUIDE)
@@ -2974,7 +2990,8 @@ def corpo_richiesta(today):
 </div>
 <noscript><p class="note">Senza JavaScript il modulo non compone il messaggio. Scrivi gli stessi dati a {mail_link()}.</p></noscript>
 </div>
-{script_richiesta()}"""
+{script_richiesta()}
+{LANCIO_JS}"""
 
 
 def riga_scadenza(b):
@@ -3335,8 +3352,13 @@ def build(today=None):
         f"<p><span data-aperti>{aperti_home}</span>, con scadenza e link alla fonte ufficiale.</p>"
         f'<p class="upd">Aggiornato il {it_date(agg)} · fonti ufficiali · senza cookie</p>'
         '<p class="hero-actions"><a class="btn" href="#filtri">Trova il tuo bando</a>'
-        '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a>'
+        '<a class="btn ghost" href="/check-up">Richiedi il Check-up</a></p>',
+    )
+    hero = hero.replace(
+        'href="/check-up">Richiedi il Check-up</a></p>',
+        'href="/check-up">Richiedi il Check-up</a>'
         '<a class="btn ghost" href="/affiancamento">Affiancamento ai bandi</a></p>',
+        1,
     )
     home_title = "Bandi per imprese in Toscana, Umbria ed Emilia-Romagna"
     home_desc = (
@@ -3362,12 +3384,19 @@ def build(today=None):
     home_body = (
         f'<p class="note">Queste sono sintesi. Prima di fare domanda, controlla requisiti e scadenze sul sito dell&#39;ente.</p>'
         f"{raccolte}"
-        f'<p>Servizi: <a href="{site_href("affiancamento.html")}">affiancamento ai bandi</a>, '
-        f'<a href="{site_href("scadenze.html")}">scadenze</a> e '
-        f'<a href="{site_href("avvisi.html")}">avvisi bandi gratuiti</a>.</p>'
         f'<div id="filtri">{filter_form(bandi)}</div>'
         '<noscript><p class="note">Senza JavaScript restano visibili tutti i bandi aperti. I filtri girano solo sul tuo dispositivo e non inviano dati.</p></noscript>'
         f"{grid(bandi, '', today)}{JS}{hubs(bandi, '')}{checkup_section('', con_immagine=True, variante='home')}{faq_html(home_marcate, raw=True)}{fpef_box()}"
+    )
+    # Paragrafo aggiunto dopo le raccolte, senza riscrivere il corpo della home.
+    home_body = home_body.replace(
+        f'{raccolte}<div id="filtri">',
+        f"{raccolte}"
+        f'<p>Servizi: <a href="{site_href("affiancamento.html")}">affiancamento ai bandi</a>, '
+        f'<a href="{site_href("scadenze.html")}">scadenze</a> e '
+        f'<a href="{site_href("avvisi.html")}">avvisi bandi gratuiti</a>.</p>'
+        '<div id="filtri">',
+        1,
     )
     emit(
         "index.html",
@@ -3689,16 +3718,6 @@ def build(today=None):
             SEO_LASTMOD, "monthly", "0.6",
         )
 
-    for path, title, desc, body, ld, freq, priority in pagine_servizio(bandi, today, leggi_avvisi_azione()):
-        emit(
-            path,
-            page(path, title, desc, body, ld=ld, title_as_is=True),
-            lastmod_pagina(path, agg),
-            freq,
-            priority,
-        )
-    (D / "scadenze.ics").write_bytes(testo_ics(bandi, today).encode("utf-8"))
-
     # Il vecchio indirizzo resta raggiungibile, ma non è una seconda pagina: rimanda a /check-up
     # e non entra nella sitemap.
     alias = page(
@@ -3743,6 +3762,17 @@ def build(today=None):
     not_found = re.sub(r'\bsrcset="([^"]*)"', root_srcset, not_found, flags=re.I)
     (D / "404.html").write_text(not_found, encoding="utf-8")
     written.add("404.html")
+
+    # In coda, dopo tutte le URL già pubblicate: il riallineamento della sitemap non le mescola.
+    for path, title, desc, body, ld, freq, priority in pagine_servizio(bandi, today, leggi_avvisi_azione()):
+        emit(
+            path,
+            page(path, title, desc, body, ld=ld, title_as_is=True),
+            lastmod_pagina(path, agg),
+            freq,
+            priority,
+        )
+    (D / "scadenze.ics").write_bytes(testo_ics(bandi, today).encode("utf-8"))
 
     urlset = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for path, lastmod, freq, priority in urls:

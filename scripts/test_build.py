@@ -1851,6 +1851,66 @@ process.stdout.write(JSON.stringify({
         )
         self.assertNotIn(" hidden>", visibile)
 
+    def test_lancio_sulle_pagine_nuove_fino_al_30_ottobre(self):
+        """Il codice sulle pagine nuove vale fino al 30/10/2026, in generazione e nel browser."""
+        fino = build.corpo_richiesta(datetime.date(2026, 10, 30))
+        dopo = build.corpo_richiesta(datetime.date(2026, 10, 31))
+        self.assertIn(build.LANCIO_JS, fino)
+        self.assertIn(build.LANCIO_JS, dopo)
+        self.assertIn(build.LANCIO_JS, (DIST / "check-up.html").read_text(encoding="utf-8"))
+        self.assertIn('<aside class="promo"', fino)
+        self.assertIn('<p class="code">LANCIO15</p>', fino)
+        self.assertIn(build.CHECKUP_LANCIO, fino)
+        self.assertIn("41,65 €", fino)
+        self.assertIn("67,15 €", fino)
+        self.assertNotIn('<aside class="promo"', dopo)
+        self.assertNotIn('<p class="code">LANCIO15</p>', dopo)
+        self.assertNotIn(build.CHECKUP_LANCIO, dopo)
+        self.assertNotIn("41,65 €", dopo)
+        self.assertNotIn("67,15 €", dopo)
+        for name in ("affiancamento.html", "scadenze.html", "avvisi.html"):
+            pagina = (DIST / name).read_text(encoding="utf-8")
+            self.assertNotIn("LANCIO15", pagina, name)
+            self.assertNotIn("41,65", pagina, name)
+            self.assertNotIn("67,15", pagina, name)
+        codice = build.LANCIO_JS.removeprefix("<script>").removesuffix("</script>")
+        runner = r"""
+const vm = require("vm");
+const fs = require("fs");
+const code = fs.readFileSync(process.argv[2], "utf8");
+function run(iso) {
+  let removed = false;
+  const promo = { parentNode: { removeChild() { removed = true; } } };
+  const document = {
+    querySelector(sel) { return sel === "aside.promo" && !removed ? promo : null; },
+    querySelectorAll() { return []; }
+  };
+  const sandbox = { document, window: {} };
+  if (iso) sandbox.window.INCENTIVI_OGGI = iso;
+  vm.runInNewContext(code, sandbox);
+  return removed;
+}
+process.stdout.write(JSON.stringify({
+  il30: run("2026-10-30T12:00:00"),
+  il31: run("2026-10-31T12:00:00")
+}));
+"""
+        script_path = DIST / "_lancio.js"
+        runner_path = DIST / "_lancio_runner.js"
+        script_path.write_text(codice, encoding="utf-8")
+        runner_path.write_text(runner, encoding="utf-8")
+        try:
+            import subprocess
+            out = subprocess.run(
+                ["node", str(runner_path), str(script_path)],
+                check=True, capture_output=True, text=True,
+            )
+        finally:
+            script_path.unlink(missing_ok=True)
+            runner_path.unlink(missing_ok=True)
+        esito = json.loads(out.stdout)
+        self.assertIs(esito["il30"], False)
+        self.assertIs(esito["il31"], True)
 
     def test_pagine_affiancamento_richiesta_scadenze_avvisi(self):
         """Pagine nuove, calendario senza bandi scaduti, prezzi, nota Gumroad, parole vietate."""
