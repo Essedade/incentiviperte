@@ -1804,7 +1804,7 @@ def visible_text(text):
     return re.sub(r'\bhref="[^"]*"', "", text, flags=re.I)
 
 
-def self_check(written):
+def self_check(written, bandi):
     htmls = [p for p in written if p.endswith(".html")]
     for rel in htmls:
         text = (D / rel).read_text(encoding="utf-8")
@@ -1900,7 +1900,8 @@ def self_check(written):
         raise ValueError("home: manca la sezione Check-up Bandi")
     if 'getAttribute("data-scadenza")' not in home or 'getAttribute("data-apre")' not in home:
         raise ValueError("home: il conto alla rovescia non viene dalle date dei bandi")
-    if 'data-scad="2026-10-23"' not in home:
+    # Una scadenza presente nei dati, non una data fissa: togliere un bando non rompe la build.
+    if not any(b.get("scadenza") and f'data-scad="{b["scadenza"]}"' in home for b in bandi):
         raise ValueError("home: manca la scadenza letta dai dati")
     if 'value="Umbria"' not in home or 'value="Emilia-Romagna"' not in home or 'value="Toscana"' not in home:
         raise ValueError("home: filtri di area incompleti")
@@ -3055,7 +3056,7 @@ def build(today=None):
     cleanup(written)
     # Dopo cleanup: gli html non generati come pagine vengono eliminati, e questo file non è una pagina.
     write_search_console()
-    self_check(written)
+    self_check(written, bandi)
     print(f"OK: {len(bandi)} bandi, {len(written)} pagine -> {D}")
     return written
 

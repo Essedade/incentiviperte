@@ -5,6 +5,8 @@ La meta si genera da importo, destinatari e scadenza, al massimo 155 caratteri,
 senza puntini di sospensione. Dove il documento fissa la frase, si usa quella,
 accorciata solo se supera il limite o se contiene la stringa vietata «Arezzo-Siena».
 """
+import re
+import warnings
 
 TITOLO_SCHEDA = {
     "bando-132-bei-2026": "Bando 1.3.2 BEI Toscana 2026: aiuti su interessi e garanzia",
@@ -63,6 +65,7 @@ TITOLO_SCHEDA = {
     "smart-start-italia": "Smart&Start Italia 2026: requisiti e tasso zero",
     "bando-132-50k-2026": "Bando 1.3.2 Toscana 2026: finanziamenti fino a 50.000 €",
     "cciaa-arezzo-siena-export-2026-arezzo": "Contributi fiere internazionali 2026 Arezzo: Bando Export",
+    "bando-neve-funzionamento-toscana-2026": "Bando Neve Toscana 2026: fondo perduto fino all'80%",
 }
 
 # H1 più lungo del title, solo dove il documento lo distingue.
@@ -74,6 +77,9 @@ H1_SCHEDA = {
     "bando-132-50k-2026": "Bando 1.3.2 Toscana – Sostegno alle PMI fino a 50.000 € (2026)",
     "cciaa-arezzo-siena-export-2026-arezzo": "Bando Export 2026 Arezzo: contributi per le fiere internazionali",
     "cciaa-arezzo-siena-export-2026-siena": "Bando Export 2026 Siena: contributi per le fiere internazionali",
+    "bando-neve-funzionamento-toscana-2026": (
+        "Bando Neve Toscana 2026: fondo perduto fino all'80% per gli impianti di risalita"
+    ),
 }
 
 # Meta fissate dal documento. Nuova Sabatini e Resto al Sud sono accorciate di poche
@@ -215,14 +221,56 @@ def _it_date(iso):
     return f"{g}/{m}/{y}"
 
 
+def _senza_vietate(testo):
+    """Toglie dal ripiego le stringhe che la build non può pubblicare."""
+    testo = str(testo or "")
+    testo = testo.replace("Arezzo-Siena", "Arezzo e Siena")
+    testo = re.sub(r"invitalia", "", testo, flags=re.I)
+    testo = re.sub(r"\+\s*iva", "", testo, flags=re.I)
+    testo = testo.replace("…", " ").replace("...", " ")
+    return " ".join(testo.split())
+
+
+def _titolo_ripiego(bando):
+    """Title di ripiego dal nome del bando, entro 60 caratteri, senza promesse."""
+    nome = _senza_vietate(bando.get("titolo"))
+    regione = _senza_vietate(bando.get("regione"))
+    if nome and regione and regione.lower() not in nome.lower():
+        con_regione = f"{nome} ({regione})"
+        candidato = con_regione if len(con_regione) <= TITOLO_MAX else nome
+    else:
+        candidato = nome or regione
+    if not candidato:
+        candidato = _senza_vietate(str(bando.get("id") or "bando").replace("-", " "))
+    titolo = _accorcia(candidato, TITOLO_MAX)
+    if not titolo or "Arezzo-Siena" in titolo or "…" in titolo or "..." in titolo:
+        titolo = _accorcia(
+            _senza_vietate(str(bando.get("id") or "bando").replace("-", " ")) or "Bando",
+            TITOLO_MAX,
+        )
+    return titolo or "Bando"
+
+
 def titolo_scheda(bando):
+    """Title della scheda. Se manca in TITOLO_SCHEDA, un ripiego: la build non si ferma."""
     titolo = TITOLO_SCHEDA.get(bando["id"])
+    generato = False
     if not titolo:
-        raise ValueError(f"{bando['id']}: manca il title SEO")
+        titolo = _titolo_ripiego(bando)
+        generato = True
     if len(titolo) > TITOLO_MAX:
         raise ValueError(f"{bando['id']}: title SEO di {len(titolo)} caratteri")
     if "Arezzo-Siena" in titolo or "…" in titolo:
         raise ValueError(f"{bando['id']}: title SEO non pubblicabile")
+    if generato:
+        TITOLO_SCHEDA[bando["id"]] = titolo
+        warnings.warn(
+            f"{bando['id']}: manca il title SEO in TITOLO_SCHEDA; "
+            f"la build usa il ripiego «{titolo}» ({len(titolo)} caratteri). "
+            f"Aggiungi un title dedicato, al massimo {TITOLO_MAX} caratteri.",
+            UserWarning,
+            stacklevel=2,
+        )
     return titolo
 
 
