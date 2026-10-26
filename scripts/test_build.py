@@ -8,6 +8,7 @@ import re
 import sys
 import unittest
 import urllib.parse
+import warnings
 import xml.etree.ElementTree as ET
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -167,6 +168,52 @@ class Validazione(unittest.TestCase):
             {b["id"] for b in rows if build.is_aperto(b)},
             {"aperto", "sportello", "apre-oggi"},
         )
+
+    def test_title_seo_mancante_non_blocca_la_build(self):
+        copia = build.seo_copy
+        bid = "esempio-senza-title-seo"
+        self.assertNotIn(bid, copia.TITOLO_SCHEDA)
+        bando = sample(
+            id=bid,
+            titolo="Contributo Invitalia + IVA per le fiere di Arezzo-Siena",
+            regione="Toscana",
+        )
+        troppo = "esempio-title-troppo-lungo"
+        try:
+            with self.assertWarns(UserWarning) as ctx:
+                titolo = copia.titolo_scheda(bando)
+            self.assertEqual(titolo, "Contributo per le fiere di Arezzo e Siena (Toscana)")
+            self.assertLessEqual(len(titolo), 60)
+            self.assertNotIn("Invitalia", titolo)
+            self.assertNotIn("invitalia", titolo.lower())
+            self.assertNotIn("+ IVA", titolo)
+            self.assertNotIn("+IVA", titolo)
+            self.assertNotIn("Arezzo-Siena", titolo)
+            self.assertNotIn("…", titolo)
+            self.assertEqual(copia.TITOLO_SCHEDA[bid], titolo)
+            messaggio = str(ctx.warning)
+            self.assertIn(bid, messaggio)
+            self.assertIn("manca il title SEO", messaggio)
+            self.assertIn(titolo, messaggio)
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                self.assertEqual(copia.titolo_scheda(bando), titolo)
+                self.assertEqual(copia.h1_scheda(bando), titolo)
+            self.assertEqual(caught, [])
+            curato = {"id": "nuova-sabatini", "titolo": "altro", "regione": "Nazionale"}
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                self.assertEqual(
+                    copia.titolo_scheda(curato),
+                    copia.TITOLO_SCHEDA["nuova-sabatini"],
+                )
+            self.assertEqual(caught, [])
+            copia.TITOLO_SCHEDA[troppo] = "x" * 61
+            with self.assertRaises(ValueError):
+                copia.titolo_scheda({"id": troppo, "titolo": "Bando", "regione": "Toscana"})
+        finally:
+            copia.TITOLO_SCHEDA.pop(bid, None)
+            copia.TITOLO_SCHEDA.pop(troppo, None)
 
 
 class Sito(unittest.TestCase):
@@ -623,16 +670,17 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
 
     def test_bandi_20_ottobre_e_conto_alla_rovescia(self):
         home = (DIST / "index.html").read_text(encoding="utf-8")
-        self.assertIn("Aggiornato il 24/10/2026", home)
+        self.assertIn("Aggiornato il 26/10/2026", home)
+        self.assertNotIn("Aggiornato il 24/10/2026", home)
         self.assertNotIn("Aggiornato il 20/10/2026", home)
         self.assertNotIn("Aggiornato il 15/10/2026", home)
         self.assertIn('getAttribute("data-scadenza")', home)
         self.assertIn('getAttribute("data-apre")', home)
-        self.assertIn('data-scad="2026-10-23"', home)
-        self.assertIn('data-scadenza="2026-10-23"', home)
+        self.assertIn('data-scad="2026-10-26"', home)
+        self.assertIn('data-scadenza="2026-10-26"', home)
         visible = re.sub(r"<script\b.*?</script>", "", home, flags=re.S)
-        self.assertIn("Scade il 23/10/2026", visible)
-        self.assertIn("Aperto fino al 23/10/2026", visible)
+        self.assertIn("Scade il 26/10/2026", visible)
+        self.assertIn("Aperto fino al 26/10/2026", visible)
         self.assertNotIn("Mancano 10 giorni", visible)
         self.assertNotIn("Mancano 3 giorni", visible)
         self.assertIn('"Mancano " + left + " giorni"', home)
@@ -652,24 +700,32 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         for row in data:
             aree[row["regione"]] = aree.get(row["regione"], 0) + 1
         self.assertEqual(aree, {"Nazionale": 8, "Toscana": 25, "Umbria": 6, "Emilia-Romagna": 17})
-        self.assertTrue(all(row["ultimo_controllo"] == "2026-10-24" for row in data))
+        self.assertEqual(max(row["ultimo_controllo"] for row in data), "2026-10-26")
+        self.assertEqual(
+            sorted(row["id"] for row in data if row["ultimo_controllo"] != "2026-10-26"),
+            [
+                "cciaa-arezzo-siena-export-2026-arezzo",
+                "cciaa-arezzo-siena-export-2026-siena",
+                "cciaa-maremma-tirreno-creazione-impresa-2026",
+            ],
+        )
         oggi = datetime.date(2026, 10, 24)
         prepared = build.prepare(data, oggi)
-        self.assertEqual(sum(1 for b in prepared if b["scaduto"]), 1)
+        self.assertEqual(sum(1 for b in prepared if b["scaduto"]), 0)
         self.assertEqual(sum(1 for b in prepared if b["in_arrivo"]), 2)
-        self.assertEqual(sum(1 for b in prepared if build.is_aperto(b)), 53)
+        self.assertEqual(sum(1 for b in prepared if build.is_aperto(b)), 54)
         toscana = [b for b in prepared if b["regione"] == "Toscana"]
         emilia = [b for b in prepared if b["regione"] == "Emilia-Romagna"]
         self.assertEqual(len(toscana), 25)
-        self.assertEqual(sum(1 for b in toscana if b["scaduto"]), 1)
+        self.assertEqual(sum(1 for b in toscana if b["scaduto"]), 0)
         self.assertEqual(sum(1 for b in emilia if b["in_arrivo"]), 2)
         self.assertEqual(sum(1 for b in prepared if b["regione"] == "Umbria"), 6)
         self.assertEqual(sum(1 for b in prepared if b["regione"] == "Nazionale"), 8)
         self.assertEqual(sum(1 for b in emilia if build.is_aperto(b)), 15)
-        self.assertEqual(sum(1 for b in toscana if build.is_aperto(b)), 24)
-        eco = next(b for b in prepared if b["id"] == "economia-circolare-privati")
-        self.assertTrue(eco["scaduto"])
-        self.assertEqual(eco["scadenza"], "2026-10-23")
+        self.assertEqual(sum(1 for b in toscana if build.is_aperto(b)), 25)
+        neve = next(b for b in prepared if b["id"] == "bando-neve-funzionamento-toscana-2026")
+        self.assertFalse(neve["scaduto"])
+        self.assertEqual(neve["scadenza"], "2026-11-16")
         for bid, when in (
             ("cciaa-modena-occupazione-giovanile-2026", "Apre il 02/11/2026"),
             ("eureca-er-tutti-settori-2026", "Apre il 02/12/2026"),
@@ -694,15 +750,15 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
 
         self.assertIn("senza garanzia di copertura", note("cciaa-maremma-tirreno-agricoltura-green-2026"))
         self.assertIn("senza ulteriori risorse da assegnare", note("cciaa-maremma-tirreno-agricoltura-green-2026"))
-        for slug in (
-            "cciaa-maremma-tirreno-internazionalizzazione-2026",
-            "cciaa-maremma-tirreno-imprese-vicinato-2026",
-            "cciaa-maremma-tirreno-creazione-impresa-2026",
-            "cciaa-maremma-tirreno-doppia-transizione-2026",
+        for slug, quando in (
+            ("cciaa-maremma-tirreno-internazionalizzazione-2026", "26/10/2026"),
+            ("cciaa-maremma-tirreno-imprese-vicinato-2026", "26/10/2026"),
+            ("cciaa-maremma-tirreno-creazione-impresa-2026", "24/10/2026"),
+            ("cciaa-maremma-tirreno-doppia-transizione-2026", "26/10/2026"),
         ):
             text = note(slug)
             self.assertIn("Risorse esaurite: nuove domande solo in lista d&#x27;attesa.", text, slug)
-            self.assertIn("Verificato il 24/10/2026", text, slug)
+            self.assertIn(f"Verificato il {quando}", text, slug)
             self.assertNotIn("senza garanzia di copertura", text, slug)
         self.assertIn("18.481,60", note("cciaa-maremma-tirreno-internazionalizzazione-2026"))
         self.assertIn("0,00", note("cciaa-maremma-tirreno-imprese-vicinato-2026"))
@@ -737,7 +793,8 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
             page = (DIST / "bando" / f"{slug}.html").read_text(encoding="utf-8")
             scheda = page.split("<article", 1)[1].split('class="related"', 1)[0]
             self.assertIn(frase, scheda, slug)
-            self.assertIn("Verificato il 24/10/2026", scheda, slug)
+            quando = "24/10/2026" if slug == "cciaa-maremma-tirreno-creazione-impresa-2026" else "26/10/2026"
+            self.assertIn(f"Verificato il {quando}", scheda, slug)
             self.assertIn(">Fonte ufficiale<", scheda, slug)
             self.assertIn(row["fonte"], scheda, slug)
             self.assertIn('class="badge"', scheda, slug)
@@ -761,7 +818,7 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertIn("90.000", firenze)
         self.assertIn("15:00 del 14/09/2026", firenze)
         self.assertIn("16:00 del 31/12/2026", firenze)
-        self.assertIn("24/10/2026", firenze)
+        self.assertIn("26/10/2026", firenze)
         self.assertIn("https://www.fi.camcom.gov.it/", firenze)
         self.assertNotIn("lista d&#x27;attesa", firenze)
         self.assertNotIn('data-avviso="fondi"', firenze)
@@ -770,7 +827,7 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertIn("60.000", turismo_page)
         self.assertIn("50.000", turismo_page)
         self.assertIn("23:59 del 10/11/2026", turismo_page)
-        self.assertIn("Verificato il 24/10/2026", turismo_page)
+        self.assertIn("Verificato il 26/10/2026", turismo_page)
         self.assertIn(">Fonte ufficiale<", turismo_page)
         self.assertNotIn("lista d&#x27;attesa", turismo_page)
         self.assertNotIn('data-avviso="fondi"', turismo_page)
@@ -871,8 +928,8 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertEqual(og[16:24], (1200).to_bytes(4, "big") + (630).to_bytes(4, "big"))
         visible = re.sub(r"<script\b.*?</script>", "", home, flags=re.S)
         self.assertNotIn("Mancano", visible)
-        self.assertIn('data-scadenza="2026-10-23"', home)
-        self.assertIn("Scade il 23/10/2026", home)
+        self.assertIn('data-scadenza="2026-10-26"', home)
+        self.assertIn("Scade il 26/10/2026", home)
         self.assertIn("data-scadenza", home)
         self.assertIn("Mancano ", home)
         cards = re.findall(r'<article class="card\b.*?</article>', home, re.S)
@@ -1263,13 +1320,13 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
             self.assertIn('open + " bandi aperti"', text, path.name)
             self.assertIn("list.appendChild", text, path.name)
             self.assertIn('node.textContent = "Scaduto il "', text, path.name)
-        scheda = (DIST / "bando" / "economia-circolare-privati.html").read_text(encoding="utf-8")
+        scheda = (DIST / "bando" / "cciaa-tno-doppia-transizione-2-2026.html").read_text(encoding="utf-8")
         visible = re.sub(r"<script\b.*?</script>", "", scheda, flags=re.S)
-        self.assertIn("Aperto fino al 23/10/2026", visible)
-        self.assertIn(">Scade il 23/10/2026<", visible)
-        self.assertNotIn(">Scaduto il 23/10/2026<", visible)
-        self.assertIn('data-deadline="2026-10-23"', scheda)
-        self.assertIn('data-scadenza="2026-10-23"', scheda)
+        self.assertIn("Aperto fino al 26/10/2026", visible)
+        self.assertIn(">Scade il 26/10/2026<", visible)
+        self.assertNotIn(">Scaduto il 26/10/2026<", visible)
+        self.assertIn('data-deadline="2026-10-26"', scheda)
+        self.assertIn('data-scadenza="2026-10-26"', scheda)
         script = re.search(r"<script>\s*(\(function \(\) \{.*?startOfToday.*?\}\)\(\);)\s*</script>", scheda, re.S)
         self.assertIsNotNone(script)
         runner = r"""
@@ -1620,6 +1677,20 @@ process.stdout.write(JSON.stringify({
         home = (DIST / "index.html").read_text(encoding="utf-8")
         self.assertNotIn("Amerigo", home)
         self.assertNotIn("Vespucci", home)
+        neve = (DIST / "bando" / "bando-neve-funzionamento-toscana-2026.html").read_text(encoding="utf-8")
+        neve_title = html.unescape(re.search(r"<title>(.*?)</title>", neve).group(1))
+        neve_h1 = html.unescape(re.search(r"<h1>(.*?)</h1>", neve).group(1))
+        self.assertEqual(neve_title, "Bando Neve Toscana 2026: fondo perduto fino all'80%")
+        self.assertLessEqual(len(neve_title), 60)
+        self.assertEqual(
+            neve_h1,
+            "Bando Neve Toscana 2026: fondo perduto fino all'80% per gli impianti di risalita",
+        )
+        self.assertIn("16/11/2026", neve)
+        self.assertIn("80%", neve)
+        self.assertNotIn("Invitalia", neve)
+        self.assertNotIn("+ IVA", neve)
+        self.assertNotIn("ottieni il contributo", neve.lower())
 
         page = (DIST / "check-up.html").read_text(encoding="utf-8")
         self.assertIn("<h1>Check-up Bandi: quali bandi sono adatti alla tua impresa</h1>", page)
@@ -1712,15 +1783,15 @@ process.stdout.write(JSON.stringify({
         self.assertEqual(locs[:-6], attesi)
         by = {field(node, "loc"): node for node in urls}
         for slug in ("cookie", "note-legali", "disclaimer", "privacy"):
-            self.assertEqual(field(by[BASE + slug], "lastmod"), "2026-10-25", slug)
+            self.assertEqual(field(by[BASE + slug], "lastmod"), "2026-10-26", slug)
             self.assertEqual(field(by[BASE + slug], "changefreq"), "yearly", slug)
             self.assertEqual(field(by[BASE + slug], "priority"), "0.3", slug)
         self.assertEqual(field(by[BASE], "changefreq"), "weekly")
         self.assertEqual(field(by[BASE], "priority"), "1.0")
-        self.assertEqual(field(by[BASE], "lastmod"), "2026-10-25")
-        self.assertEqual(field(by[BASE + "check-up"], "lastmod"), "2026-10-25")
+        self.assertEqual(field(by[BASE], "lastmod"), "2026-10-26")
+        self.assertEqual(field(by[BASE + "check-up"], "lastmod"), "2026-10-26")
         self.assertEqual(field(by[BASE + "check-up"], "changefreq"), "monthly")
-        self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "lastmod"), "2026-10-25")
+        self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "lastmod"), "2026-10-26")
         self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "changefreq"), "weekly")
         self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "priority"), "0.7")
         for loc in nuovi[:3]:
@@ -1757,18 +1828,19 @@ process.stdout.write(JSON.stringify({
         self.assertNotIn(codice, dopo)
         self.assertIn("LANCIO15", dopo)
         data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
-        righe = build.prepare(data, datetime.date(2026, 10, 25))
-        eco = next(b for b in righe if b["id"] == "economia-circolare-privati")
-        self.assertTrue(eco["scaduto"])
-        card = build.card(eco, "", datetime.date(2026, 10, 25))
+        slug = "cciaa-tno-doppia-transizione-2-2026"
+        righe = build.prepare(data, datetime.date(2026, 10, 27))
+        chiuso = next(b for b in righe if b["id"] == slug)
+        self.assertTrue(chiuso["scaduto"])
+        card = build.card(chiuso, "", datetime.date(2026, 10, 27))
         self.assertIn(" hidden>", card)
         self.assertIn(">Scaduto<", card)
         urls = [item["url"] for item in build.item_list(righe)["itemListElement"]]
-        self.assertNotIn(build.public_url("bando/economia-circolare-privati.html"), urls)
+        self.assertNotIn(build.public_url(f"bando/{slug}.html"), urls)
         home = (DIST / "index.html").read_text(encoding="utf-8")
         visibile = next(
             block for block in re.findall(r'<article class="card\b.*?</article>', home, re.S)
-            if "/bando/economia-circolare-privati" in block
+            if f"/bando/{slug}" in block
         )
         self.assertNotIn(" hidden>", visibile)
 
