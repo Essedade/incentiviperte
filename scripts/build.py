@@ -44,7 +44,7 @@ CHECKUP_EXTRA = (
     "priorità motivata",
     "stima indicativa dell'agevolazione (non garantita)",
     "scadenzario",
-    "call di 30 minuti",
+    "colloquio telefonico di 30 minuti",
 )
 CHECKUP_COMPLETO = (
     "report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi, "
@@ -1359,7 +1359,7 @@ footer nav{margin-top:8px}
 .checkup-form{display:grid;gap:12px;margin-top:16px}
 .checkup-form label,.checkup-form legend{font-weight:800}
 .checkup-form label{display:block;margin:0 0 4px}
-.checkup-form input[type="text"],.checkup-form input:not([type]),.checkup-form select,.checkup-form textarea{width:100%;min-height:44px;padding:8px 10px;border:1px solid #5c6b82;border-radius:8px;font:inherit;font-size:16px;background:#fff;color:var(--t)}
+.checkup-form input[type="text"],.checkup-form input[type="email"],.checkup-form input:not([type]),.checkup-form select,.checkup-form textarea{width:100%;min-height:44px;padding:8px 10px;border:1px solid #5c6b82;border-radius:8px;font:inherit;font-size:16px;background:#fff;color:var(--t)}
 .checkup-form textarea{min-height:8rem}
 #checkup-fallback{display:grid;gap:8px;margin-top:12px}
 #checkup-fallback[hidden]{display:none}
@@ -1595,7 +1595,7 @@ def checkup_body(today):
     percorso = crumbs([("index.html", "Home"), ("", "Check-up Bandi")], "")
     domande = faq_html(checkup_faq())
     return f"""{percorso}<div class="box">
-<p>Il Check-up Bandi è una verifica scritta dei bandi adatti alla tua impresa: bandi della Regione Toscana e delle Camere di Commercio toscane, dell'Umbria, dell'Emilia-Romagna e incentivi nazionali. Ci mandi i dati dell'impresa e ricevi una relazione scritta sui bandi adatti e cosa serve per partecipare. Base 49 €, relazione di circa 3-4 pagine entro 5 giorni lavorativi. Completo 79 €, 6-10 pagine entro 7-10 giorni lavorativi, con call di 30 minuti. Prezzi finali.</p>
+<p>Il Check-up Bandi è una verifica scritta dei bandi adatti alla tua impresa: bandi della Regione Toscana e delle Camere di Commercio toscane, dell'Umbria, dell'Emilia-Romagna e incentivi nazionali. Ci mandi i dati dell'impresa e ricevi una relazione scritta sui bandi adatti e cosa serve per partecipare. Base 49 €, relazione di circa 3-4 pagine entro 5 giorni lavorativi. Completo 79 €, 6-10 pagine entro 7-10 giorni lavorativi, con colloquio telefonico di 30 minuti. Prezzi finali.</p>
 <p>Il Check-up è una verifica di ammissibilità e non garantisce l'ottenimento del contributo.</p>
 <h2>Livelli del servizio</h2>
 <div class="with-illu"><div>
@@ -2977,7 +2977,7 @@ def corpo_richiesta(today):
 <label><input type="radio" name="livello" value="Completo"> Completo 79 €</label>
 </div></fieldset>
 <div><label for="rq-email">Email</label><input id="rq-email" name="email" type="email" required autocomplete="email"></div>
-<div class="consensi"><label><input type="checkbox" name="privacy" value="sì" required> Ho letto l'<a href="{site_href("privacy.html")}">informativa privacy</a> e acconsento al trattamento dei dati per questa richiesta.</label></div>
+<div class="consensi"><label><input type="checkbox" name="privacy" value="sì" required><span>Ho letto l'<a href="{site_href("privacy.html")}">informativa privacy</a> e acconsento al trattamento dei dati per questa richiesta.</span></label></div>
 <button type="submit" class="btn">Invia richiesta</button>
 </form>
 <p>Il pulsante apre il programma di posta con oggetto e testo già compilati.</p>
@@ -3133,8 +3133,8 @@ def corpo_avvisi(azione):
 <div><label for="av-regione">Regione</label><select id="av-regione" name="REGIONE" required{dis}><option value="">Scegli</option>{regioni}</select></div>
 <div><label for="av-settore">Settore</label><select id="av-settore" name="SETTORE" required{dis}><option value="">Scegli</option>{settori}</select></div>
 <div class="consensi">
-<label><input type="checkbox" name="CONSENSO_AVVISI" value="sì" required{dis}> Acconsento a ricevere gli avvisi email sui nuovi bandi per la regione e il settore indicati.</label>
-<label><input type="checkbox" name="CONSENSO_PRIVACY" value="sì" required{dis}> Ho letto l'<a href="{privacy}">informativa privacy</a> e acconsento al trattamento dei dati per gli avvisi email.</label>
+<label><input type="checkbox" name="CONSENSO_AVVISI" value="sì" required{dis}><span>Acconsento a ricevere gli avvisi email sui nuovi bandi per la regione e il settore indicati.</span></label>
+<label><input type="checkbox" name="CONSENSO_PRIVACY" value="sì" required{dis}><span>Ho letto l'<a href="{privacy}">informativa privacy</a> e acconsento al trattamento dei dati per gli avvisi email.</span></label>
 </div>
 <button type="submit" class="btn"{dis}>{bottone}</button>
 </fieldset>

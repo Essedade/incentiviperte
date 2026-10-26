@@ -1986,6 +1986,12 @@ process.stdout.write(JSON.stringify({
         self.assertIsNotNone(consenso)
         self.assertIn("required", consenso.group(0))
         self.assertIn(
+            'name="privacy" value="sì" required><span>Ho letto l\'<a href="/privacy">informativa privacy</a>',
+            richiesta,
+        )
+        self.assertIn("colloquio telefonico di 30 minuti", richiesta)
+        self.assertNotIn("call di 30 minuti", richiesta)
+        self.assertIn(
             'location.href = "mailto:incentiviperte.team@gmail.com?subject=" + encodeURIComponent(subject)',
             richiesta,
         )
@@ -2000,6 +2006,17 @@ process.stdout.write(JSON.stringify({
         self.assertIn("mailto:incentiviperte.team@gmail.com", avvisi)
         self.assertIn('name="CONSENSO_AVVISI"', avvisi)
         self.assertIn('name="CONSENSO_PRIVACY"', avvisi)
+        self.assertIn(
+            'name="CONSENSO_PRIVACY" value="sì" required disabled>'
+            '<span>Ho letto l\'<a href="/privacy">informativa privacy</a>',
+            avvisi,
+        )
+        self.assertIn('.checkup-form input[type="email"]', (DIST / "style.css").read_text(encoding="utf-8"))
+        for path in DIST.rglob("*.html"):
+            visibile = re.sub(r"<script\b[^>]*>.*?</script>", " ", path.read_text(encoding="utf-8"), flags=re.I | re.S)
+            visibile = re.sub(r"<style\b[^>]*>.*?</style>", " ", visibile, flags=re.I | re.S)
+            visibile = html.unescape(re.sub(r"<[^>]+>", " ", visibile))
+            self.assertIsNone(re.search(r"\bcall\b", visibile, re.I), path.name)
         self.assertIn('href="/privacy"', avvisi.split("<footer>", 1)[0])
         self.assertNotIn('method="post" action="', avvisi)
         self.assertEqual(build.leggi_avvisi_azione(), "")

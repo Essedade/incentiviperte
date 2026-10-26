@@ -175,7 +175,7 @@ footer nav{margin-top:8px}
 .checkup-form{display:grid;gap:12px;margin-top:16px}
 .checkup-form label,.checkup-form legend{font-weight:800}
 .checkup-form label{display:block;margin:0 0 4px}
-.checkup-form input[type="text"],.checkup-form input:not([type]),.checkup-form select,.checkup-form textarea{width:100%;min-height:44px;padding:8px 10px;border:1px solid #5c6b82;border-radius:8px;font:inherit;font-size:16px;background:#fff;color:var(--t)}
+.checkup-form input[type="text"],.checkup-form input[type="email"],.checkup-form input:not([type]),.checkup-form select,.checkup-form textarea{width:100%;min-height:44px;padding:8px 10px;border:1px solid #5c6b82;border-radius:8px;font:inherit;font-size:16px;background:#fff;color:var(--t)}
 .checkup-form textarea{min-height:8rem}
 #checkup-fallback{display:grid;gap:8px;margin-top:12px}
 #checkup-fallback[hidden]{display:none}
