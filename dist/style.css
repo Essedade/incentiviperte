@@ -175,7 +175,7 @@ footer nav{margin-top:8px}
 .checkup-form{display:grid;gap:12px;margin-top:16px}
 .checkup-form label,.checkup-form legend{font-weight:800}
 .checkup-form label{display:block;margin:0 0 4px}
-.checkup-form input[type="text"],.checkup-form input:not([type]),.checkup-form select,.checkup-form textarea{width:100%;min-height:44px;padding:8px 10px;border:1px solid #5c6b82;border-radius:8px;font:inherit;font-size:16px;background:#fff;color:var(--t)}
+.checkup-form input[type="text"],.checkup-form input[type="email"],.checkup-form input:not([type]),.checkup-form select,.checkup-form textarea{width:100%;min-height:44px;padding:8px 10px;border:1px solid #5c6b82;border-radius:8px;font:inherit;font-size:16px;background:#fff;color:var(--t)}
 .checkup-form textarea{min-height:8rem}
 #checkup-fallback{display:grid;gap:8px;margin-top:12px}
 #checkup-fallback[hidden]{display:none}
@@ -195,3 +195,21 @@ footer nav{margin-top:8px}
 .pay-actions .btn{text-align:center}
 @media(max-width:600px){.pay-actions{flex-direction:column;align-items:stretch}.pay-choice{align-items:stretch}.pay-actions .btn{width:100%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media(min-width:1180px){.dnav a{font-size:14px;padding:8px 6px}}
+.pacchetti{display:grid;gap:12px;margin:12px 0}
+@media(min-width:800px){.pacchetti{grid-template-columns:1fr 1fr}}
+.imp{font-weight:800;color:var(--b);margin:8px 0}
+.cal-actions{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.scadenze{list-style:none;padding:0;margin:12px 0;display:grid;gap:8px}
+.scadenze li{display:grid;gap:2px 16px;background:#fff;border:1px solid var(--l);border-radius:12px;padding:12px 14px}
+.scadenze li[hidden]{display:none}
+.scadenze time{font-weight:800}
+.scadenze small{color:var(--m)}
+@media(min-width:700px){.scadenze li{grid-template-columns:7.5rem minmax(0,1fr) auto;align-items:center}.scadenze small{grid-column:2/-1}}
+.checkup-form .coppia{display:grid;gap:12px}
+@media(min-width:800px){.checkup-form .coppia{grid-template-columns:1fr 1fr}}
+.checkup-form .consensi{display:grid;gap:8px;margin:0}
+.checkup-form .consensi label{display:flex;align-items:flex-start;gap:8px;min-height:44px;font-weight:700}
+.checkup-form .consensi input{width:1.15rem;height:1.15rem;margin-top:.35rem;flex:0 0 auto}
+.btn:disabled,.checkup-form fieldset[disabled] .btn{opacity:.55;cursor:not-allowed}
+.checkup-form fieldset[disabled]{border:0;margin:0;padding:0;min-inline-size:0}

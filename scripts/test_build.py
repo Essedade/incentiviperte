@@ -1761,7 +1761,14 @@ process.stdout.write(JSON.stringify({
             BASE + "guida/de-minimis",
             BASE + "guida/fondo-perduto-o-finanziamento-agevolato",
         ]
-        self.assertEqual(locs[-6:], nuovi)
+        aggiunte = [
+            BASE + "affiancamento",
+            BASE + "check-up/richiesta",
+            BASE + "scadenze",
+            BASE + "avvisi",
+        ]
+        self.assertEqual(locs[-10:-4], nuovi)
+        self.assertEqual(locs[-4:], aggiunte)
         data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
         bandi = sorted(data, key=lambda b: b["scadenza"] or "9999-12-31")
         attesi = [
@@ -1780,7 +1787,7 @@ process.stdout.write(JSON.stringify({
             attesi.append(BASE + "bando/" + bando["id"])
         for slug in ("chi-siamo", "contatti", "sponsor", "check-up", "cookie", "note-legali", "disclaimer", "privacy"):
             attesi.append(BASE + slug)
-        self.assertEqual(locs[:-6], attesi)
+        self.assertEqual(locs[:-10], attesi)
         by = {field(node, "loc"): node for node in urls}
         for slug in ("cookie", "note-legali", "disclaimer", "privacy"):
             self.assertEqual(field(by[BASE + slug], "lastmod"), "2026-10-26", slug)
@@ -1843,6 +1850,313 @@ process.stdout.write(JSON.stringify({
             if f"/bando/{slug}" in block
         )
         self.assertNotIn(" hidden>", visibile)
+
+    def test_lancio_sulle_pagine_nuove_fino_al_30_ottobre(self):
+        """Il codice sulle pagine nuove vale fino al 30/10/2026, in generazione e nel browser."""
+        fino = build.corpo_richiesta(datetime.date(2026, 10, 30))
+        dopo = build.corpo_richiesta(datetime.date(2026, 10, 31))
+        self.assertIn(build.LANCIO_JS, fino)
+        self.assertIn(build.LANCIO_JS, dopo)
+        self.assertIn(build.LANCIO_JS, (DIST / "check-up.html").read_text(encoding="utf-8"))
+        self.assertIn('<aside class="promo"', fino)
+        self.assertIn('<p class="code">LANCIO15</p>', fino)
+        self.assertIn(build.CHECKUP_LANCIO, fino)
+        self.assertIn("41,65 €", fino)
+        self.assertIn("67,15 €", fino)
+        self.assertNotIn('<aside class="promo"', dopo)
+        self.assertNotIn('<p class="code">LANCIO15</p>', dopo)
+        self.assertNotIn(build.CHECKUP_LANCIO, dopo)
+        self.assertNotIn("41,65 €", dopo)
+        self.assertNotIn("67,15 €", dopo)
+        for name in ("affiancamento.html", "scadenze.html", "avvisi.html"):
+            pagina = (DIST / name).read_text(encoding="utf-8")
+            self.assertNotIn("LANCIO15", pagina, name)
+            self.assertNotIn("41,65", pagina, name)
+            self.assertNotIn("67,15", pagina, name)
+        codice = build.LANCIO_JS.removeprefix("<script>").removesuffix("</script>")
+        runner = r"""
+const vm = require("vm");
+const fs = require("fs");
+const code = fs.readFileSync(process.argv[2], "utf8");
+function run(iso) {
+  let removed = false;
+  const promo = { parentNode: { removeChild() { removed = true; } } };
+  const document = {
+    querySelector(sel) { return sel === "aside.promo" && !removed ? promo : null; },
+    querySelectorAll() { return []; }
+  };
+  const sandbox = { document, window: {} };
+  if (iso) sandbox.window.INCENTIVI_OGGI = iso;
+  vm.runInNewContext(code, sandbox);
+  return removed;
+}
+process.stdout.write(JSON.stringify({
+  il30: run("2026-10-30T12:00:00"),
+  il31: run("2026-10-31T12:00:00")
+}));
+"""
+        script_path = DIST / "_lancio.js"
+        runner_path = DIST / "_lancio_runner.js"
+        script_path.write_text(codice, encoding="utf-8")
+        runner_path.write_text(runner, encoding="utf-8")
+        try:
+            import subprocess
+            out = subprocess.run(
+                ["node", str(runner_path), str(script_path)],
+                check=True, capture_output=True, text=True,
+            )
+        finally:
+            script_path.unlink(missing_ok=True)
+            runner_path.unlink(missing_ok=True)
+        esito = json.loads(out.stdout)
+        self.assertIs(esito["il30"], False)
+        self.assertIs(esito["il31"], True)
+
+    def test_pagine_affiancamento_richiesta_scadenze_avvisi(self):
+        """Pagine nuove, calendario senza bandi scaduti, prezzi, nota Gumroad, parole vietate."""
+        import tempfile
+
+        pagine = {
+            "affiancamento.html": BASE + "affiancamento",
+            "check-up/richiesta.html": BASE + "check-up/richiesta",
+            "scadenze.html": BASE + "scadenze",
+            "avvisi.html": BASE + "avvisi",
+        }
+        for rel, canon in pagine.items():
+            path = DIST / rel
+            self.assertTrue(path.is_file(), rel)
+            text = path.read_text(encoding="utf-8")
+            self.assertEqual(len(re.findall(r"<h1[\s>]", text)), 1, rel)
+            self.assertIn(f'rel="canonical" href="{canon}"', text, rel)
+            self.assertIn(f'name="google-site-verification" content="{build.GSC_TOKEN}"', text, rel)
+            self.assertNotIn('name="robots" content="noindex"', text, rel)
+            title = html.unescape(re.search(r"<title>(.*?)</title>", text).group(1))
+            desc = html.unescape(re.search(r'<meta name="description" content="([^"]*)"', text).group(1))
+            self.assertLessEqual(len(desc), 155, rel)
+            self.assertNotIn("…", title + desc, rel)
+        checkup = (DIST / "check-up.html").read_text(encoding="utf-8")
+        self.assertIn('rel="canonical" href="https://incentiviperte.github.io/check-up"', checkup)
+        robots = (DIST / "robots.txt").read_text(encoding="utf-8")
+        self.assertEqual(robots, f"User-agent: *\nAllow: /\nSitemap: {BASE}sitemap.xml\n")
+        self.assertEqual(
+            (DIST / build.GSC_FILE).read_text(encoding="utf-8"),
+            "google-site-verification: googlec8d66ea588cfa987.html",
+        )
+
+        aff = (DIST / "affiancamento.html").read_text(encoding="utf-8")
+        for phrase in (
+            "199 €",
+            "149 €",
+            "329 €",
+            "690 € + 4% del contributo effettivamente erogato, tetto 4.000 €",
+            "Rendicontazione 490 €",
+            "1.490 € + 5% del contributo erogato, tetto 8.000 €",
+            "90 € ciascuna",
+            "290 € solo fisso, senza contatti con la banca e senza compenso a risultato",
+            "Check-up Completo 79 €",
+            "Il Check-up già pagato (49 o 79 €) si scala dal prezzo.",
+            "La parte a risultato si paga solo all'erogazione del contributo.",
+            "In alcuni bandi la consulenza non è una spesa ammissibile.",
+            "Firma, credenziali e invio della domanda restano del legale rappresentante.",
+            "Le attività sono svolte da un team di esperti professionisti con esperienza pluriennale.",
+            "Alcuni enti pubblici offrono un accompagnamento gratuito",
+            "Nessuna garanzia di ottenere il contributo.",
+            "Solo compenso fisso",
+            'href="/check-up/richiesta">Richiedi il Check-up</a>',
+        ):
+            self.assertIn(phrase, aff, phrase)
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        self.assertIn('href="/affiancamento">Affiancamento ai bandi</a>', home)
+        self.assertIn('href="/affiancamento">affiancamento ai bandi</a>', home)
+        nav = home.split('<nav class="dnav"', 1)[1].split("</nav>", 1)[0]
+        self.assertIn('href="/affiancamento">Affiancamento</a>', nav)
+        self.assertIn('href="/scadenze"', home)
+        self.assertIn('href="/avvisi"', home)
+
+        richiesta = (DIST / "check-up" / "richiesta.html").read_text(encoding="utf-8")
+        self.assertIn(build.CHECKUP_IVA_NOTE, richiesta)
+        self.assertEqual(richiesta.count(build.CHECKUP_IVA_NOTE), 1)
+        self.assertIn("49 €", richiesta)
+        self.assertIn("79 €", richiesta)
+        self.assertIn("Nessun dato inviato a terzi.", richiesta)
+        self.assertIn("Il Check-up è una verifica di ammissibilità e non garantisce il contributo.", richiesta)
+        self.assertIn("Dopo l'invio ricevi per email il link al pagamento.", richiesta)
+        self.assertIn('href="/privacy"', richiesta)
+        consenso = re.search(r'<input[^>]*name="privacy"[^>]*>', richiesta)
+        self.assertIsNotNone(consenso)
+        self.assertIn("required", consenso.group(0))
+        self.assertIn(
+            'name="privacy" value="sì" required><span>Ho letto l\'<a href="/privacy">informativa privacy</a>',
+            richiesta,
+        )
+        self.assertIn("colloquio telefonico di 30 minuti", richiesta)
+        self.assertNotIn("call di 30 minuti", richiesta)
+        self.assertIn(
+            'location.href = "mailto:incentiviperte.team@gmail.com?subject=" + encodeURIComponent(subject)',
+            richiesta,
+        )
+        self.assertNotIn('action="http', richiesta.split("<footer>", 1)[0])
+        self.assertNotIn("fetch(", richiesta)
+        self.assertNotIn("XMLHttpRequest", richiesta)
+
+        avvisi = (DIST / "avvisi.html").read_text(encoding="utf-8")
+        self.assertIn(">In arrivo<", avvisi)
+        self.assertIn("<fieldset disabled>", avvisi)
+        self.assertIn("subject=Iscrizione%20avvisi", avvisi)
+        self.assertIn("mailto:incentiviperte.team@gmail.com", avvisi)
+        self.assertIn('name="CONSENSO_AVVISI"', avvisi)
+        self.assertIn('name="CONSENSO_PRIVACY"', avvisi)
+        self.assertIn(
+            'name="CONSENSO_PRIVACY" value="sì" required disabled>'
+            '<span>Ho letto l\'<a href="/privacy">informativa privacy</a>',
+            avvisi,
+        )
+        self.assertIn('.checkup-form input[type="email"]', (DIST / "style.css").read_text(encoding="utf-8"))
+        for path in DIST.rglob("*.html"):
+            visibile = re.sub(r"<script\b[^>]*>.*?</script>", " ", path.read_text(encoding="utf-8"), flags=re.I | re.S)
+            visibile = re.sub(r"<style\b[^>]*>.*?</style>", " ", visibile, flags=re.I | re.S)
+            visibile = html.unescape(re.sub(r"<[^>]+>", " ", visibile))
+            self.assertIsNone(re.search(r"\bcall\b", visibile, re.I), path.name)
+        self.assertIn('href="/privacy"', avvisi.split("<footer>", 1)[0])
+        self.assertNotIn('method="post" action="', avvisi)
+        self.assertEqual(build.leggi_avvisi_azione(), "")
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = pathlib.Path(tmp) / "avvisi.json"
+            cfg.write_text('{"azione":" https://example.brevo.com/serve/abc "}', encoding="utf-8")
+            self.assertEqual(
+                build.leggi_avvisi_azione(cfg),
+                "https://example.brevo.com/serve/abc",
+            )
+            cfg.write_text('{"azione":"http://example.brevo.com/x"}', encoding="utf-8")
+            with self.assertRaises(ValueError):
+                build.leggi_avvisi_azione(cfg)
+        attivo, _faq = build.corpo_avvisi("https://example.brevo.com/serve/abc")
+        self.assertIn('action="https://example.brevo.com/serve/abc"', attivo)
+        self.assertNotIn("In arrivo", attivo)
+        self.assertNotIn("disabled", attivo)
+        self.assertIn("Brevo, come responsabile del trattamento", attivo)
+
+        privacy = (DIST / "privacy.html").read_text(encoding="utf-8")
+        titolare = privacy.split("<h2>Titolare del trattamento</h2>", 1)[1].split("<h2>", 1)[0]
+        self.assertIn("Davide Davoglio, Arezzo (Italia)", titolare)
+        self.assertNotIn("Brevo", titolare)
+        self.assertIn("<h2>Modulo di richiesta del Check-up</h2>", privacy)
+        self.assertIn("<h2>Avvisi email</h2>", privacy)
+        self.assertIn("Brevo, come responsabile del trattamento", privacy)
+        self.assertIn("art. 28", privacy)
+        diritti = privacy.split("<h2>Diritti</h2>", 1)[1].split("</p>", 1)[0]
+        self.assertNotIn("Davide", diritti)
+        self.assertNotIn("Davoglio", (DIST / "affiancamento.html").read_text(encoding="utf-8"))
+
+        raw = (DIST / "scadenze.ics").read_bytes()
+        self.assertTrue(raw.endswith(b"\r\n"))
+        testo = raw.decode("utf-8")
+        righe = testo.split("\r\n")
+        self.assertEqual(righe[-1], "")
+        for riga in righe:
+            self.assertLessEqual(len(riga.encode("utf-8")), 75, riga[:40])
+        self.assertEqual(testo.count("BEGIN:VCALENDAR"), 1)
+        self.assertEqual(testo.count("END:VCALENDAR"), 1)
+        self.assertIn("VERSION:2.0", testo)
+        self.assertEqual(testo.count("BEGIN:VEVENT"), testo.count("END:VEVENT"))
+        aperte = []
+        for riga in righe:
+            if riga.startswith((" ", "\t")) and aperte:
+                aperte[-1] += riga[1:]
+            elif riga:
+                aperte.append(riga)
+        eventi = []
+        corrente = None
+        for riga in aperte:
+            if riga == "BEGIN:VEVENT":
+                corrente = {}
+            elif riga == "END:VEVENT":
+                eventi.append(corrente)
+                corrente = None
+            elif corrente is not None:
+                chiave, _, valore = riga.partition(":")
+                corrente[chiave.split(";", 1)[0]] = valore
+        self.assertGreaterEqual(len(eventi), 1)
+        dati = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
+        bandi = build.prepare(dati, TODAY)
+        scelte = build.scadenze_aperte(bandi)
+        self.assertEqual(
+            [ev["UID"] for ev in eventi],
+            [f"{b['id']}@incentiviperte.github.io" for b in scelte],
+        )
+        self.assertEqual(testo, build.testo_ics(bandi, TODAY))
+        scaduti = {b["id"] for b in bandi if b.get("scaduto")}
+        senza_data = {b["id"] for b in bandi if not b.get("scadenza")}
+        for ev in eventi:
+            bid = ev["UID"].split("@", 1)[0]
+            self.assertNotIn(bid, scaduti)
+            self.assertNotIn(bid, senza_data)
+            self.assertTrue(ev["DTSTART"].startswith("VALUE=DATE") or "DTSTART" in ev)
+            self.assertIn(ev["URL"], ev["DESCRIPTION"])
+            self.assertTrue(ev["URL"].startswith(BASE + "bando/"))
+            self.assertNotIn(".html", ev["URL"])
+            inizio = ev["DTSTART"]
+            self.assertRegex(inizio, r"^\d{8}$")
+            self.assertGreaterEqual(inizio, TODAY.strftime("%Y%m%d"))
+        campione = build.prepare(
+            [
+                sample(id="aperto-cal", scadenza="2026-12-01", titolo="Uno, due; tre"),
+                sample(id="scaduto-cal", scadenza="2020-01-01", titolo="Bando vecchio"),
+                sample(id="sportello-cal", scadenza=None),
+                sample(
+                    id="arrivo-cal",
+                    apertura="2026-12-02",
+                    scadenza="2027-03-31",
+                    nota_scadenza="Dal 02/12/2026",
+                ),
+            ],
+            TODAY,
+        )
+        self.assertEqual(
+            [b["id"] for b in build.scadenze_aperte(campione)],
+            ["aperto-cal", "arrivo-cal"],
+        )
+        calendario = build.testo_ics(campione, TODAY)
+        self.assertIn("aperto-cal", calendario)
+        self.assertIn("arrivo-cal", calendario)
+        self.assertNotIn("scaduto-cal", calendario)
+        self.assertNotIn("sportello-cal", calendario)
+        self.assertIn(r"SUMMARY:Uno\, due\; tre", calendario.replace("\r\n ", ""))
+
+        vietate = (
+            "Invitalia",
+            "Sorbolini",
+            "Frascadore",
+            "Flavio",
+            "Giuseppe",
+            "Davide",
+            "Davoglio",
+            "Myself Plus",
+            "Arezzo-Siena",
+            "+ IVA",
+            "prestazione occasionale",
+            "forfettario",
+        )
+        for rel in ("affiancamento.html", "check-up/richiesta.html", "scadenze.html", "avvisi.html"):
+            testo_pagina = (DIST / rel).read_text(encoding="utf-8")
+            visibile = build.visible_text(testo_pagina)
+            for parola in vietate:
+                self.assertNotIn(parola, visibile, (rel, parola))
+            self.assertIsNone(re.search(r"invitalia", visibile, re.I), rel)
+        testo_calendario = "\n".join(
+            "\n".join(ev.get(campo, "") for campo in ("SUMMARY", "DESCRIPTION", "LOCATION"))
+            for ev in eventi
+        )
+        for parola in vietate:
+            self.assertNotIn(parola, testo_calendario, parola)
+        self.assertIsNone(re.search(r"invitalia", testo_calendario, re.I))
+        pagina_scadenze = (DIST / "scadenze.html").read_text(encoding="utf-8")
+        self.assertIn(">Aggiungi al calendario<", pagina_scadenze)
+        self.assertIn('href="/scadenze.ics"', pagina_scadenze)
+        self.assertIn('href="webcal://incentiviperte.github.io/scadenze.ics"', pagina_scadenze)
+        self.assertIn('id="regione-scadenze"', pagina_scadenze)
+        for regione in ("Toscana", "Umbria", "Emilia-Romagna", "Nazionale"):
+            self.assertIn(f'value="{regione}"', pagina_scadenze)
 
 
 class Update(unittest.TestCase):

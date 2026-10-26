@@ -1,0 +1,595 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//IncentiviPerTe//Scadenze bandi//IT
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Scadenze bandi IncentiviPerTe
+BEGIN:VEVENT
+UID:cciaa-tno-doppia-transizione-2-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261026
+DTEND;VALUE=DATE:20261027
+SUMMARY:Voucher Doppia Transizione – II edizione 2026 (Lucca\, Massa-Carr
+ ara\, Pisa)
+DESCRIPTION:Dalle 10:00 del 20/10/2026 alle 18:00 del 26/10/2026 (piattafor
+ ma ReStart)\nScheda: https://incentiviperte.github.io/bando/cciaa-tno-dopp
+ ia-transizione-2-2026
+URL:https://incentiviperte.github.io/bando/cciaa-tno-doppia-transizione-2-2
+ 026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:umbria-feampa-indennizzo-pesca-acquacoltura-2026@incentiviperte.github.
+ io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261027
+DTEND;VALUE=DATE:20261028
+SUMMARY:FEAMPA – Indennizzo per la pesca nelle acque interne e l'acquacol
+ tura (Intervento 222507)
+DESCRIPTION:Domande via PEC dal 07/10/2026 al 27/10/2026 (20 giorni dalla p
+ ubblicazione sul BUR n. 47)\nScheda: https://incentiviperte.github.io/band
+ o/umbria-feampa-indennizzo-pesca-acquacoltura-2026
+URL:https://incentiviperte.github.io/bando/umbria-feampa-indennizzo-pesca-a
+ cquacoltura-2026
+LOCATION:Umbria
+END:VEVENT
+BEGIN:VEVENT
+UID:premio-innovazione-toscana-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261028
+DTEND;VALUE=DATE:20261029
+SUMMARY:Premio Innovazione Toscana 2026: premi per PMI e startup
+DESCRIPTION:28/10/2026 ore 16:00\nScheda: https://incentiviperte.github.io/
+ bando/premio-innovazione-toscana-2026
+URL:https://incentiviperte.github.io/bando/premio-innovazione-toscana-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:trasferimento-tecnologico-er-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261030
+DTEND;VALUE=DATE:20261031
+SUMMARY:Bando progetti di trasferimento tecnologico delle PMI
+DESCRIPTION:Dal 24/09 al 30/10/2026 (piattaforma Sfinge 2020)\nScheda: http
+ s://incentiviperte.github.io/bando/trasferimento-tecnologico-er-2026
+URL:https://incentiviperte.github.io/bando/trasferimento-tecnologico-er-202
+ 6
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:umbria-poli-innovazione-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261030
+DTEND;VALUE=DATE:20261031
+SUMMARY:Avviso Poli di Innovazione 2026
+DESCRIPTION:La scheda del portale regionale indica domande dal 21/10 al 30/
+ 10/2026\; l'avviso aggiornato dopo la proroga (09/10/2026) indica invio vi
+ a PEC fino alle 12:00 del 30/11/2026: termine da verificare\nScheda: https
+ ://incentiviperte.github.io/bando/umbria-poli-innovazione-2026
+URL:https://incentiviperte.github.io/bando/umbria-poli-innovazione-2026
+LOCATION:Umbria
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-tno-competenze-trasversali-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261031
+DTEND;VALUE=DATE:20261101
+SUMMARY:Bando per percorsi per le competenze trasversali e per l'orientamen
+ to (PCTO) – 2026
+DESCRIPTION:Dalle 14:00 del 02/03/2026 alle 18:00 del 31/10/2026\, salvo ch
+ iusura anticipata per esaurimento risorse (ReStart)\nScheda: https://incen
+ tiviperte.github.io/bando/cciaa-tno-competenze-trasversali-2026
+URL:https://incentiviperte.github.io/bando/cciaa-tno-competenze-trasversali
+ -2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-bologna-finanza-innovativa-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261104
+DTEND;VALUE=DATE:20261105
+SUMMARY:Contributi per attivare strumenti di finanza innovativa – 2026
+DESCRIPTION:Dalle 11:00 del 13/10 alle 13:00 del 04/11/2026 (piattaforma Re
+ Start)\nScheda: https://incentiviperte.github.io/bando/cciaa-bologna-finan
+ za-innovativa-2026
+URL:https://incentiviperte.github.io/bando/cciaa-bologna-finanza-innovativa
+ -2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-maremma-tirreno-frihub-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261106
+DTEND;VALUE=DATE:20261107
+SUMMARY:Voucher per la partecipazione delle MPMI al progetto FRIHUB
+DESCRIPTION:Domande dal 03/08/2026\, prorogate al 06/11/2026 (determinazion
+ e n. 384 del 16/10/2026): registrazione sulla piattaforma del progetto e i
+ nvio via PEC\nScheda: https://incentiviperte.github.io/bando/cciaa-maremma
+ -tirreno-frihub-2026
+URL:https://incentiviperte.github.io/bando/cciaa-maremma-tirreno-frihub-202
+ 6
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-maremma-tirreno-agricoltura-green-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:Bando Agricoltura green – 2026 (Livorno e Grosseto)
+DESCRIPTION:Dalle 9:00 del 09/04/2026 alle 23:59 del 10/11/2026\, salvo chi
+ usura anticipata (ReStart)\; risorse impegnate secondo la scheda di avanza
+ mento del 01/09/2026\nScheda: https://incentiviperte.github.io/bando/cciaa
+ -maremma-tirreno-agricoltura-green-2026
+URL:https://incentiviperte.github.io/bando/cciaa-maremma-tirreno-agricoltur
+ a-green-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-maremma-tirreno-certificazioni-qualita-2026@incentiviperte.github
+ .io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:Bando certificazioni di qualità – 2026 (Livorno e Grosseto)
+DESCRIPTION:Dalle 9:00 del 25/03/2026 alle 23:59 del 10/11/2026\, salvo esa
+ urimento risorse (ReStart)\nScheda: https://incentiviperte.github.io/bando
+ /cciaa-maremma-tirreno-certificazioni-qualita-2026
+URL:https://incentiviperte.github.io/bando/cciaa-maremma-tirreno-certificaz
+ ioni-qualita-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-maremma-tirreno-creazione-impresa-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:Bando a sostegno della creazione d'impresa – 2026 (Livorno e Gros
+ seto)
+DESCRIPTION:Dalle 10:00 del 25/03/2026 alle 23:59 del 10/11/2026 su ReStart
+ \, salvo esaurimento risorse\nScheda: https://incentiviperte.github.io/ban
+ do/cciaa-maremma-tirreno-creazione-impresa-2026
+URL:https://incentiviperte.github.io/bando/cciaa-maremma-tirreno-creazione-
+ impresa-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-maremma-tirreno-doppia-transizione-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:Bando Doppia Transizione: digitale e sostenibile – 2026 (Livorno 
+ e Grosseto)
+DESCRIPTION:Dalle 12:00 dell'08/07/2026 alle 23:59 del 10/11/2026\, secondo
+  il testo rifinanziato\, salvo esaurimento risorse (ReStart)\nScheda: http
+ s://incentiviperte.github.io/bando/cciaa-maremma-tirreno-doppia-transizion
+ e-2026
+URL:https://incentiviperte.github.io/bando/cciaa-maremma-tirreno-doppia-tra
+ nsizione-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-maremma-tirreno-imprese-vicinato-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:Bando a sostegno delle imprese di vicinato – 2026 (Livorno e Gros
+ seto)
+DESCRIPTION:Dalle 11:00 del 25/03/2026 alle 23:59 del 10/11/2026 su ReStart
+ \, salvo esaurimento risorse. Al 21/10/2026 le risorse disponibili sono 0\
+ ,00 €\nScheda: https://incentiviperte.github.io/bando/cciaa-maremma-tirr
+ eno-imprese-vicinato-2026
+URL:https://incentiviperte.github.io/bando/cciaa-maremma-tirreno-imprese-vi
+ cinato-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-maremma-tirreno-internazionalizzazione-2026@incentiviperte.github
+ .io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:Bando a sostegno dell'internazionalizzazione delle imprese – 2026
+  (Livorno e Grosseto)
+DESCRIPTION:Dalle 11:00 del 07/05/2026 alle 23:59 del 10/11/2026 su ReStart
+ \, salvo esaurimento risorse. La scheda del 02/09/2026 indica una disponib
+ ilità di −18.481\,60 €\nScheda: https://incentiviperte.github.io/band
+ o/cciaa-maremma-tirreno-internazionalizzazione-2026
+URL:https://incentiviperte.github.io/bando/cciaa-maremma-tirreno-internazio
+ nalizzazione-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-maremma-tirreno-societa-benefit-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:Bando a sostegno della creazione di società benefit – 2026 (Livo
+ rno e Grosseto)
+DESCRIPTION:Dalle 9:00 del 03/03/2026 alle 23:59 del 10/11/2026\, salvo esa
+ urimento risorse (ReStart)\nScheda: https://incentiviperte.github.io/bando
+ /cciaa-maremma-tirreno-societa-benefit-2026
+URL:https://incentiviperte.github.io/bando/cciaa-maremma-tirreno-societa-be
+ nefit-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-maremma-tirreno-turismo-sostenibile-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:Transizione sostenibile delle imprese turistiche – 2026 (Livorno 
+ e Grosseto)
+DESCRIPTION:Domande su ReStart dalle 12:00 del 25/03/2026 fino alle 23:59 d
+ el 10/11/2026\, salvo esaurimento risorse\nScheda: https://incentiviperte.
+ github.io/bando/cciaa-maremma-tirreno-turismo-sostenibile-2026
+URL:https://incentiviperte.github.io/bando/cciaa-maremma-tirreno-turismo-so
+ stenibile-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-romagna-antirapina-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261110
+DTEND;VALUE=DATE:20261111
+SUMMARY:Contributi per sistemi di sicurezza antirapina – 2026 (Forlì-Ces
+ ena e Rimini)
+DESCRIPTION:Dalle 10:00 del 02/09/2026 alle 13:00 del 10/11/2026\, salvo es
+ aurimento fondi (ReStart)\nScheda: https://incentiviperte.github.io/bando/
+ cciaa-romagna-antirapina-2026
+URL:https://incentiviperte.github.io/bando/cciaa-romagna-antirapina-2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-pistoia-prato-formazione-lavoro-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261112
+DTEND;VALUE=DATE:20261113
+SUMMARY:Contributi per la Formazione Scuola Lavoro e la certificazione dell
+ e competenze – 2026
+DESCRIPTION:Dalle 18:00 del 19/10/2026 alle 23:59 del 12/11/2026\, via PEC\
+ , in ordine cronologico\nScheda: https://incentiviperte.github.io/bando/cc
+ iaa-pistoia-prato-formazione-lavoro-2026
+URL:https://incentiviperte.github.io/bando/cciaa-pistoia-prato-formazione-l
+ avoro-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:bando-neve-funzionamento-toscana-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261116
+DTEND;VALUE=DATE:20261117
+SUMMARY:Bando Neve: spese di funzionamento 2026
+DESCRIPTION:16/11/2026 ore 16:00 (domande dal 19/10/2026 ore 10:00)\nScheda
+ : https://incentiviperte.github.io/bando/bando-neve-funzionamento-toscana-
+ 2026
+URL:https://incentiviperte.github.io/bando/bando-neve-funzionamento-toscana
+ -2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:fotovoltaico-pensiline-er-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261116
+DTEND;VALUE=DATE:20261117
+SUMMARY:Supporto all'utilizzo di fonti rinnovabili nelle imprese (fotovolta
+ ico su pensiline)
+DESCRIPTION:Dalle 10:00 del 30/09 alle 13:00 del 16/11/2026 (piattaforma Sf
+ inge 2020)\nScheda: https://incentiviperte.github.io/bando/fotovoltaico-pe
+ nsiline-er-2026
+URL:https://incentiviperte.github.io/bando/fotovoltaico-pensiline-er-2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:ferrara-locali-sfitti-centro-storico@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261120
+DTEND;VALUE=DATE:20261121
+SUMMARY:Nuove attività nei locali commerciali sfitti del centro storico di
+  Ferrara
+DESCRIPTION:Termine prorogato alle 12:00 del 20/11/2026\nScheda: https://in
+ centiviperte.github.io/bando/ferrara-locali-sfitti-centro-storico
+URL:https://incentiviperte.github.io/bando/ferrara-locali-sfitti-centro-sto
+ rico
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-arezzo-siena-certificazioni-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:Contributi per la certificazione della parità di genere e altre ce
+ rtificazioni – 2026
+DESCRIPTION:Dalle 10:00 del 15/10/2026 al 30/11/2026\, domanda via PEC\nSch
+ eda: https://incentiviperte.github.io/bando/cciaa-arezzo-siena-certificazi
+ oni-2026
+URL:https://incentiviperte.github.io/bando/cciaa-arezzo-siena-certificazion
+ i-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-modena-fondo-sicurezza-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:Fondo per la Sicurezza – 2026
+DESCRIPTION:Dalle 14:00 del 02/02/2026 alle 20:00 del 30/11/2026 (ReStart)\
+ nScheda: https://incentiviperte.github.io/bando/cciaa-modena-fondo-sicurez
+ za-2026
+URL:https://incentiviperte.github.io/bando/cciaa-modena-fondo-sicurezza-202
+ 6
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-modena-occupazione-giovanile-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:Bando a sostegno dell'occupazione giovanile – 2026 (codice 26OC)
+DESCRIPTION:Dalle 10:00 del 02/11/2026 alle 18:00 del 30/11/2026 (ReStart\,
+  codice 26OC)\; precompilazione dal 26/10/2026\nScheda: https://incentivip
+ erte.github.io/bando/cciaa-modena-occupazione-giovanile-2026
+URL:https://incentiviperte.github.io/bando/cciaa-modena-occupazione-giovani
+ le-2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:fondo-greener-er-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:Fondo Multiscopo – sezione GreenER (finestra ott.-nov. 2026)
+DESCRIPTION:Dal 12/10 al 30/11/2026\, salvo esaurimento risorse\nScheda: ht
+ tps://incentiviperte.github.io/bando/fondo-greener-er-2026
+URL:https://incentiviperte.github.io/bando/fondo-greener-er-2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:fondo-starter-er-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:Fondo Multiscopo – sezione StartER (finestra ott.-nov. 2026)
+DESCRIPTION:Dalle 11:00 del 12/10 alle 16:00 del 30/11/2026\, salvo esaurim
+ ento fondi\nScheda: https://incentiviperte.github.io/bando/fondo-starter-e
+ r-2026
+URL:https://incentiviperte.github.io/bando/fondo-starter-er-2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:step-2026-sovvenzione-umbria@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:Avviso STEP 2026 – Linea a sovvenzione
+DESCRIPTION:Dal 01/10/2026 ore 10:00 al 30/11/2026 ore 12:00 (graduatoria d
+ i merito)\nScheda: https://incentiviperte.github.io/bando/step-2026-sovven
+ zione-umbria
+URL:https://incentiviperte.github.io/bando/step-2026-sovvenzione-umbria
+LOCATION:Umbria
+END:VEVENT
+BEGIN:VEVENT
+UID:step-2026-umbria@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261130
+DTEND;VALUE=DATE:20261201
+SUMMARY:Avviso STEP 2026
+DESCRIPTION:30/11/2026 ore 12:00\nScheda: https://incentiviperte.github.io/
+ bando/step-2026-umbria
+URL:https://incentiviperte.github.io/bando/step-2026-umbria
+LOCATION:Umbria
+END:VEVENT
+BEGIN:VEVENT
+UID:assunzioni-montagna-er-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:Contributi all'assunzione nei territori montani e nelle aree intern
+ e
+DESCRIPTION:Dal 12/10 al 15/12/2026 ore 14:00\, salvo esaurimento risorse\n
+ Scheda: https://incentiviperte.github.io/bando/assunzioni-montagna-er-2026
+URL:https://incentiviperte.github.io/bando/assunzioni-montagna-er-2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-arezzo-siena-export-2026-arezzo@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:Bando Export 2026 – provincia di Arezzo
+DESCRIPTION:Domande via PEC dal 12/03/2026 al 15/12/2026\, in ordine cronol
+ ogico fino a esaurimento risorse\nScheda: https://incentiviperte.github.io
+ /bando/cciaa-arezzo-siena-export-2026-arezzo
+URL:https://incentiviperte.github.io/bando/cciaa-arezzo-siena-export-2026-a
+ rezzo
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-arezzo-siena-export-2026-siena@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261215
+DTEND;VALUE=DATE:20261216
+SUMMARY:Bando Export 2026 – provincia di Siena
+DESCRIPTION:Domande via PEC dal 12/03/2026 al 15/12/2026\, in ordine cronol
+ ogico fino a esaurimento risorse\nScheda: https://incentiviperte.github.io
+ /bando/cciaa-arezzo-siena-export-2026-siena
+URL:https://incentiviperte.github.io/bando/cciaa-arezzo-siena-export-2026-s
+ iena
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-firenze-nuove-imprese-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Contributi alle nuove imprese della città metropolitana di Firenze
+  – 2026
+DESCRIPTION:Domande su ReStart dalle 15:00 del 14/09/2026 alle 16:00 del 31
+ /12/2026\, salvo esaurimento fondi\nScheda: https://incentiviperte.github.
+ io/bando/cciaa-firenze-nuove-imprese-2026
+URL:https://incentiviperte.github.io/bando/cciaa-firenze-nuove-imprese-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-firenze-sicurezza-sedi-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Sicurezza delle sedi aziendali – 2026 (città metropolitana di Fi
+ renze)
+DESCRIPTION:Dalle 12:00 del 09/04/2026 alle 16:00 del 31/12/2026\, salvo es
+ aurimento fondi (piattaforma ReStart)\nScheda: https://incentiviperte.gith
+ ub.io/bando/cciaa-firenze-sicurezza-sedi-2026
+URL:https://incentiviperte.github.io/bando/cciaa-firenze-sicurezza-sedi-202
+ 6
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-firenze-turismo-sostenibile-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Transizione sostenibile delle MPMI turistiche della città metropol
+ itana di Firenze – 2026
+DESCRIPTION:Dal 23/06/2026 alle 16:00 del 31/12/2026\, salvo esaurimento fo
+ ndi (piattaforma ReStart)\nScheda: https://incentiviperte.github.io/bando/
+ cciaa-firenze-turismo-sostenibile-2026
+URL:https://incentiviperte.github.io/bando/cciaa-firenze-turismo-sostenibil
+ e-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:efficienza-energetica-2026-umbria@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Bando Efficienza Energetica 2026
+DESCRIPTION:31/12/2026 ore 12:00 (salvo proroghe)\nScheda: https://incentiv
+ iperte.github.io/bando/efficienza-energetica-2026-umbria
+URL:https://incentiviperte.github.io/bando/efficienza-energetica-2026-umbri
+ a
+LOCATION:Umbria
+END:VEVENT
+BEGIN:VEVENT
+UID:fonti-rinnovabili-2026-umbria@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Bando Fonti Rinnovabili 2026
+DESCRIPTION:31/12/2026 ore 12:00 (salvo proroghe)\nScheda: https://incentiv
+ iperte.github.io/bando/fonti-rinnovabili-2026-umbria
+URL:https://incentiviperte.github.io/bando/fonti-rinnovabili-2026-umbria
+LOCATION:Umbria
+END:VEVENT
+BEGIN:VEVENT
+UID:igp-artigianato-toscana-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20261231
+DTEND;VALUE=DATE:20270101
+SUMMARY:Registrazione IGP di prodotti artigianali e industriali
+DESCRIPTION:A sportello dal 20/07/2026 fino a esaurimento risorse\, comunqu
+ e entro il 31/12/2026\nScheda: https://incentiviperte.github.io/bando/igp-
+ artigianato-toscana-2026
+URL:https://incentiviperte.github.io/bando/igp-artigianato-toscana-2026
+LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-romagna-fondo-energia-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20270120
+DTEND;VALUE=DATE:20270121
+SUMMARY:Intervento straordinario Fondo Energia Imprese – 2026 (Forlì-Ces
+ ena e Rimini)
+DESCRIPTION:Per finanziamenti erogati dal 01/01 al 31/12/2026\; richieste t
+ ramite il Confidi entro il 20/01/2027\nScheda: https://incentiviperte.gith
+ ub.io/bando/cciaa-romagna-fondo-energia-2026
+URL:https://incentiviperte.github.io/bando/cciaa-romagna-fondo-energia-2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-ferrara-ravenna-competitivita-imprese-giovanili-2026@incentiviper
+ te.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20270122
+DTEND;VALUE=DATE:20270123
+SUMMARY:Piano Giovani: competitività delle imprese giovanili – 2026 (Fer
+ rara e Ravenna)
+DESCRIPTION:Dalle 10:00 del 26/05/2026 alle 12:00 del 22/01/2027\, salvo es
+ aurimento risorse (ordine cronologico)\nScheda: https://incentiviperte.git
+ hub.io/bando/cciaa-ferrara-ravenna-competitivita-imprese-giovanili-2026
+URL:https://incentiviperte.github.io/bando/cciaa-ferrara-ravenna-competitiv
+ ita-imprese-giovanili-2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-ferrara-ravenna-creazione-imprese-giovanili-2026@incentiviperte.g
+ ithub.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20270122
+DTEND;VALUE=DATE:20270123
+SUMMARY:Piano Giovani: creazione di imprese giovanili – 2026 (Ferrara e R
+ avenna)
+DESCRIPTION:Dalle 10:00 del 19/05/2026 alle 12:00 del 22/01/2027\, salvo es
+ aurimento risorse (ordine cronologico)\nScheda: https://incentiviperte.git
+ hub.io/bando/cciaa-ferrara-ravenna-creazione-imprese-giovanili-2026
+URL:https://incentiviperte.github.io/bando/cciaa-ferrara-ravenna-creazione-
+ imprese-giovanili-2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-emilia-credito-confidi-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20270130
+DTEND;VALUE=DATE:20270131
+SUMMARY:Bando a sostegno dell'accesso al credito tramite i Confidi – CF26
+  (Parma\, Piacenza\, Reggio Emilia)
+DESCRIPTION:Dalle 10:00 del 06/10/2026 alle 16:00 del 30/01/2027\; la doman
+ da la invia il Confidi (ReStart)\nScheda: https://incentiviperte.github.io
+ /bando/cciaa-emilia-credito-confidi-2026
+URL:https://incentiviperte.github.io/bando/cciaa-emilia-credito-confidi-202
+ 6
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:cciaa-ferrara-ravenna-credito-confidi-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20270331
+DTEND;VALUE=DATE:20270401
+SUMMARY:Bando a sostegno dell'accesso al credito tramite i Confidi – 26CF
+  (Ferrara e Ravenna)
+DESCRIPTION:Dalle 10:00 dell'11/09/2026 alle 12:00 del 31/03/2027\; la doma
+ nda la invia il Confidi (ReStart)\, entro 5 mesi dall'erogazione\nScheda: 
+ https://incentiviperte.github.io/bando/cciaa-ferrara-ravenna-credito-confi
+ di-2026
+URL:https://incentiviperte.github.io/bando/cciaa-ferrara-ravenna-credito-co
+ nfidi-2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:eureca-er-tutti-settori-2026@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20270331
+DTEND;VALUE=DATE:20270401
+SUMMARY:EuReCa – contributo in conto interessi per gli investimenti delle
+  PMI (tutti i settori)
+DESCRIPTION:Domande dal 02/12/2026 al 31/03/2027 tramite un Confidi aderent
+ e all'ATI EuReCa\nScheda: https://incentiviperte.github.io/bando/eureca-er
+ -tutti-settori-2026
+URL:https://incentiviperte.github.io/bando/eureca-er-tutti-settori-2026
+LOCATION:Emilia-Romagna
+END:VEVENT
+BEGIN:VEVENT
+UID:toscana-disabilita-assunzioni-2026-2027@incentiviperte.github.io
+DTSTAMP:20261026T000000Z
+DTSTART;VALUE=DATE:20270517
+DTEND;VALUE=DATE:20270518
+SUMMARY:Fondo regionale per l'occupazione delle persone con disabilità 202
+ 6/2027 – contributi ai datori di lavoro privati
+DESCRIPTION:Domande dal 15/10/2026\, con tre scadenze: 16/11/2026\, 28/02/2
+ 027 e 17/05/2027 (ore 23:59)\, via PEC al Settore Servizi per il Lavoro co
+ mpetente\nScheda: https://incentiviperte.github.io/bando/toscana-disabilit
+ a-assunzioni-2026-2027
+URL:https://incentiviperte.github.io/bando/toscana-disabilita-assunzioni-20
+ 26-2027
+LOCATION:Toscana
+END:VEVENT
+END:VCALENDAR
