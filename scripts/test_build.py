@@ -1833,7 +1833,7 @@ process.stdout.write(JSON.stringify({
         self.assertNotIn('<aside class="promo"', dopo)
         self.assertNotIn(build.CHECKUP_LANCIO, dopo)
         self.assertNotIn(codice, dopo)
-        self.assertIn("LANCIO15", dopo)
+        self.assertNotIn("LANCIO15", dopo)
         data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
         slug = "cciaa-tno-doppia-transizione-2-2026"
         righe = build.prepare(data, datetime.date(2026, 10, 27))
@@ -1856,7 +1856,7 @@ process.stdout.write(JSON.stringify({
         fino = build.corpo_richiesta(datetime.date(2026, 10, 30))
         dopo = build.corpo_richiesta(datetime.date(2026, 10, 31))
         self.assertIn(build.LANCIO_JS, fino)
-        self.assertIn(build.LANCIO_JS, dopo)
+        self.assertNotIn(build.LANCIO_JS, dopo)
         self.assertIn(build.LANCIO_JS, (DIST / "check-up.html").read_text(encoding="utf-8"))
         self.assertIn('<aside class="promo"', fino)
         self.assertIn('<p class="code">LANCIO15</p>', fino)
@@ -2157,6 +2157,133 @@ process.stdout.write(JSON.stringify({
         self.assertIn('id="regione-scadenze"', pagina_scadenze)
         for regione in ("Toscana", "Umbria", "Emilia-Romagna", "Nazionale"):
             self.assertIn(f'value="{regione}"', pagina_scadenze)
+
+    def test_favicon_ico(self):
+        import struct
+
+        ico = DIST / "favicon.ico"
+        self.assertTrue(ico.is_file())
+        self.assertEqual((ROOT / "assets" / "favicon.ico").read_bytes(), ico.read_bytes())
+        data = ico.read_bytes()
+        reserved, kind, count = struct.unpack_from("<HHH", data, 0)
+        self.assertEqual((reserved, kind), (0, 1))
+        self.assertEqual(count, 3)
+        sizes = []
+        blobs = []
+        for i in range(count):
+            w, h, _colors, _reserved, _planes, _bits, size, offset = struct.unpack_from("<BBBBHHII", data, 6 + 16 * i)
+            blob = data[offset:offset + size]
+            self.assertTrue(blob.startswith(b"\x89PNG\r\n\x1a\n"))
+            self.assertEqual(struct.unpack(">II", blob[16:24]), (w, h))
+            sizes.append((w, h))
+            blobs.append(blob)
+        self.assertEqual(sizes, [(16, 16), (32, 32), (48, 48)])
+        for name, blob in zip(("favicon-16.png", "favicon-32.png", "favicon-48.png"), blobs):
+            self.assertEqual(blob, (ROOT / "assets" / name).read_bytes(), name)
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        self.assertIn('<link rel="icon" href="favicon.ico" type="image/x-icon" sizes="any">', home)
+        self.assertIn('<link rel="icon" href="favicon.svg" type="image/svg+xml">', home)
+
+    def test_schede_espongono_data_scadenza(self):
+        dati = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
+        for row in dati:
+            page = (DIST / "bando" / f"{row['id']}.html").read_text(encoding="utf-8")
+            if row.get("scadenza"):
+                self.assertIn(f'data-scadenza="{row["scadenza"]}"', page, row["id"])
+            self.assertIn("Europe/Rome", page, row["id"])
+        feampa = (DIST / "bando" / "umbria-feampa-indennizzo-pesca-acquacoltura-2026.html").read_text(encoding="utf-8")
+        self.assertIn('data-scadenza="2026-10-27"', feampa)
+        self.assertIn('data-deadline="2026-10-27"', feampa)
+        for name in ("index.html", "umbria.html", "nazionale.html", "scadenze.html"):
+            text = (DIST / name).read_text(encoding="utf-8")
+            self.assertIn("Europe/Rome", text, name)
+            self.assertIn("data-scadenza", text, name)
+
+    def test_build_date_ics_e_lancio(self):
+        import os
+
+        env = os.environ
+        old = env.get("BUILD_DATE")
+
+        def eventi(testo):
+            righe = []
+            for riga in testo.split("\r\n"):
+                if riga.startswith((" ", "\t")) and righe:
+                    righe[-1] += riga[1:]
+                elif riga:
+                    righe.append(riga)
+            out = []
+            corrente = None
+            for riga in righe:
+                if riga == "BEGIN:VEVENT":
+                    corrente = {}
+                elif riga == "END:VEVENT":
+                    out.append(corrente)
+                    corrente = None
+                elif corrente is not None and ":" in riga:
+                    chiave, _, valore = riga.partition(":")
+                    corrente[chiave.split(";", 1)[0]] = valore
+            return out
+
+        try:
+            env["BUILD_DATE"] = "2026-10-28"
+            build.build()
+            raw = (DIST / "scadenze.ics").read_bytes()
+            self.assertTrue(raw.endswith(b"\r\n"))
+            self.assertNotIn(b"\n", raw.replace(b"\r\n", b""))
+            testo = raw.decode("utf-8")
+            self.assertEqual(testo.count("BEGIN:VCALENDAR"), 1)
+            self.assertEqual(testo.count("END:VCALENDAR"), 1)
+            self.assertIn("VERSION:2.0", testo)
+            trovati = eventi(testo)
+            self.assertGreaterEqual(len(trovati), 1)
+            self.assertEqual(len(trovati), testo.count("BEGIN:VEVENT"))
+            ids = []
+            for ev in trovati:
+                self.assertRegex(ev["UID"], r"^[a-z0-9-]+@incentiviperte\.github\.io$")
+                self.assertGreaterEqual(ev["DTSTART"], "20261028")
+                ids.append(ev["UID"].split("@", 1)[0])
+            self.assertNotIn("umbria-feampa-indennizzo-pesca-acquacoltura-2026", ids)
+            self.assertNotIn("cciaa-tno-doppia-transizione-2-2026", ids)
+            self.assertIn("premio-innovazione-toscana-2026", ids)
+            self.assertEqual(
+                [ev["UID"] for ev in trovati],
+                [f"{bid}@incentiviperte.github.io" for bid in ids],
+            )
+            pagina = (DIST / "scadenze.html").read_text(encoding="utf-8")
+            n = len(trovati)
+            etichetta = "1 scadenza" if n == 1 else f"{n} scadenze"
+            self.assertIn(f'id="n-scadenze" aria-live="polite">{etichetta}</p>', pagina)
+            self.assertEqual(pagina.count("<time "), n)
+            checkup = (DIST / "check-up.html").read_text(encoding="utf-8")
+            self.assertIn("LANCIO15", checkup)
+            self.assertIn("41,65 €", checkup)
+            self.assertIn("67,15 €", checkup)
+            self.assertIn("Base 49 €", checkup)
+            self.assertIn("Completo 79 €", checkup)
+            self.assertIn(build.CHECKUP_IVA_NOTE, checkup)
+
+            env["BUILD_DATE"] = "2026-10-31"
+            build.build()
+            for path in DIST.rglob("*.html"):
+                html_text = path.read_text(encoding="utf-8")
+                self.assertNotIn("LANCIO15", html_text, path.as_posix())
+                self.assertNotIn("41,65", html_text, path.as_posix())
+                self.assertNotIn("67,15", html_text, path.as_posix())
+            dopo = (DIST / "check-up.html").read_text(encoding="utf-8")
+            richiesta = (DIST / "check-up" / "richiesta.html").read_text(encoding="utf-8")
+            for pagina_prezzi in (dopo, richiesta):
+                self.assertIn("49 €", pagina_prezzi)
+                self.assertIn("79 €", pagina_prezzi)
+                self.assertIn(build.CHECKUP_IVA_NOTE, pagina_prezzi)
+            self.assertNotIn("Codice di lancio", dopo)
+            self.assertNotIn("Codice di lancio", richiesta)
+        finally:
+            if old is None:
+                env.pop("BUILD_DATE", None)
+            else:
+                env["BUILD_DATE"] = old
+            build.build(TODAY)
 
 
 class Update(unittest.TestCase):

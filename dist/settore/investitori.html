@@ -30,6 +30,7 @@
 <link rel="icon" href="../favicon-16.png" type="image/png" sizes="16x16">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png" sizes="180x180">
 <link rel="icon" href="../favicon-512.png" type="image/png" sizes="512x512">
+<link rel="icon" href="../favicon.ico" type="image/x-icon" sizes="any">
 <link rel="stylesheet" href="../style.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "CollectionPage", "name": "Agevolazioni per chi investe in startup innovative", "url": "https://incentiviperte.github.io/settore/investitori", "inLanguage": "it-IT", "about": "Investitori"}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Bandi", "item": "https://incentiviperte.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Investitori", "item": "https://incentiviperte.github.io/settore/investitori"}]}, {"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": 1, "url": "https://incentiviperte.github.io/bando/detrazione-investimenti-startup-innovative", "name": "Detrazione IRPEF 65% per chi investe in startup innovative (de minimis)"}]}]}</script>
 </head>
@@ -45,7 +46,26 @@
 <main id="main" tabindex="-1"><div class="wrap"><nav class="crumb" aria-label="Percorso"><ol><li><a href="/">Bandi</a></li><li aria-current="page">Investitori</li></ol></nav><h1>Agevolazioni per chi investe in startup</h1><p>Qui trovi i bandi aperti per chi investe in startup innovative in Toscana, Umbria, Emilia-Romagna e a livello nazionale, con importo, scadenza e link al bando ufficiale. Aggiornato al 26/10/2026.</p><p>In elenco: <span data-aperti>1 bando aperto</span>, aree nazionali.</p><p><a href="/?dest=Investitori#filtri">Trova il tuo bando</a></p><div class="grid" id="elenco"><article class="card" data-reg="Nazionale" data-dest="Investitori|Startup" data-scad="9999-12-31" data-apre="" data-scaduto="0" data-search="Detrazione IRPEF 65% per chi investe in startup innovative (de minimis) Detrazione IRPEF del 65% per le persone fisiche che investono nel capitale di startup innovative, fino a 100.000 € per periodo d&#x27;imposta, con l&#x27;investimento mantenuto almeno 3 anni. Prima dell&#x27;investimento la startup deve presentare istanza sulla piattaforma dedicata. La startup non può ricevere più di 300.000 € in de minimis in tre anni. MIMIT Nazionale Investitori Startup"><span class="badge open">Sportello aperto</span><h3><a class="cardlink" href="/bando/detrazione-investimenti-startup-innovative">Detrazione IRPEF 65% per chi investe in startup innovative (de minimis)</a></h3><p class="amt">Detrazione del 65% fino a 100.000 € investiti all&#x27;anno</p><div class="tags"><span class="tag area">Nazionale</span><span class="tag">Investitori</span><span class="tag">Startup</span></div><p class="sum">Detrazione IRPEF del 65% per le persone fisiche che investono nel capitale di startup innovative, fino a 100.000 € per periodo d&#x27;imposta, con l&#x27;investimento mantenuto almeno 3 anni. Prima dell&#x27;investimento la startup deve presentare istanza sulla piattaforma dedicata. La startup non può ricevere più di 300.000 € in de minimis in tre anni.</p><div class="meta"><span class="dl">Senza scadenza indicata: verifica sul sito ufficiale</span><span class="ente">MIMIT</span></div></article><aside class="card spc" aria-label="Spazio sponsor"><span class="lab">Sponsorizzato</span><p class="spt">Il tuo studio qui, tra chi cerca un finanziamento</p><p class="spp">Da 49 € al mese · prezzo di lancio</p><a class="btn outline" href="/sponsor">Scopri gli spazi sponsor</a></aside></div><script>
 (function () {
   function startOfToday() {
-    var now = window.INCENTIVI_OGGI ? new Date(window.INCENTIVI_OGGI) : new Date();
+    var override = (typeof window !== "undefined" && window.INCENTIVI_OGGI) ? String(window.INCENTIVI_OGGI) : "";
+    var match = /^(\d{4})-(\d{2})-(\d{2})/.exec(override);
+    if (match) return new Date(+match[1], +match[2] - 1, +match[3]);
+    try {
+      var fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Europe/Rome",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+      var parts = fmt.formatToParts(new Date());
+      var y = 0, m = 0, d = 0;
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i].type === "year") y = +parts[i].value;
+        else if (parts[i].type === "month") m = +parts[i].value;
+        else if (parts[i].type === "day") d = +parts[i].value;
+      }
+      if (y && m && d) return new Date(y, m - 1, d);
+    } catch (err) {}
+    var now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }
   function parts(iso) {
@@ -91,7 +111,17 @@
     if (left < 0) {
       el.textContent = "Scaduto";
       el.classList.add("exp");
-      if (card) card.setAttribute("data-scaduto", "1");
+      if (card) {
+        card.setAttribute("data-scaduto", "1");
+        var cardCls = card.getAttribute("class") || "";
+        if (cardCls.indexOf("card") !== -1) {
+          var parent = card.parentNode;
+          var mostra = parent && parent.getAttribute && parent.getAttribute("data-mostra-scaduti") === "1";
+          if (mostra) {
+            if (parent.appendChild) parent.appendChild(card);
+          } else card.hidden = true;
+        }
+      }
     } else if (left === 0) {
       el.textContent = "Scade oggi";
       el.classList.add("soon");
@@ -115,8 +145,32 @@
       continue;
     }
     if (!pD) continue;
-    if (daysLeft(isoD, start) < 0) node.textContent = "Scaduto il " + itDate(pD);
-    else if (pOpenD) node.textContent = "Aperto fino al " + itDate(pD);
+    if (daysLeft(isoD, start) < 0) {
+      node.textContent = "Scaduto il " + itDate(pD);
+      var row = node.closest ? node.closest("li") : null;
+      if (row && row.closest && row.closest(".related")) row.hidden = true;
+    } else if (pOpenD) node.textContent = "Aperto fino al " + itDate(pD);
+  }
+  var voci = document.querySelectorAll("li[data-scadenza]");
+  var scadVis = 0;
+  var scadTot = 0;
+  for (var s = 0; s < voci.length; s++) {
+    var voce = voci[s];
+    var nelCal = voce.parentNode && voce.parentNode.id === "elenco-scadenze";
+    if (nelCal) scadTot++;
+    var isoV = voce.getAttribute("data-scadenza") || "";
+    if (daysLeft(isoV, start) < 0) {
+      voce.hidden = true;
+      voce.setAttribute("data-scaduto", "1");
+      continue;
+    }
+    if (nelCal) scadVis++;
+  }
+  if (scadTot) {
+    var countS = document.getElementById("n-scadenze");
+    if (countS) countS.textContent = scadVis === 1 ? "1 scadenza" : scadVis + " scadenze";
+    var emptyS = document.getElementById("nessuna-scadenza");
+    if (emptyS) emptyS.hidden = scadVis !== 0;
   }
   var list = document.getElementById("elenco");
   if (!list) return;
@@ -139,8 +193,31 @@
   for (var c = 0; c < counts.length; c++) counts[c].textContent = label;
   var numeri = document.querySelectorAll("[data-aperti-n]");
   for (var u = 0; u < numeri.length; u++) numeri[u].textContent = String(open);
+  if (document.getElementById("filtri-form")) {
+    var conti = document.querySelectorAll("[data-conto]");
+    for (var t = 0; t < conti.length; t++) {
+      var key = conti[t].getAttribute("data-conto") || "";
+      var tot = 0;
+      var known = false;
+      if (key.indexOf("reg:") === 0) {
+        known = true;
+        var reg = key.slice(4);
+        for (var ri = 0; ri < cards.length; ri++) {
+          if (cards[ri].getAttribute("data-reg") === reg && cards[ri].getAttribute("data-scaduto") !== "1") tot++;
+        }
+      } else if (key.indexOf("dest:") === 0) {
+        known = true;
+        var destName = key.slice(5);
+        for (var di = 0; di < cards.length; di++) {
+          var bits = (cards[di].getAttribute("data-dest") || "").split("|");
+          if (bits.indexOf(destName) !== -1 && cards[di].getAttribute("data-scaduto") !== "1") tot++;
+        }
+      }
+      if (known) conti[t].textContent = String(tot);
+    }
+  }
 })();
-</script><section aria-labelledby="altre-aree"><h2 id="altre-aree">Aree</h2><ul class="pills"><li><a href="/nazionale">Nazionali<span class="num">8</span></a></li><li><a href="/toscana">Toscana<span class="num">25</span></a></li><li><a href="/umbria">Umbria<span class="num">6</span></a></li><li><a href="/emilia-romagna">Emilia-Romagna<span class="num">17</span></a></li></ul></section><section aria-labelledby="altri-dest"><h2 id="altri-dest">Altri destinatari</h2><div class="with-illu"><div><ul class="pills"><li><a href="/settore/startup">Startup<span class="num">7</span></a></li><li><a href="/settore/pmi">PMI<span class="num">50</span></a></li><li><a href="/settore/nuove-imprese">Nuove imprese<span class="num">11</span></a></li><li><a href="/settore/under-35">Under 35<span class="num">9</span></a></li><li><a href="/settore/donne">Donne<span class="num">6</span></a></li><li><a href="/settore/professionisti">Professionisti<span class="num">8</span></a></li><li><a href="/settore/grandi-imprese">Grandi imprese<span class="num">8</span></a></li></ul></div><img src="/assets/img/bandi-per-destinatario.webp" width="800" height="600" alt="Illustrazione isometrica di edifici d&#x27;impresa collegati da un sentiero: un garage di startup con una piantina a forma di razzo, una bottega artigiana, un negozio, un ufficio moderno e un piccolo stabilimento" loading="lazy" decoding="async" class="sec-img"></div></section><aside class="fpef" aria-label="FoglioPEF, progetto dello stesso titolare"><p class="lab">Progetto dello stesso titolare</p><h2>FoglioPEF</h2><p>FoglioPEF: modelli Excel per business plan, immobiliare e finanza d'impresa.</p><p class="row"><a class="btn outline" href="https://fogliopef.github.io" rel="noopener noreferrer" target="_blank">Apri FoglioPEF<span class="vh"> (si apre in una nuova scheda)</span></a><a href="https://www.linkedin.com/company/fogliopef" rel="noopener noreferrer" target="_blank">FoglioPEF su LinkedIn<span class="vh"> (si apre in una nuova scheda)</span></a></p></aside></div></main>
+</script><section aria-labelledby="altre-aree"><h2 id="altre-aree">Aree</h2><ul class="pills"><li><a href="/nazionale">Nazionali<span class="num" data-conto="reg:Nazionale">8</span></a></li><li><a href="/toscana">Toscana<span class="num" data-conto="reg:Toscana">24</span></a></li><li><a href="/umbria">Umbria<span class="num" data-conto="reg:Umbria">6</span></a></li><li><a href="/emilia-romagna">Emilia-Romagna<span class="num" data-conto="reg:Emilia-Romagna">17</span></a></li></ul></section><section aria-labelledby="altri-dest"><h2 id="altri-dest">Altri destinatari</h2><div class="with-illu"><div><ul class="pills"><li><a href="/settore/startup">Startup<span class="num" data-conto="dest:Startup">7</span></a></li><li><a href="/settore/pmi">PMI<span class="num" data-conto="dest:PMI">49</span></a></li><li><a href="/settore/nuove-imprese">Nuove imprese<span class="num" data-conto="dest:Nuove imprese">11</span></a></li><li><a href="/settore/under-35">Under 35<span class="num" data-conto="dest:Under 35">9</span></a></li><li><a href="/settore/donne">Donne<span class="num" data-conto="dest:Donne">6</span></a></li><li><a href="/settore/professionisti">Professionisti<span class="num" data-conto="dest:Professionisti">8</span></a></li><li><a href="/settore/grandi-imprese">Grandi imprese<span class="num" data-conto="dest:Grandi imprese">8</span></a></li></ul></div><img src="/assets/img/bandi-per-destinatario.webp" width="800" height="600" alt="Illustrazione isometrica di edifici d&#x27;impresa collegati da un sentiero: un garage di startup con una piantina a forma di razzo, una bottega artigiana, un negozio, un ufficio moderno e un piccolo stabilimento" loading="lazy" decoding="async" class="sec-img"></div></section><aside class="fpef" aria-label="FoglioPEF, progetto dello stesso titolare"><p class="lab">Progetto dello stesso titolare</p><h2>FoglioPEF</h2><p>FoglioPEF: modelli Excel per business plan, immobiliare e finanza d'impresa.</p><p class="row"><a class="btn outline" href="https://fogliopef.github.io" rel="noopener noreferrer" target="_blank">Apri FoglioPEF<span class="vh"> (si apre in una nuova scheda)</span></a><a href="https://www.linkedin.com/company/fogliopef" rel="noopener noreferrer" target="_blank">FoglioPEF su LinkedIn<span class="vh"> (si apre in una nuova scheda)</span></a></p></aside></div></main>
 <footer><div class="wrap">
 <p><strong>IncentiviPerTe</strong> · raccolta gratuita e indipendente di bandi per startup e PMI, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali. Le schede sono sintesi: fa fede solo il bando ufficiale.</p>
 <nav aria-label="Aree"><p><strong>Aree</strong></p><ul><li><a href="/nazionale">Nazionali</a></li><li><a href="/toscana">Toscana</a></li><li><a href="/umbria">Umbria</a></li><li><a href="/emilia-romagna">Emilia-Romagna</a></li></ul></nav>

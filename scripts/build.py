@@ -4,15 +4,18 @@
 Nessuna dipendenza, nessun tracker, nessun cookie.
 Scrive anche dist/scadenze.ics. L'URL del modulo avvisi sta in data/avvisi.json.
 Uso: python3 scripts/build.py
+La data è BUILD_DATE (YYYY-MM-DD) oppure oggi in Europe/Rome.
 """
 import datetime
 import html
 import json
+import os
 import pathlib
 import re
 import shutil
 import sys
 import urllib.parse
+from zoneinfo import ZoneInfo
 
 import seo_copy
 
@@ -56,9 +59,10 @@ CHECKUP_IVA_NOTE = (
 CHECKUP_LANCIO = (
     "Con LANCIO15 fino al 30/10/2026: Base 41,65 €, Completo 67,15 €."
 )
-# Il codice resta in pagina fino al 30/10/2026 compreso. Dal 31/10 sparisce in generazione
-# e, se la pagina è già stata pubblicata, anche nello script del browser.
+# Il codice resta in pagina fino al 30/10/2026 compreso. Dal 31/10 la generazione
+# non scrive più LANCIO15. Lo script nel browser copre le build precedenti.
 LANCIO_FINO = datetime.date(2026, 10, 30)
+ROMA = ZoneInfo("Europe/Rome")
 # Giorno del ritocco SEO. lastmod delle pagine toccate; le pagine legali restano alla data dei dati.
 SEO_LASTMOD = "2026-10-25"
 PAGINE_LASTMOD_DATI = {"cookie.html", "note-legali.html", "disclaimer.html", "privacy.html"}
@@ -144,7 +148,7 @@ def voci_nav():
 
 
 KEEP = {
-    "style.css", "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-48.png",
+    "style.css", "favicon.ico", "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-48.png",
     "favicon-512.png", "apple-touch-icon.png", "logo-header.svg", "logo-header-80.png",
     "logo-header-160.png", "og.png", "robots.txt", "sitemap.xml", ".nojekyll",
 }
@@ -153,7 +157,7 @@ GSC_FILE = "googlec8d66ea588cfa987.html"
 GSC_CONTENT = "google-site-verification: googlec8d66ea588cfa987.html"
 GSC_TOKEN = "jCzN7Fx7XoDrf8U8F0zh3SqX4j2mogdrXKI-ygMN8m4"
 STATIC_ASSETS = (
-    "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-48.png", "favicon-512.png",
+    "favicon.ico", "favicon.svg", "favicon-16.png", "favicon-32.png", "favicon-48.png", "favicon-512.png",
     "apple-touch-icon.png", "logo-header.svg", "logo-header-80.png", "logo-header-160.png",
     "og.png",
 )
@@ -263,6 +267,17 @@ def is_aperto(b):
 def lancio_attivo(today):
     """True fino al 30/10/2026 compreso."""
     return today <= LANCIO_FINO
+
+
+def data_generazione():
+    """Data della build: BUILD_DATE oppure oggi in Europe/Rome."""
+    raw = os.environ.get("BUILD_DATE", "").strip()
+    if raw:
+        try:
+            return datetime.date.fromisoformat(raw)
+        except ValueError as ex:
+            raise ValueError("BUILD_DATE non è una data YYYY-MM-DD") from ex
+    return datetime.datetime.now(ROMA).date()
 
 
 def lastmod_pagina(path, data_lastmod):
@@ -456,7 +471,26 @@ def badge(b, today):
 BADGE_JS = r"""<script>
 (function () {
   function startOfToday() {
-    var now = window.INCENTIVI_OGGI ? new Date(window.INCENTIVI_OGGI) : new Date();
+    var override = (typeof window !== "undefined" && window.INCENTIVI_OGGI) ? String(window.INCENTIVI_OGGI) : "";
+    var match = /^(\d{4})-(\d{2})-(\d{2})/.exec(override);
+    if (match) return new Date(+match[1], +match[2] - 1, +match[3]);
+    try {
+      var fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Europe/Rome",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+      var parts = fmt.formatToParts(new Date());
+      var y = 0, m = 0, d = 0;
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i].type === "year") y = +parts[i].value;
+        else if (parts[i].type === "month") m = +parts[i].value;
+        else if (parts[i].type === "day") d = +parts[i].value;
+      }
+      if (y && m && d) return new Date(y, m - 1, d);
+    } catch (err) {}
+    var now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate());
   }
   function parts(iso) {
@@ -502,7 +536,17 @@ BADGE_JS = r"""<script>
     if (left < 0) {
       el.textContent = "Scaduto";
       el.classList.add("exp");
-      if (card) card.setAttribute("data-scaduto", "1");
+      if (card) {
+        card.setAttribute("data-scaduto", "1");
+        var cardCls = card.getAttribute("class") || "";
+        if (cardCls.indexOf("card") !== -1) {
+          var parent = card.parentNode;
+          var mostra = parent && parent.getAttribute && parent.getAttribute("data-mostra-scaduti") === "1";
+          if (mostra) {
+            if (parent.appendChild) parent.appendChild(card);
+          } else card.hidden = true;
+        }
+      }
     } else if (left === 0) {
       el.textContent = "Scade oggi";
       el.classList.add("soon");
@@ -526,8 +570,32 @@ BADGE_JS = r"""<script>
       continue;
     }
     if (!pD) continue;
-    if (daysLeft(isoD, start) < 0) node.textContent = "Scaduto il " + itDate(pD);
-    else if (pOpenD) node.textContent = "Aperto fino al " + itDate(pD);
+    if (daysLeft(isoD, start) < 0) {
+      node.textContent = "Scaduto il " + itDate(pD);
+      var row = node.closest ? node.closest("li") : null;
+      if (row && row.closest && row.closest(".related")) row.hidden = true;
+    } else if (pOpenD) node.textContent = "Aperto fino al " + itDate(pD);
+  }
+  var voci = document.querySelectorAll("li[data-scadenza]");
+  var scadVis = 0;
+  var scadTot = 0;
+  for (var s = 0; s < voci.length; s++) {
+    var voce = voci[s];
+    var nelCal = voce.parentNode && voce.parentNode.id === "elenco-scadenze";
+    if (nelCal) scadTot++;
+    var isoV = voce.getAttribute("data-scadenza") || "";
+    if (daysLeft(isoV, start) < 0) {
+      voce.hidden = true;
+      voce.setAttribute("data-scaduto", "1");
+      continue;
+    }
+    if (nelCal) scadVis++;
+  }
+  if (scadTot) {
+    var countS = document.getElementById("n-scadenze");
+    if (countS) countS.textContent = scadVis === 1 ? "1 scadenza" : scadVis + " scadenze";
+    var emptyS = document.getElementById("nessuna-scadenza");
+    if (emptyS) emptyS.hidden = scadVis !== 0;
   }
   var list = document.getElementById("elenco");
   if (!list) return;
@@ -550,6 +618,29 @@ BADGE_JS = r"""<script>
   for (var c = 0; c < counts.length; c++) counts[c].textContent = label;
   var numeri = document.querySelectorAll("[data-aperti-n]");
   for (var u = 0; u < numeri.length; u++) numeri[u].textContent = String(open);
+  if (document.getElementById("filtri-form")) {
+    var conti = document.querySelectorAll("[data-conto]");
+    for (var t = 0; t < conti.length; t++) {
+      var key = conti[t].getAttribute("data-conto") || "";
+      var tot = 0;
+      var known = false;
+      if (key.indexOf("reg:") === 0) {
+        known = true;
+        var reg = key.slice(4);
+        for (var ri = 0; ri < cards.length; ri++) {
+          if (cards[ri].getAttribute("data-reg") === reg && cards[ri].getAttribute("data-scaduto") !== "1") tot++;
+        }
+      } else if (key.indexOf("dest:") === 0) {
+        known = true;
+        var destName = key.slice(5);
+        for (var di = 0; di < cards.length; di++) {
+          var bits = (cards[di].getAttribute("data-dest") || "").split("|");
+          if (bits.indexOf(destName) !== -1 && cards[di].getAttribute("data-scaduto") !== "1") tot++;
+        }
+      }
+      if (known) conti[t].textContent = String(tot);
+    }
+  }
 })();
 </script>"""
 
@@ -695,9 +786,11 @@ def card(b, pre, today, mostra_scaduto=False):
     when = f' data-deadline="{b["scadenza"]}"' if b["scadenza"] else ""
     if b.get("apertura"):
         when += f' data-apre="{b["apertura"]}"'
+    scad_attr = f' data-scadenza="{e(b["scadenza"])}"' if b.get("scadenza") else ""
     return (
         f'<article class="card" data-reg="{e(b["regione"])}" '
-        f'data-dest="{e("|".join(b["destinatari"]))}" data-scad="{b["scadenza"] or "9999-12-31"}" '
+        f'data-dest="{e("|".join(b["destinatari"]))}" data-scad="{b["scadenza"] or "9999-12-31"}"'
+        f'{scad_attr} '
         f'data-apre="{e(b.get("apertura") or "")}" '
         f'data-scaduto="{1 if b["scaduto"] else 0}" data-search="{e(search)}"{hidden}>'
         f'{badge(b, today)}{avviso}<h3><a class="cardlink" href="{href}">{e(seo_copy.titolo_in_elenco(b))}</a></h3>'
@@ -841,13 +934,31 @@ JS = r"""<script>
     for (var i = 0; i < sel.options.length; i++) if (sel.options[i].value === value) return true;
     return false;
   }
+  function startOfToday() {
+    try {
+      var fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Europe/Rome",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+      var parts = fmt.formatToParts(new Date());
+      var y = 0, m = 0, d = 0;
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i].type === "year") y = +parts[i].value;
+        else if (parts[i].type === "month") m = +parts[i].value;
+        else if (parts[i].type === "day") d = +parts[i].value;
+      }
+      if (y && m && d) return new Date(y, m - 1, d);
+    } catch (err) {}
+    var now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
   function daysUntil(iso) {
     var p = iso.split("-");
     if (p.length !== 3 || iso.indexOf("9999") === 0) return 99999;
     var target = new Date(+p[0], +p[1] - 1, +p[2]);
-    var now = new Date();
-    var start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    return Math.round((target - start) / 864e5);
+    return Math.round((target - startOfToday()) / 864e5);
   }
   function shownByDefault(card) {
     return card.getAttribute("data-scaduto") !== "1";
@@ -930,9 +1041,18 @@ JS = r"""<script>
 
 
 def pills(links):
+    reg_by_href = {site_href(region_path(reg)): reg for reg in REG}
     lis = []
     for href, label, num in links:
-        count = f'<span class="num">{num}</span>' if num is not None else ""
+        path = href.split("?", 1)[0].split("#", 1)[0]
+        if path in reg_by_href:
+            conto = "reg:" + reg_by_href[path]
+        elif path.startswith("/settore/"):
+            conto = "dest:" + label
+        else:
+            conto = ""
+        attr = f' data-conto="{e(conto)}"' if conto else ""
+        count = f'<span class="num"{attr}>{num}</span>' if num is not None else ""
         lis.append(f'<li><a href="{href}">{e(label)}{count}</a></li>')
     return f'<ul class="pills">{"".join(lis)}</ul>'
 
@@ -1000,7 +1120,7 @@ def link_verifica():
 
 
 def head_icons(pre):
-    """Favicon del marchio A: SVG, PNG 16/32/48/512 e apple-touch da 180."""
+    """Favicon del marchio A: SVG, PNG 16/32/48/512, ICO e apple-touch da 180."""
     icons = (
         ("icon", "favicon.svg", ' type="image/svg+xml"'),
         ("icon", "favicon-48.png", ' type="image/png" sizes="48x48"'),
@@ -1008,6 +1128,7 @@ def head_icons(pre):
         ("icon", "favicon-16.png", ' type="image/png" sizes="16x16"'),
         ("apple-touch-icon", "apple-touch-icon.png", ' sizes="180x180"'),
         ("icon", "favicon-512.png", ' type="image/png" sizes="512x512"'),
+        ("icon", "favicon.ico", ' type="image/x-icon" sizes="any"'),
     )
     return "\n".join(
         f'<link rel="{rel}" href="{pre}{name}"{extra}>' for rel, name, extra in icons
@@ -1543,10 +1664,22 @@ def checkup_faq():
 
 LANCIO_JS = r"""<script>
 (function () {
-  var ultimo = new Date(2026, 9, 30);
-  var now = window.INCENTIVI_OGGI ? new Date(window.INCENTIVI_OGGI) : new Date();
-  var start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  if (start <= ultimo) return;
+  var ultimo = "2026-10-30";
+  function oggi() {
+    var override = (typeof window !== "undefined" && window.INCENTIVI_OGGI) ? String(window.INCENTIVI_OGGI) : "";
+    var match = /^(\d{4}-\d{2}-\d{2})/.exec(override);
+    if (match) return match[1];
+    try {
+      var fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome", year: "numeric", month: "2-digit", day: "2-digit" });
+      var iso = fmt.format(new Date());
+      if (/^\d{4}-\d{2}-\d{2}/.test(iso)) return iso.slice(0, 10);
+    } catch (err) {}
+    var now = new Date();
+    var m = now.getMonth() + 1;
+    var d = now.getDate();
+    return now.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (d < 10 ? "0" : "") + d;
+  }
+  if (oggi() <= ultimo) return;
   var promo = document.querySelector("aside.promo");
   if (promo && promo.parentNode) promo.parentNode.removeChild(promo);
   var links = document.querySelectorAll("a[href]");
@@ -1635,7 +1768,7 @@ def checkup_body(today):
 </div>
 </div>
 {domande}
-{LANCIO_JS}
+{LANCIO_JS if lancio_attivo(today) else ""}
 <script>
 (function () {{
   var form = document.getElementById("checkup-form");
@@ -2022,8 +2155,20 @@ def link_bando(b):
 def lista_bandi(rows):
     if not rows:
         return "<p>Nessuna scheda in questo elenco.</p>"
-    voci = "".join(f"<li>{link_bando(b)} — {e(deadline_text(b))}</li>" for b in rows)
-    return f"<ul>{voci}</ul>"
+    voci = []
+    for b in rows:
+        attr = f' data-scadenza="{e(b["scadenza"])}"' if b.get("scadenza") else ""
+        if b.get("apertura"):
+            attr += f' data-apre="{e(b["apertura"])}"'
+        if b.get("scadenza"):
+            when_attr = f' data-deadline="{e(b["scadenza"])}"'
+            if b.get("apertura"):
+                when_attr += f' data-apre="{e(b["apertura"])}"'
+            when = f"<span{when_attr}>{e(deadline_text(b))}</span>"
+        else:
+            when = e(deadline_text(b))
+        voci.append(f"<li{attr}>{link_bando(b)} — {when}</li>")
+    return f"<ul>{''.join(voci)}</ul>"
 
 
 def chiave_camera(bando):
@@ -2315,7 +2460,7 @@ def griglia_camera(gruppo, today):
     blocchi = "".join(card(b, "", today, mostra_scaduto=True) for b in aperti + chiusi)
     if not blocchi:
         return "<p>Nessuna scheda in questa sezione.</p>"
-    return f'<div class="grid">{blocchi}</div>'
+    return f'<div class="grid" data-mostra-scaduti="1">{blocchi}</div>'
 
 
 def corpo_camere(titolo_h1, paragrafo, voci, bandi, today, faq):
@@ -2503,6 +2648,7 @@ def corpo_aprire(bandi, data):
         + "Registro delle imprese. La domanda si presenta di solito online sulla piattaforma ReStart, con firma "
         + "digitale, oppure via PEC: il bando indica quale.</p></section>"
         + faq_html(html_pairs, raw=True)
+        + BADGE_JS
     )
     return corpo, plain, camere + regione + nazionali
 
@@ -2991,7 +3137,7 @@ def corpo_richiesta(today):
 <noscript><p class="note">Senza JavaScript il modulo non compone il messaggio. Scrivi gli stessi dati a {mail_link()}.</p></noscript>
 </div>
 {script_richiesta()}
-{LANCIO_JS}"""
+{LANCIO_JS if lancio_attivo(today) else ""}"""
 
 
 def riga_scadenza(b):
@@ -3001,7 +3147,7 @@ def riga_scadenza(b):
         apre = "Apre il " + it_date(b["apertura"]) + ". "
     nota = apre + (b.get("nota_scadenza") or "")
     return (
-        f'<li data-reg="{e(b["regione"])}">'
+        f'<li data-reg="{e(b["regione"])}" data-scadenza="{e(b["scadenza"])}">'
         f'<time datetime="{e(b["scadenza"])}">{e(it_date(b["scadenza"]))}</time>'
         f'<a href="{site_href(f"bando/{b["id"]}.html")}">{e(seo_copy.titolo_in_elenco(b))}</a>'
         f"<span>{e(area)}</span>"
@@ -3048,6 +3194,7 @@ def corpo_scadenze(bandi):
 <noscript><p class="note">Senza JavaScript restano visibili tutte le scadenze. Il filtro per regione gira solo sul tuo dispositivo e non invia dati.</p></noscript>
 </div>
 {faq_html(faq_scadenze())}
+{BADGE_JS}
 <script>
 (function () {{
   var area = document.getElementById("regione-scadenze");
@@ -3058,7 +3205,8 @@ def corpo_scadenze(bandi):
   function apply() {{
     var n = 0;
     for (var i = 0; i < rows.length; i++) {{
-      var ok = !area.value || rows[i].getAttribute("data-reg") === area.value;
+      var scaduto = rows[i].getAttribute("data-scaduto") === "1";
+      var ok = !scaduto && (!area.value || rows[i].getAttribute("data-reg") === area.value);
       rows[i].hidden = !ok;
       if (ok) n++;
     }}
@@ -3066,6 +3214,7 @@ def corpo_scadenze(bandi):
     if (count) count.textContent = n === 1 ? "1 scadenza" : n + " scadenze";
   }}
   area.addEventListener("change", apply);
+  apply();
 }})();
 </script>"""
 
@@ -3324,7 +3473,8 @@ def controlla_servizi(bandi):
 
 
 def build(today=None):
-    today = today or datetime.date.today()
+    if today is None:
+        today = data_generazione()
     bandi = prepare(json.loads(DATA.read_text(encoding="utf-8")), today)
     att = [b for b in bandi if not b["scaduto"]]
     agg = max(b["ultimo_controllo"] for b in bandi)
@@ -3520,18 +3670,33 @@ def build(today=None):
         sibs = related(b, bandi)
         related_html = ""
         if sibs:
-            lis = "".join(
-                f'<li><a href="{site_href(f"bando/{o["id"]}.html")}">{e(seo_copy.titolo_in_elenco(o))}<span>{e(o["regione"])} · {e(deadline_text(o))}</span></a></li>'
-                for o in sibs
+            voci_rel = []
+            for o in sibs:
+                quando_rel = deadline_text(o)
+                if o.get("scadenza"):
+                    rel_attr = f' data-deadline="{e(o["scadenza"])}"'
+                    if o.get("apertura"):
+                        rel_attr += f' data-apre="{e(o["apertura"])}"'
+                    quando_html = f"<span{rel_attr}>{e(quando_rel)}</span>"
+                else:
+                    quando_html = e(quando_rel)
+                voci_rel.append(
+                    f'<li><a href="{site_href(f"bando/{o["id"]}.html")}">{e(seo_copy.titolo_in_elenco(o))}'
+                    f"<span>{e(o['regione'])} · {quando_html}</span></a></li>"
+                )
+            related_html = (
+                '<section class="related" aria-labelledby="collegati"><h2 id="collegati">Bandi collegati</h2><ul>'
+                + "".join(voci_rel)
+                + "</ul></section>"
             )
-            related_html = f'<section class="related" aria-labelledby="collegati"><h2 id="collegati">Bandi collegati</h2><ul>{lis}</ul></section>'
         tags = f'<a class="tag area" href="{site_href(area_href)}">{e(b["regione"])}</a>' + "".join(
             f'<a class="tag" href="{site_href(sector_path(d))}">{e(d)}</a>' for d in b["destinatari"]
         )
         when = f' data-deadline="{b["scadenza"]}"' if b["scadenza"] else ""
         if b.get("apertura"):
             when += f' data-apre="{b["apertura"]}"'
-        lead = seo_copy.lead_scheda(b, deadline_text(b))
+        quando = deadline_text(b)
+        lead = seo_copy.lead_scheda(b, quando)
         if b["id"] == "resto-al-sud-2":
             lead_html = e(lead).replace(
                 "Autoimpiego Centro-Nord",
@@ -3540,6 +3705,14 @@ def build(today=None):
             )
         else:
             lead_html = e(lead)
+        if b.get("scadenza") and e(quando) in lead_html:
+            lead_attr = f' data-deadline="{e(b["scadenza"])}"'
+            if b.get("apertura"):
+                lead_attr += f' data-apre="{e(b["apertura"])}"'
+            lead_html = lead_html.replace(e(quando), f"<span{lead_attr}>{e(quando)}</span>", 1)
+        scheda_attr = f' data-scadenza="{e(b["scadenza"])}"' if b.get("scadenza") else ""
+        if b.get("apertura"):
+            scheda_attr += f' data-apre="{e(b["apertura"])}"'
         chiuso = ""
         if b["scaduto"]:
             chiuso = "<p>Questo bando è chiuso. Più sotto, i bandi collegati sono misure aperte simili.</p>"
@@ -3547,7 +3720,7 @@ def build(today=None):
         faq_block = faq_html(faq_html_pairs, raw=True) if faq_html_pairs else ""
         body = (
             crumbs([("index.html", "Bandi"), (area_href, area_label), ("", nome)], "../")
-            + f'<article class="box">{badge(b, today)}<div class="tags">{tags}</div><h1>{e(nome)}</h1>'
+            + f'<article class="box"{scheda_attr}>{badge(b, today)}<div class="tags">{tags}</div><h1>{e(nome)}</h1>'
             + chiuso
             + avviso_fondi(b, con_link=True)
             + "<dl class=\"kv\">"
@@ -3712,6 +3885,8 @@ def build(today=None):
         SEO_LASTMOD, "weekly", "0.8",
     )
     for path, title, desc, h1, body, faq in corpo_guide(bandi):
+        if "data-scadenza" in body:
+            body += BADGE_JS
         emit(
             path,
             page(path, title, desc, body, ld=ld_guida(path, title, h1, faq), title_as_is=True),
