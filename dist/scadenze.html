@@ -30,6 +30,7 @@
 <link rel="icon" href="favicon-16.png" type="image/png" sizes="16x16">
 <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180">
 <link rel="icon" href="favicon-512.png" type="image/png" sizes="512x512">
+<link rel="icon" href="favicon.ico" type="image/x-icon" sizes="any">
 <link rel="stylesheet" href="style.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "WebPage", "name": "Calendario delle scadenze dei bandi", "url": "https://incentiviperte.github.io/scadenze", "inLanguage": "it-IT", "publisher": {"@type": "Organization", "name": "IncentiviPerTe", "url": "https://incentiviperte.github.io/", "sameAs": ["https://www.linkedin.com/company/incentiviperte/"], "logo": "https://incentiviperte.github.io/favicon-512.png"}}, {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://incentiviperte.github.io/"}, {"@type": "ListItem", "position": 2, "name": "Scadenze", "item": "https://incentiviperte.github.io/scadenze"}]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Ci sono anche i bandi scaduti?", "acceptedAnswer": {"@type": "Answer", "text": "No. L'elenco e il file del calendario contengono solo le scadenze non ancora passate. Uno sportello aperto senza una data non compare."}}, {"@type": "Question", "name": "Le date si aggiornano da sole?", "acceptedAnswer": {"@type": "Answer", "text": "Con l'abbonamento webcal il programma di calendario rilegge il file. Controlla sempre la scheda e il testo ufficiale: una scadenza può cambiare o le risorse possono esaurirsi."}}]}]}</script>
 </head>
@@ -50,12 +51,187 @@
 <div><label for="regione-scadenze">Regione</label>
 <select id="regione-scadenze" name="regione"><option value="">Tutte le regioni</option><option value="Nazionale">Nazionali</option><option value="Toscana">Toscana</option><option value="Umbria">Umbria</option><option value="Emilia-Romagna">Emilia-Romagna</option></select></div>
 </form>
-<p class="count" id="n-scadenze" aria-live="polite">44 scadenze</p>
+<p class="count" id="n-scadenze" aria-live="polite">43 scadenze</p>
 <p id="nessuna-scadenza" class="note" hidden>Nessuna scadenza in questa regione.</p>
-<ol class="scadenze" id="elenco-scadenze"><li data-reg="Toscana"><time datetime="2026-10-26">26/10/2026</time><a href="/bando/cciaa-tno-doppia-transizione-2-2026">Voucher Doppia Transizione – II edizione 2026 (Lucca, Massa-Carrara, Pisa)</a><span>Toscana</span><small>Dalle 10:00 del 20/10/2026 alle 18:00 del 26/10/2026 (piattaforma ReStart)</small></li><li data-reg="Umbria"><time datetime="2026-10-27">27/10/2026</time><a href="/bando/umbria-feampa-indennizzo-pesca-acquacoltura-2026">FEAMPA – Indennizzo per la pesca nelle acque interne e l&#x27;acquacoltura (Intervento 222507)</a><span>Umbria</span><small>Domande via PEC dal 07/10/2026 al 27/10/2026 (20 giorni dalla pubblicazione sul BUR n. 47)</small></li><li data-reg="Toscana"><time datetime="2026-10-28">28/10/2026</time><a href="/bando/premio-innovazione-toscana-2026">Premio Innovazione Toscana 2026: premi per PMI e startup</a><span>Toscana</span><small>28/10/2026 ore 16:00</small></li><li data-reg="Emilia-Romagna"><time datetime="2026-10-30">30/10/2026</time><a href="/bando/trasferimento-tecnologico-er-2026">Bando progetti di trasferimento tecnologico delle PMI</a><span>Emilia-Romagna</span><small>Dal 24/09 al 30/10/2026 (piattaforma Sfinge 2020)</small></li><li data-reg="Umbria"><time datetime="2026-10-30">30/10/2026</time><a href="/bando/umbria-poli-innovazione-2026">Avviso Poli di Innovazione 2026</a><span>Umbria</span><small>La scheda del portale regionale indica domande dal 21/10 al 30/10/2026; l&#x27;avviso aggiornato dopo la proroga (09/10/2026) indica invio via PEC fino alle 12:00 del 30/11/2026: termine da verificare</small></li><li data-reg="Toscana"><time datetime="2026-10-31">31/10/2026</time><a href="/bando/cciaa-tno-competenze-trasversali-2026">Bando per percorsi per le competenze trasversali e per l&#x27;orientamento (PCTO) – 2026</a><span>Toscana</span><small>Dalle 14:00 del 02/03/2026 alle 18:00 del 31/10/2026, salvo chiusura anticipata per esaurimento risorse (ReStart)</small></li><li data-reg="Emilia-Romagna"><time datetime="2026-11-04">04/11/2026</time><a href="/bando/cciaa-bologna-finanza-innovativa-2026">Contributi per attivare strumenti di finanza innovativa – 2026</a><span>Emilia-Romagna</span><small>Dalle 11:00 del 13/10 alle 13:00 del 04/11/2026 (piattaforma ReStart)</small></li><li data-reg="Toscana"><time datetime="2026-11-06">06/11/2026</time><a href="/bando/cciaa-maremma-tirreno-frihub-2026">Voucher per la partecipazione delle MPMI al progetto FRIHUB</a><span>Toscana</span><small>Domande dal 03/08/2026, prorogate al 06/11/2026 (determinazione n. 384 del 16/10/2026): registrazione sulla piattaforma del progetto e invio via PEC</small></li><li data-reg="Toscana"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-agricoltura-green-2026">Bando Agricoltura green – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 9:00 del 09/04/2026 alle 23:59 del 10/11/2026, salvo chiusura anticipata (ReStart); risorse impegnate secondo la scheda di avanzamento del 01/09/2026</small></li><li data-reg="Toscana"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-certificazioni-qualita-2026">Bando certificazioni di qualità – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 9:00 del 25/03/2026 alle 23:59 del 10/11/2026, salvo esaurimento risorse (ReStart)</small></li><li data-reg="Toscana"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-creazione-impresa-2026">Bando a sostegno della creazione d&#x27;impresa – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 10:00 del 25/03/2026 alle 23:59 del 10/11/2026 su ReStart, salvo esaurimento risorse</small></li><li data-reg="Toscana"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-doppia-transizione-2026">Bando Doppia Transizione: digitale e sostenibile – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 12:00 dell&#x27;08/07/2026 alle 23:59 del 10/11/2026, secondo il testo rifinanziato, salvo esaurimento risorse (ReStart)</small></li><li data-reg="Toscana"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-imprese-vicinato-2026">Bando a sostegno delle imprese di vicinato – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 11:00 del 25/03/2026 alle 23:59 del 10/11/2026 su ReStart, salvo esaurimento risorse. Al 21/10/2026 le risorse disponibili sono 0,00 €</small></li><li data-reg="Toscana"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-internazionalizzazione-2026">Bando a sostegno dell&#x27;internazionalizzazione delle imprese – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 11:00 del 07/05/2026 alle 23:59 del 10/11/2026 su ReStart, salvo esaurimento risorse. La scheda del 02/09/2026 indica una disponibilità di −18.481,60 €</small></li><li data-reg="Toscana"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-societa-benefit-2026">Bando a sostegno della creazione di società benefit – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 9:00 del 03/03/2026 alle 23:59 del 10/11/2026, salvo esaurimento risorse (ReStart)</small></li><li data-reg="Toscana"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-turismo-sostenibile-2026">Transizione sostenibile delle imprese turistiche – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Domande su ReStart dalle 12:00 del 25/03/2026 fino alle 23:59 del 10/11/2026, salvo esaurimento risorse</small></li><li data-reg="Emilia-Romagna"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-romagna-antirapina-2026">Contributi per sistemi di sicurezza antirapina – 2026 (Forlì-Cesena e Rimini)</a><span>Emilia-Romagna</span><small>Dalle 10:00 del 02/09/2026 alle 13:00 del 10/11/2026, salvo esaurimento fondi (ReStart)</small></li><li data-reg="Toscana"><time datetime="2026-11-12">12/11/2026</time><a href="/bando/cciaa-pistoia-prato-formazione-lavoro-2026">Contributi per la Formazione Scuola Lavoro e la certificazione delle competenze – 2026</a><span>Toscana</span><small>Dalle 18:00 del 19/10/2026 alle 23:59 del 12/11/2026, via PEC, in ordine cronologico</small></li><li data-reg="Toscana"><time datetime="2026-11-16">16/11/2026</time><a href="/bando/bando-neve-funzionamento-toscana-2026">Bando Neve: spese di funzionamento 2026</a><span>Toscana</span><small>16/11/2026 ore 16:00 (domande dal 19/10/2026 ore 10:00)</small></li><li data-reg="Emilia-Romagna"><time datetime="2026-11-16">16/11/2026</time><a href="/bando/fotovoltaico-pensiline-er-2026">Supporto all&#x27;utilizzo di fonti rinnovabili nelle imprese (fotovoltaico su pensiline)</a><span>Emilia-Romagna</span><small>Dalle 10:00 del 30/09 alle 13:00 del 16/11/2026 (piattaforma Sfinge 2020)</small></li><li data-reg="Emilia-Romagna"><time datetime="2026-11-20">20/11/2026</time><a href="/bando/ferrara-locali-sfitti-centro-storico">Nuove attività nei locali commerciali sfitti del centro storico di Ferrara</a><span>Emilia-Romagna</span><small>Termine prorogato alle 12:00 del 20/11/2026</small></li><li data-reg="Toscana"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/cciaa-arezzo-siena-certificazioni-2026">Contributi per la certificazione della parità di genere e altre certificazioni – 2026</a><span>Toscana</span><small>Dalle 10:00 del 15/10/2026 al 30/11/2026, domanda via PEC</small></li><li data-reg="Emilia-Romagna"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/cciaa-modena-fondo-sicurezza-2026">Fondo per la Sicurezza – 2026</a><span>Emilia-Romagna</span><small>Dalle 14:00 del 02/02/2026 alle 20:00 del 30/11/2026 (ReStart)</small></li><li data-reg="Emilia-Romagna"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/cciaa-modena-occupazione-giovanile-2026">Bando a sostegno dell&#x27;occupazione giovanile – 2026 (codice 26OC)</a><span>Emilia-Romagna</span><small>Apre il 02/11/2026. Dalle 10:00 del 02/11/2026 alle 18:00 del 30/11/2026 (ReStart, codice 26OC); precompilazione dal 26/10/2026</small></li><li data-reg="Emilia-Romagna"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/fondo-greener-er-2026">Fondo Multiscopo – sezione GreenER (finestra ott.-nov. 2026)</a><span>Emilia-Romagna</span><small>Dal 12/10 al 30/11/2026, salvo esaurimento risorse</small></li><li data-reg="Emilia-Romagna"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/fondo-starter-er-2026">Fondo Multiscopo – sezione StartER (finestra ott.-nov. 2026)</a><span>Emilia-Romagna</span><small>Dalle 11:00 del 12/10 alle 16:00 del 30/11/2026, salvo esaurimento fondi</small></li><li data-reg="Umbria"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/step-2026-sovvenzione-umbria">Avviso STEP 2026 – Linea a sovvenzione</a><span>Umbria</span><small>Dal 01/10/2026 ore 10:00 al 30/11/2026 ore 12:00 (graduatoria di merito)</small></li><li data-reg="Umbria"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/step-2026-umbria">Avviso STEP 2026</a><span>Umbria</span><small>30/11/2026 ore 12:00</small></li><li data-reg="Emilia-Romagna"><time datetime="2026-12-15">15/12/2026</time><a href="/bando/assunzioni-montagna-er-2026">Contributi all&#x27;assunzione nei territori montani e nelle aree interne</a><span>Emilia-Romagna</span><small>Dal 12/10 al 15/12/2026 ore 14:00, salvo esaurimento risorse</small></li><li data-reg="Toscana"><time datetime="2026-12-15">15/12/2026</time><a href="/bando/cciaa-arezzo-siena-export-2026-arezzo">Bando Export 2026 – provincia di Arezzo</a><span>Toscana</span><small>Domande via PEC dal 12/03/2026 al 15/12/2026, in ordine cronologico fino a esaurimento risorse</small></li><li data-reg="Toscana"><time datetime="2026-12-15">15/12/2026</time><a href="/bando/cciaa-arezzo-siena-export-2026-siena">Bando Export 2026 – provincia di Siena</a><span>Toscana</span><small>Domande via PEC dal 12/03/2026 al 15/12/2026, in ordine cronologico fino a esaurimento risorse</small></li><li data-reg="Toscana"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/cciaa-firenze-nuove-imprese-2026">Contributi alle nuove imprese della città metropolitana di Firenze – 2026</a><span>Toscana</span><small>Domande su ReStart dalle 15:00 del 14/09/2026 alle 16:00 del 31/12/2026, salvo esaurimento fondi</small></li><li data-reg="Toscana"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/cciaa-firenze-sicurezza-sedi-2026">Sicurezza delle sedi aziendali – 2026 (città metropolitana di Firenze)</a><span>Toscana</span><small>Dalle 12:00 del 09/04/2026 alle 16:00 del 31/12/2026, salvo esaurimento fondi (piattaforma ReStart)</small></li><li data-reg="Toscana"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/cciaa-firenze-turismo-sostenibile-2026">Transizione sostenibile delle MPMI turistiche della città metropolitana di Firenze – 2026</a><span>Toscana</span><small>Dal 23/06/2026 alle 16:00 del 31/12/2026, salvo esaurimento fondi (piattaforma ReStart)</small></li><li data-reg="Umbria"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/efficienza-energetica-2026-umbria">Bando Efficienza Energetica 2026</a><span>Umbria</span><small>31/12/2026 ore 12:00 (salvo proroghe)</small></li><li data-reg="Umbria"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/fonti-rinnovabili-2026-umbria">Bando Fonti Rinnovabili 2026</a><span>Umbria</span><small>31/12/2026 ore 12:00 (salvo proroghe)</small></li><li data-reg="Toscana"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/igp-artigianato-toscana-2026">Registrazione IGP di prodotti artigianali e industriali</a><span>Toscana</span><small>A sportello dal 20/07/2026 fino a esaurimento risorse, comunque entro il 31/12/2026</small></li><li data-reg="Emilia-Romagna"><time datetime="2027-01-20">20/01/2027</time><a href="/bando/cciaa-romagna-fondo-energia-2026">Intervento straordinario Fondo Energia Imprese – 2026 (Forlì-Cesena e Rimini)</a><span>Emilia-Romagna</span><small>Per finanziamenti erogati dal 01/01 al 31/12/2026; richieste tramite il Confidi entro il 20/01/2027</small></li><li data-reg="Emilia-Romagna"><time datetime="2027-01-22">22/01/2027</time><a href="/bando/cciaa-ferrara-ravenna-competitivita-imprese-giovanili-2026">Piano Giovani: competitività delle imprese giovanili – 2026 (Ferrara e Ravenna)</a><span>Emilia-Romagna</span><small>Dalle 10:00 del 26/05/2026 alle 12:00 del 22/01/2027, salvo esaurimento risorse (ordine cronologico)</small></li><li data-reg="Emilia-Romagna"><time datetime="2027-01-22">22/01/2027</time><a href="/bando/cciaa-ferrara-ravenna-creazione-imprese-giovanili-2026">Piano Giovani: creazione di imprese giovanili – 2026 (Ferrara e Ravenna)</a><span>Emilia-Romagna</span><small>Dalle 10:00 del 19/05/2026 alle 12:00 del 22/01/2027, salvo esaurimento risorse (ordine cronologico)</small></li><li data-reg="Emilia-Romagna"><time datetime="2027-01-30">30/01/2027</time><a href="/bando/cciaa-emilia-credito-confidi-2026">Bando a sostegno dell&#x27;accesso al credito tramite i Confidi – CF26 (Parma, Piacenza, Reggio Emilia)</a><span>Emilia-Romagna</span><small>Dalle 10:00 del 06/10/2026 alle 16:00 del 30/01/2027; la domanda la invia il Confidi (ReStart)</small></li><li data-reg="Emilia-Romagna"><time datetime="2027-03-31">31/03/2027</time><a href="/bando/cciaa-ferrara-ravenna-credito-confidi-2026">Bando a sostegno dell&#x27;accesso al credito tramite i Confidi – 26CF (Ferrara e Ravenna)</a><span>Emilia-Romagna</span><small>Dalle 10:00 dell&#x27;11/09/2026 alle 12:00 del 31/03/2027; la domanda la invia il Confidi (ReStart), entro 5 mesi dall&#x27;erogazione</small></li><li data-reg="Emilia-Romagna"><time datetime="2027-03-31">31/03/2027</time><a href="/bando/eureca-er-tutti-settori-2026">EuReCa – contributo in conto interessi per gli investimenti delle PMI (tutti i settori)</a><span>Emilia-Romagna</span><small>Apre il 02/12/2026. Domande dal 02/12/2026 al 31/03/2027 tramite un Confidi aderente all&#x27;ATI EuReCa</small></li><li data-reg="Toscana"><time datetime="2027-05-17">17/05/2027</time><a href="/bando/toscana-disabilita-assunzioni-2026-2027">Fondo regionale per l&#x27;occupazione delle persone con disabilità 2026/2027 – contributi ai datori di lavoro privati</a><span>Toscana</span><small>Domande dal 15/10/2026, con tre scadenze: 16/11/2026, 28/02/2027 e 17/05/2027 (ore 23:59), via PEC al Settore Servizi per il Lavoro competente</small></li></ol>
+<ol class="scadenze" id="elenco-scadenze"><li data-reg="Umbria" data-scadenza="2026-10-27"><time datetime="2026-10-27">27/10/2026</time><a href="/bando/umbria-feampa-indennizzo-pesca-acquacoltura-2026">FEAMPA – Indennizzo per la pesca nelle acque interne e l&#x27;acquacoltura (Intervento 222507)</a><span>Umbria</span><small>Domande via PEC dal 07/10/2026 al 27/10/2026 (20 giorni dalla pubblicazione sul BUR n. 47)</small></li><li data-reg="Toscana" data-scadenza="2026-10-28"><time datetime="2026-10-28">28/10/2026</time><a href="/bando/premio-innovazione-toscana-2026">Premio Innovazione Toscana 2026: premi per PMI e startup</a><span>Toscana</span><small>28/10/2026 ore 16:00</small></li><li data-reg="Emilia-Romagna" data-scadenza="2026-10-30"><time datetime="2026-10-30">30/10/2026</time><a href="/bando/trasferimento-tecnologico-er-2026">Bando progetti di trasferimento tecnologico delle PMI</a><span>Emilia-Romagna</span><small>Dal 24/09 al 30/10/2026 (piattaforma Sfinge 2020)</small></li><li data-reg="Umbria" data-scadenza="2026-10-30"><time datetime="2026-10-30">30/10/2026</time><a href="/bando/umbria-poli-innovazione-2026">Avviso Poli di Innovazione 2026</a><span>Umbria</span><small>La scheda del portale regionale indica domande dal 21/10 al 30/10/2026; l&#x27;avviso aggiornato dopo la proroga (09/10/2026) indica invio via PEC fino alle 12:00 del 30/11/2026: termine da verificare</small></li><li data-reg="Toscana" data-scadenza="2026-10-31"><time datetime="2026-10-31">31/10/2026</time><a href="/bando/cciaa-tno-competenze-trasversali-2026">Bando per percorsi per le competenze trasversali e per l&#x27;orientamento (PCTO) – 2026</a><span>Toscana</span><small>Dalle 14:00 del 02/03/2026 alle 18:00 del 31/10/2026, salvo chiusura anticipata per esaurimento risorse (ReStart)</small></li><li data-reg="Emilia-Romagna" data-scadenza="2026-11-04"><time datetime="2026-11-04">04/11/2026</time><a href="/bando/cciaa-bologna-finanza-innovativa-2026">Contributi per attivare strumenti di finanza innovativa – 2026</a><span>Emilia-Romagna</span><small>Dalle 11:00 del 13/10 alle 13:00 del 04/11/2026 (piattaforma ReStart)</small></li><li data-reg="Toscana" data-scadenza="2026-11-06"><time datetime="2026-11-06">06/11/2026</time><a href="/bando/cciaa-maremma-tirreno-frihub-2026">Voucher per la partecipazione delle MPMI al progetto FRIHUB</a><span>Toscana</span><small>Domande dal 03/08/2026, prorogate al 06/11/2026 (determinazione n. 384 del 16/10/2026): registrazione sulla piattaforma del progetto e invio via PEC</small></li><li data-reg="Toscana" data-scadenza="2026-11-10"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-agricoltura-green-2026">Bando Agricoltura green – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 9:00 del 09/04/2026 alle 23:59 del 10/11/2026, salvo chiusura anticipata (ReStart); risorse impegnate secondo la scheda di avanzamento del 01/09/2026</small></li><li data-reg="Toscana" data-scadenza="2026-11-10"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-certificazioni-qualita-2026">Bando certificazioni di qualità – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 9:00 del 25/03/2026 alle 23:59 del 10/11/2026, salvo esaurimento risorse (ReStart)</small></li><li data-reg="Toscana" data-scadenza="2026-11-10"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-creazione-impresa-2026">Bando a sostegno della creazione d&#x27;impresa – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 10:00 del 25/03/2026 alle 23:59 del 10/11/2026 su ReStart, salvo esaurimento risorse</small></li><li data-reg="Toscana" data-scadenza="2026-11-10"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-doppia-transizione-2026">Bando Doppia Transizione: digitale e sostenibile – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 12:00 dell&#x27;08/07/2026 alle 23:59 del 10/11/2026, secondo il testo rifinanziato, salvo esaurimento risorse (ReStart)</small></li><li data-reg="Toscana" data-scadenza="2026-11-10"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-imprese-vicinato-2026">Bando a sostegno delle imprese di vicinato – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 11:00 del 25/03/2026 alle 23:59 del 10/11/2026 su ReStart, salvo esaurimento risorse. Al 21/10/2026 le risorse disponibili sono 0,00 €</small></li><li data-reg="Toscana" data-scadenza="2026-11-10"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-internazionalizzazione-2026">Bando a sostegno dell&#x27;internazionalizzazione delle imprese – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 11:00 del 07/05/2026 alle 23:59 del 10/11/2026 su ReStart, salvo esaurimento risorse. La scheda del 02/09/2026 indica una disponibilità di −18.481,60 €</small></li><li data-reg="Toscana" data-scadenza="2026-11-10"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-societa-benefit-2026">Bando a sostegno della creazione di società benefit – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Dalle 9:00 del 03/03/2026 alle 23:59 del 10/11/2026, salvo esaurimento risorse (ReStart)</small></li><li data-reg="Toscana" data-scadenza="2026-11-10"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-maremma-tirreno-turismo-sostenibile-2026">Transizione sostenibile delle imprese turistiche – 2026 (Livorno e Grosseto)</a><span>Toscana</span><small>Domande su ReStart dalle 12:00 del 25/03/2026 fino alle 23:59 del 10/11/2026, salvo esaurimento risorse</small></li><li data-reg="Emilia-Romagna" data-scadenza="2026-11-10"><time datetime="2026-11-10">10/11/2026</time><a href="/bando/cciaa-romagna-antirapina-2026">Contributi per sistemi di sicurezza antirapina – 2026 (Forlì-Cesena e Rimini)</a><span>Emilia-Romagna</span><small>Dalle 10:00 del 02/09/2026 alle 13:00 del 10/11/2026, salvo esaurimento fondi (ReStart)</small></li><li data-reg="Toscana" data-scadenza="2026-11-12"><time datetime="2026-11-12">12/11/2026</time><a href="/bando/cciaa-pistoia-prato-formazione-lavoro-2026">Contributi per la Formazione Scuola Lavoro e la certificazione delle competenze – 2026</a><span>Toscana</span><small>Dalle 18:00 del 19/10/2026 alle 23:59 del 12/11/2026, via PEC, in ordine cronologico</small></li><li data-reg="Toscana" data-scadenza="2026-11-16"><time datetime="2026-11-16">16/11/2026</time><a href="/bando/bando-neve-funzionamento-toscana-2026">Bando Neve: spese di funzionamento 2026</a><span>Toscana</span><small>16/11/2026 ore 16:00 (domande dal 19/10/2026 ore 10:00)</small></li><li data-reg="Emilia-Romagna" data-scadenza="2026-11-16"><time datetime="2026-11-16">16/11/2026</time><a href="/bando/fotovoltaico-pensiline-er-2026">Supporto all&#x27;utilizzo di fonti rinnovabili nelle imprese (fotovoltaico su pensiline)</a><span>Emilia-Romagna</span><small>Dalle 10:00 del 30/09 alle 13:00 del 16/11/2026 (piattaforma Sfinge 2020)</small></li><li data-reg="Emilia-Romagna" data-scadenza="2026-11-20"><time datetime="2026-11-20">20/11/2026</time><a href="/bando/ferrara-locali-sfitti-centro-storico">Nuove attività nei locali commerciali sfitti del centro storico di Ferrara</a><span>Emilia-Romagna</span><small>Termine prorogato alle 12:00 del 20/11/2026</small></li><li data-reg="Toscana" data-scadenza="2026-11-30"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/cciaa-arezzo-siena-certificazioni-2026">Contributi per la certificazione della parità di genere e altre certificazioni – 2026</a><span>Toscana</span><small>Dalle 10:00 del 15/10/2026 al 30/11/2026, domanda via PEC</small></li><li data-reg="Emilia-Romagna" data-scadenza="2026-11-30"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/cciaa-modena-fondo-sicurezza-2026">Fondo per la Sicurezza – 2026</a><span>Emilia-Romagna</span><small>Dalle 14:00 del 02/02/2026 alle 20:00 del 30/11/2026 (ReStart)</small></li><li data-reg="Emilia-Romagna" data-scadenza="2026-11-30"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/cciaa-modena-occupazione-giovanile-2026">Bando a sostegno dell&#x27;occupazione giovanile – 2026 (codice 26OC)</a><span>Emilia-Romagna</span><small>Apre il 02/11/2026. Dalle 10:00 del 02/11/2026 alle 18:00 del 30/11/2026 (ReStart, codice 26OC); precompilazione dal 26/10/2026</small></li><li data-reg="Emilia-Romagna" data-scadenza="2026-11-30"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/fondo-greener-er-2026">Fondo Multiscopo – sezione GreenER (finestra ott.-nov. 2026)</a><span>Emilia-Romagna</span><small>Dal 12/10 al 30/11/2026, salvo esaurimento risorse</small></li><li data-reg="Emilia-Romagna" data-scadenza="2026-11-30"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/fondo-starter-er-2026">Fondo Multiscopo – sezione StartER (finestra ott.-nov. 2026)</a><span>Emilia-Romagna</span><small>Dalle 11:00 del 12/10 alle 16:00 del 30/11/2026, salvo esaurimento fondi</small></li><li data-reg="Umbria" data-scadenza="2026-11-30"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/step-2026-sovvenzione-umbria">Avviso STEP 2026 – Linea a sovvenzione</a><span>Umbria</span><small>Dal 01/10/2026 ore 10:00 al 30/11/2026 ore 12:00 (graduatoria di merito)</small></li><li data-reg="Umbria" data-scadenza="2026-11-30"><time datetime="2026-11-30">30/11/2026</time><a href="/bando/step-2026-umbria">Avviso STEP 2026</a><span>Umbria</span><small>30/11/2026 ore 12:00</small></li><li data-reg="Emilia-Romagna" data-scadenza="2026-12-15"><time datetime="2026-12-15">15/12/2026</time><a href="/bando/assunzioni-montagna-er-2026">Contributi all&#x27;assunzione nei territori montani e nelle aree interne</a><span>Emilia-Romagna</span><small>Dal 12/10 al 15/12/2026 ore 14:00, salvo esaurimento risorse</small></li><li data-reg="Toscana" data-scadenza="2026-12-15"><time datetime="2026-12-15">15/12/2026</time><a href="/bando/cciaa-arezzo-siena-export-2026-arezzo">Bando Export 2026 – provincia di Arezzo</a><span>Toscana</span><small>Domande via PEC dal 12/03/2026 al 15/12/2026, in ordine cronologico fino a esaurimento risorse</small></li><li data-reg="Toscana" data-scadenza="2026-12-15"><time datetime="2026-12-15">15/12/2026</time><a href="/bando/cciaa-arezzo-siena-export-2026-siena">Bando Export 2026 – provincia di Siena</a><span>Toscana</span><small>Domande via PEC dal 12/03/2026 al 15/12/2026, in ordine cronologico fino a esaurimento risorse</small></li><li data-reg="Toscana" data-scadenza="2026-12-31"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/cciaa-firenze-nuove-imprese-2026">Contributi alle nuove imprese della città metropolitana di Firenze – 2026</a><span>Toscana</span><small>Domande su ReStart dalle 15:00 del 14/09/2026 alle 16:00 del 31/12/2026, salvo esaurimento fondi</small></li><li data-reg="Toscana" data-scadenza="2026-12-31"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/cciaa-firenze-sicurezza-sedi-2026">Sicurezza delle sedi aziendali – 2026 (città metropolitana di Firenze)</a><span>Toscana</span><small>Dalle 12:00 del 09/04/2026 alle 16:00 del 31/12/2026, salvo esaurimento fondi (piattaforma ReStart)</small></li><li data-reg="Toscana" data-scadenza="2026-12-31"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/cciaa-firenze-turismo-sostenibile-2026">Transizione sostenibile delle MPMI turistiche della città metropolitana di Firenze – 2026</a><span>Toscana</span><small>Dal 23/06/2026 alle 16:00 del 31/12/2026, salvo esaurimento fondi (piattaforma ReStart)</small></li><li data-reg="Umbria" data-scadenza="2026-12-31"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/efficienza-energetica-2026-umbria">Bando Efficienza Energetica 2026</a><span>Umbria</span><small>31/12/2026 ore 12:00 (salvo proroghe)</small></li><li data-reg="Umbria" data-scadenza="2026-12-31"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/fonti-rinnovabili-2026-umbria">Bando Fonti Rinnovabili 2026</a><span>Umbria</span><small>31/12/2026 ore 12:00 (salvo proroghe)</small></li><li data-reg="Toscana" data-scadenza="2026-12-31"><time datetime="2026-12-31">31/12/2026</time><a href="/bando/igp-artigianato-toscana-2026">Registrazione IGP di prodotti artigianali e industriali</a><span>Toscana</span><small>A sportello dal 20/07/2026 fino a esaurimento risorse, comunque entro il 31/12/2026</small></li><li data-reg="Emilia-Romagna" data-scadenza="2027-01-20"><time datetime="2027-01-20">20/01/2027</time><a href="/bando/cciaa-romagna-fondo-energia-2026">Intervento straordinario Fondo Energia Imprese – 2026 (Forlì-Cesena e Rimini)</a><span>Emilia-Romagna</span><small>Per finanziamenti erogati dal 01/01 al 31/12/2026; richieste tramite il Confidi entro il 20/01/2027</small></li><li data-reg="Emilia-Romagna" data-scadenza="2027-01-22"><time datetime="2027-01-22">22/01/2027</time><a href="/bando/cciaa-ferrara-ravenna-competitivita-imprese-giovanili-2026">Piano Giovani: competitività delle imprese giovanili – 2026 (Ferrara e Ravenna)</a><span>Emilia-Romagna</span><small>Dalle 10:00 del 26/05/2026 alle 12:00 del 22/01/2027, salvo esaurimento risorse (ordine cronologico)</small></li><li data-reg="Emilia-Romagna" data-scadenza="2027-01-22"><time datetime="2027-01-22">22/01/2027</time><a href="/bando/cciaa-ferrara-ravenna-creazione-imprese-giovanili-2026">Piano Giovani: creazione di imprese giovanili – 2026 (Ferrara e Ravenna)</a><span>Emilia-Romagna</span><small>Dalle 10:00 del 19/05/2026 alle 12:00 del 22/01/2027, salvo esaurimento risorse (ordine cronologico)</small></li><li data-reg="Emilia-Romagna" data-scadenza="2027-01-30"><time datetime="2027-01-30">30/01/2027</time><a href="/bando/cciaa-emilia-credito-confidi-2026">Bando a sostegno dell&#x27;accesso al credito tramite i Confidi – CF26 (Parma, Piacenza, Reggio Emilia)</a><span>Emilia-Romagna</span><small>Dalle 10:00 del 06/10/2026 alle 16:00 del 30/01/2027; la domanda la invia il Confidi (ReStart)</small></li><li data-reg="Emilia-Romagna" data-scadenza="2027-03-31"><time datetime="2027-03-31">31/03/2027</time><a href="/bando/cciaa-ferrara-ravenna-credito-confidi-2026">Bando a sostegno dell&#x27;accesso al credito tramite i Confidi – 26CF (Ferrara e Ravenna)</a><span>Emilia-Romagna</span><small>Dalle 10:00 dell&#x27;11/09/2026 alle 12:00 del 31/03/2027; la domanda la invia il Confidi (ReStart), entro 5 mesi dall&#x27;erogazione</small></li><li data-reg="Emilia-Romagna" data-scadenza="2027-03-31"><time datetime="2027-03-31">31/03/2027</time><a href="/bando/eureca-er-tutti-settori-2026">EuReCa – contributo in conto interessi per gli investimenti delle PMI (tutti i settori)</a><span>Emilia-Romagna</span><small>Apre il 02/12/2026. Domande dal 02/12/2026 al 31/03/2027 tramite un Confidi aderente all&#x27;ATI EuReCa</small></li><li data-reg="Toscana" data-scadenza="2027-05-17"><time datetime="2027-05-17">17/05/2027</time><a href="/bando/toscana-disabilita-assunzioni-2026-2027">Fondo regionale per l&#x27;occupazione delle persone con disabilità 2026/2027 – contributi ai datori di lavoro privati</a><span>Toscana</span><small>Domande dal 15/10/2026, con tre scadenze: 16/11/2026, 28/02/2027 e 17/05/2027 (ore 23:59), via PEC al Settore Servizi per il Lavoro competente</small></li></ol>
 <noscript><p class="note">Senza JavaScript restano visibili tutte le scadenze. Il filtro per regione gira solo sul tuo dispositivo e non invia dati.</p></noscript>
 </div>
 <section class="faq" aria-labelledby="faq-title"><h2 id="faq-title">Domande frequenti</h2><details><summary>Ci sono anche i bandi scaduti?</summary><p>No. L&#x27;elenco e il file del calendario contengono solo le scadenze non ancora passate. Uno sportello aperto senza una data non compare.</p></details><details><summary>Le date si aggiornano da sole?</summary><p>Con l&#x27;abbonamento webcal il programma di calendario rilegge il file. Controlla sempre la scheda e il testo ufficiale: una scadenza può cambiare o le risorse possono esaurirsi.</p></details></section>
+<script>
+(function () {
+  function startOfToday() {
+    var override = (typeof window !== "undefined" && window.INCENTIVI_OGGI) ? String(window.INCENTIVI_OGGI) : "";
+    var match = /^(\d{4})-(\d{2})-(\d{2})/.exec(override);
+    if (match) return new Date(+match[1], +match[2] - 1, +match[3]);
+    try {
+      var fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Europe/Rome",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+      var parts = fmt.formatToParts(new Date());
+      var y = 0, m = 0, d = 0;
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i].type === "year") y = +parts[i].value;
+        else if (parts[i].type === "month") m = +parts[i].value;
+        else if (parts[i].type === "day") d = +parts[i].value;
+      }
+      if (y && m && d) return new Date(y, m - 1, d);
+    } catch (err) {}
+    var now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }
+  function parts(iso) {
+    var p = (iso || "").split("-");
+    if (p.length !== 3 || p[0].length !== 4) return null;
+    if (isNaN(+p[0]) || isNaN(+p[1]) || isNaN(+p[2])) return null;
+    return p;
+  }
+  function daysLeft(iso, start) {
+    var p = parts(iso);
+    if (!p) return null;
+    var target = new Date(+p[0], +p[1] - 1, +p[2]);
+    return Math.round((target - start) / 864e5);
+  }
+  function itDate(p) {
+    var d = p[2].length < 2 ? "0" + p[2] : p[2];
+    var m = p[1].length < 2 ? "0" + p[1] : p[1];
+    return d + "/" + m + "/" + p[0];
+  }
+  var start = startOfToday();
+  var nodes = document.querySelectorAll(".badge[data-scadenza], .badge[data-apre]");
+  for (var i = 0; i < nodes.length; i++) {
+    var el = nodes[i];
+    var card = el.closest("article");
+    var apre = el.getAttribute("data-apre") || (card && card.getAttribute("data-apre")) || "";
+    var pOpen = parts(apre);
+    el.classList.remove("soon", "exp", "open");
+    if (pOpen && daysLeft(apre, start) > 0) {
+      el.textContent = "Apre il " + itDate(pOpen);
+      el.classList.add("open");
+      if (card) card.setAttribute("data-scaduto", "0");
+      continue;
+    }
+    var iso = el.getAttribute("data-scadenza") || "";
+    var p = parts(iso);
+    if (!p) {
+      el.textContent = "Sportello aperto";
+      el.classList.add("open");
+      if (card) card.setAttribute("data-scaduto", "0");
+      continue;
+    }
+    var left = daysLeft(iso, start);
+    if (left < 0) {
+      el.textContent = "Scaduto";
+      el.classList.add("exp");
+      if (card) {
+        card.setAttribute("data-scaduto", "1");
+        var cardCls = card.getAttribute("class") || "";
+        if (cardCls.indexOf("card") !== -1) {
+          var parent = card.parentNode;
+          var mostra = parent && parent.getAttribute && parent.getAttribute("data-mostra-scaduti") === "1";
+          if (mostra) {
+            if (parent.appendChild) parent.appendChild(card);
+          } else card.hidden = true;
+        }
+      }
+    } else if (left === 0) {
+      el.textContent = "Scade oggi";
+      el.classList.add("soon");
+    } else if (left === 1) {
+      el.textContent = "Manca 1 giorno";
+      el.classList.add("soon");
+    } else {
+      el.textContent = "Mancano " + left + " giorni";
+      if (left <= 14) el.classList.add("soon");
+    }
+  }
+  var deadlines = document.querySelectorAll("[data-deadline]");
+  for (var j = 0; j < deadlines.length; j++) {
+    var node = deadlines[j];
+    var apreD = node.getAttribute("data-apre") || "";
+    var pOpenD = parts(apreD);
+    var isoD = node.getAttribute("data-deadline") || "";
+    var pD = parts(isoD);
+    if (pOpenD && daysLeft(apreD, start) > 0) {
+      node.textContent = "Apre il " + itDate(pOpenD);
+      continue;
+    }
+    if (!pD) continue;
+    if (daysLeft(isoD, start) < 0) {
+      node.textContent = "Scaduto il " + itDate(pD);
+      var row = node.closest ? node.closest("li") : null;
+      if (row && row.closest && row.closest(".related")) row.hidden = true;
+    } else if (pOpenD) node.textContent = "Aperto fino al " + itDate(pD);
+  }
+  var voci = document.querySelectorAll("li[data-scadenza]");
+  var scadVis = 0;
+  var scadTot = 0;
+  for (var s = 0; s < voci.length; s++) {
+    var voce = voci[s];
+    var nelCal = voce.parentNode && voce.parentNode.id === "elenco-scadenze";
+    if (nelCal) scadTot++;
+    var isoV = voce.getAttribute("data-scadenza") || "";
+    if (daysLeft(isoV, start) < 0) {
+      voce.hidden = true;
+      voce.setAttribute("data-scaduto", "1");
+      continue;
+    }
+    if (nelCal) scadVis++;
+  }
+  if (scadTot) {
+    var countS = document.getElementById("n-scadenze");
+    if (countS) countS.textContent = scadVis === 1 ? "1 scadenza" : scadVis + " scadenze";
+    var emptyS = document.getElementById("nessuna-scadenza");
+    if (emptyS) emptyS.hidden = scadVis !== 0;
+  }
+  var list = document.getElementById("elenco");
+  if (!list) return;
+  var cards = list.querySelectorAll("article.card");
+  var expired = [];
+  var open = 0;
+  for (var k = 0; k < cards.length; k++) {
+    var card = cards[k];
+    if (card.getAttribute("data-scaduto") === "1") {
+      expired.push(card);
+      continue;
+    }
+    var apreCard = card.getAttribute("data-apre") || "";
+    if (apreCard && daysLeft(apreCard, start) > 0) continue;
+    open++;
+  }
+  for (var n = 0; n < expired.length; n++) list.appendChild(expired[n]);
+  var label = open === 1 ? "1 bando aperto" : open + " bandi aperti";
+  var counts = document.querySelectorAll("[data-aperti]");
+  for (var c = 0; c < counts.length; c++) counts[c].textContent = label;
+  var numeri = document.querySelectorAll("[data-aperti-n]");
+  for (var u = 0; u < numeri.length; u++) numeri[u].textContent = String(open);
+  if (document.getElementById("filtri-form")) {
+    var conti = document.querySelectorAll("[data-conto]");
+    for (var t = 0; t < conti.length; t++) {
+      var key = conti[t].getAttribute("data-conto") || "";
+      var tot = 0;
+      var known = false;
+      if (key.indexOf("reg:") === 0) {
+        known = true;
+        var reg = key.slice(4);
+        for (var ri = 0; ri < cards.length; ri++) {
+          if (cards[ri].getAttribute("data-reg") === reg && cards[ri].getAttribute("data-scaduto") !== "1") tot++;
+        }
+      } else if (key.indexOf("dest:") === 0) {
+        known = true;
+        var destName = key.slice(5);
+        for (var di = 0; di < cards.length; di++) {
+          var bits = (cards[di].getAttribute("data-dest") || "").split("|");
+          if (bits.indexOf(destName) !== -1 && cards[di].getAttribute("data-scaduto") !== "1") tot++;
+        }
+      }
+      if (known) conti[t].textContent = String(tot);
+    }
+  }
+})();
+</script>
 <script>
 (function () {
   var area = document.getElementById("regione-scadenze");
@@ -66,7 +242,8 @@
   function apply() {
     var n = 0;
     for (var i = 0; i < rows.length; i++) {
-      var ok = !area.value || rows[i].getAttribute("data-reg") === area.value;
+      var scaduto = rows[i].getAttribute("data-scaduto") === "1";
+      var ok = !scaduto && (!area.value || rows[i].getAttribute("data-reg") === area.value);
       rows[i].hidden = !ok;
       if (ok) n++;
     }
@@ -74,6 +251,7 @@
     if (count) count.textContent = n === 1 ? "1 scadenza" : n + " scadenze";
   }
   area.addEventListener("change", apply);
+  apply();
 })();
 </script></div></main>
 <footer><div class="wrap">
