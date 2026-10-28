@@ -1307,6 +1307,13 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertIn(f'<a class="btn" href="mailto:{build.EMAIL}">Scrivi a IncentiviPerTe</a>', ipt)
         self.assertNotIn(f'<a class="btn" href="mailto:{build.FPEF_EMAIL}">', ipt)
 
+    def test_sponsor_invito_in_entrata(self):
+        sponsor = (DIST / "sponsor.html").read_text(encoding="utf-8")
+        subject = urllib.parse.quote("Sponsor IncentiviPerTe")
+        mailto = f"mailto:{build.EMAIL}?subject={subject}"
+        self.assertGreaterEqual(sponsor.count(mailto), 2)
+        self.assertNotIn("pages.dev", sponsor)
+
     def test_scaduti_fra_un_build_e_laltro(self):
         pages = [
             DIST / "index.html",
