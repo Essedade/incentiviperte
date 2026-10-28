@@ -1431,6 +1431,13 @@ a.tag.area:hover{background:var(--bd);color:#fff}
 .official small{color:var(--m);font-size:13px;line-height:1.3}
 .checkup-ask{background:#F4FAF7;border:1px solid var(--b);border-radius:14px;padding:16px 18px;margin:18px 0}
 .checkup-ask h2{margin-top:0}
+.sponsor-in{background:#F4FAF7;border:2px solid var(--b);border-radius:14px;padding:16px 18px;margin:18px 0}
+.sponsor-in h2{margin:0 0 8px}
+.sponsor-in p{margin:8px 0 0}
+.sponsor-in.compact{padding:12px 14px;margin:12px 0 0}
+.sponsor-in.compact h2{font-size:1.15rem}
+.sponsor-in .btn{max-width:100%;white-space:normal;text-align:center}
+.sponsor-in .contact-links a{min-height:44px}
 .bando-checkup{background:#F4FAF7;border:1px solid var(--b);border-radius:14px;padding:12px 14px;margin:12px 0}
 .bando-checkup p{margin:0}
 .bando-checkup p+p{margin-top:8px}
@@ -1474,7 +1481,8 @@ footer nav{margin-top:8px}
 @media(max-width:600px){
   .hero{padding:28px 0 24px}
   .hero-actions{flex-direction:column;align-items:stretch}
-  .hero-actions .btn,.spc .btn,.offer .btn{width:100%}
+  .hero-actions .btn,.spc .btn,.offer .btn,.sponsor-in .btn{width:100%}
+  .sponsor-in .contact-links{flex-direction:column;align-items:stretch}
   footer ul{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 }
 .checkup-form{display:grid;gap:12px;margin-top:16px}
@@ -1807,6 +1815,44 @@ def checkup_body(today):
 </script>"""
 
 
+def sponsor_mailto():
+    """Contatto in entrata degli sponsor: oggetto già compilato, senza testo del messaggio."""
+    query = urllib.parse.urlencode(
+        {"subject": "Sponsor IncentiviPerTe"},
+        quote_via=urllib.parse.quote,
+    )
+    return f"mailto:{EMAIL}?{query}"
+
+
+def sponsor_invite(compact=False):
+    """Stesso invito in due punti: riquadro in alto e versione compatta prima del footer."""
+    button = (
+        f'<a class="btn" href="{e(sponsor_mailto())}">'
+        "Scrivici per una sponsorizzazione</a>"
+    )
+    links = (
+        '<p class="contact-links">'
+        f"{button}"
+        f'{ext(LINKEDIN, "Messaggi della Pagina LinkedIn", "btn outline")}'
+        f"{mail_link()}"
+        "</p>"
+    )
+    phrase = "<p>Rispondiamo entro 2 giorni lavorativi.</p>"
+    if compact:
+        return (
+            '<aside class="sponsor-in compact" aria-labelledby="diventa-sponsor-fine">'
+            '<h2 id="diventa-sponsor-fine">Vuoi diventare sponsor? Scrivici</h2>'
+            f"{phrase}{links}"
+            "</aside>"
+        )
+    return (
+        '<aside class="sponsor-in" aria-labelledby="diventa-sponsor">'
+        '<h2 id="diventa-sponsor">Vuoi diventare sponsor? Scrivici</h2>'
+        f"{phrase}{links}"
+        "</aside>"
+    )
+
+
 def static_pages(today):
     li = ext(LINKEDIN, "Pagina LinkedIn IncentiviPerTe")
     li_btn = ext(LINKEDIN, "Contattaci su LinkedIn", "btn outline")
@@ -1822,6 +1868,8 @@ def static_pages(today):
     )
     fpef_space = f'<span class="for">Contatto per FoglioPEF: {fpef_mail}</span>'
     fpef_pack = f'<span class="for">Contatto per entrambi i siti: {fpef_mail}</span>'
+    invito = sponsor_invite()
+    invito_compatto = sponsor_invite(compact=True)
     owner = f"Davide Davoglio, Arezzo (Italia) – contattabile tramite i messaggi della {li} o all'indirizzo {mail}."
     return {
         "chi-siamo.html": (
@@ -1850,6 +1898,7 @@ def static_pages(today):
             "Spazi sponsor per studi, consulenti e banche davanti a chi cerca bandi: da 49 € al mese su IncentiviPerTe, 39 € su FoglioPEF, 69 € su entrambi i siti.",
             f"""<div class="box">
 <p>IncentiviPerTe è letto da imprenditori, startup e PMI che cercano finanziamenti. Gli spazi sono per <strong>commercialisti, consulenti di finanza agevolata, banche e software</strong> per le imprese.</p>
+{invito}
 {sponsor_contacts}
 <h2>Cosa include lo spazio su IncentiviPerTe</h2>
 <ul><li>Un posto in <strong>home page</strong></li><li>Un posto nelle <strong>pagine regionali</strong> (Toscana, Umbria, Emilia-Romagna) e nei bandi nazionali</li><li>Un posto nelle <strong>schede dei bandi</strong></li><li>Etichetta <strong>Sponsorizzato</strong> sempre visibile</li></ul>
@@ -1863,7 +1912,8 @@ def static_pages(today):
 <h2>Regole</h2>
 <ul><li>Ogni contenuto a pagamento è etichettato <strong>Sponsorizzato</strong>.</li><li>Gli sponsor non influenzano quali bandi pubblichiamo né come li descriviamo.</li><li>Nessun tracciamento degli utenti: niente pixel, cookie o script di terze parti.</li></ul>
 <p>Domande? Scrivici a {mail} o in un messaggio alla {ext(LINKEDIN, "nostra pagina LinkedIn")}. Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € al mese): {fpef_mail}.</p>
-</div>""",
+</div>
+{invito_compatto}""",
             False,
         ),
         "check-up.html": (

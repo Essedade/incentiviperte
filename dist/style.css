@@ -126,6 +126,13 @@ a.tag.area:hover{background:var(--bd);color:#fff}
 .official small{color:var(--m);font-size:13px;line-height:1.3}
 .checkup-ask{background:#F4FAF7;border:1px solid var(--b);border-radius:14px;padding:16px 18px;margin:18px 0}
 .checkup-ask h2{margin-top:0}
+.sponsor-in{background:#F4FAF7;border:2px solid var(--b);border-radius:14px;padding:16px 18px;margin:18px 0}
+.sponsor-in h2{margin:0 0 8px}
+.sponsor-in p{margin:8px 0 0}
+.sponsor-in.compact{padding:12px 14px;margin:12px 0 0}
+.sponsor-in.compact h2{font-size:1.15rem}
+.sponsor-in .btn{max-width:100%;white-space:normal;text-align:center}
+.sponsor-in .contact-links a{min-height:44px}
 .bando-checkup{background:#F4FAF7;border:1px solid var(--b);border-radius:14px;padding:12px 14px;margin:12px 0}
 .bando-checkup p{margin:0}
 .bando-checkup p+p{margin-top:8px}
@@ -169,7 +176,8 @@ footer nav{margin-top:8px}
 @media(max-width:600px){
   .hero{padding:28px 0 24px}
   .hero-actions{flex-direction:column;align-items:stretch}
-  .hero-actions .btn,.spc .btn,.offer .btn{width:100%}
+  .hero-actions .btn,.spc .btn,.offer .btn,.sponsor-in .btn{width:100%}
+  .sponsor-in .contact-links{flex-direction:column;align-items:stretch}
   footer ul{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 }
 .checkup-form{display:grid;gap:12px;margin-top:16px}
