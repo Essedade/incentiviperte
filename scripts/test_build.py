@@ -670,17 +670,17 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
 
     def test_bandi_20_ottobre_e_conto_alla_rovescia(self):
         home = (DIST / "index.html").read_text(encoding="utf-8")
-        self.assertIn("Aggiornato il 26/10/2026", home)
+        self.assertIn("Aggiornato il 29/10/2026", home)
+        self.assertNotIn("Aggiornato il 26/10/2026", home)
         self.assertNotIn("Aggiornato il 24/10/2026", home)
         self.assertNotIn("Aggiornato il 20/10/2026", home)
-        self.assertNotIn("Aggiornato il 15/10/2026", home)
         self.assertIn('getAttribute("data-scadenza")', home)
         self.assertIn('getAttribute("data-apre")', home)
-        self.assertIn('data-scad="2026-10-26"', home)
-        self.assertIn('data-scadenza="2026-10-26"', home)
+        self.assertIn('data-scad="2026-10-30"', home)
+        self.assertIn('data-scadenza="2026-10-30"', home)
         visible = re.sub(r"<script\b.*?</script>", "", home, flags=re.S)
-        self.assertIn("Scade il 26/10/2026", visible)
-        self.assertIn("Aperto fino al 26/10/2026", visible)
+        self.assertIn("Scade il 30/10/2026", visible)
+        self.assertIn("Aperto fino al 30/10/2026", visible)
         self.assertNotIn("Mancano 10 giorni", visible)
         self.assertNotIn("Mancano 3 giorni", visible)
         self.assertIn('"Mancano " + left + " giorni"', home)
@@ -695,34 +695,27 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertIn("Camera di Commercio di Arezzo e Siena", arezzo)
         self.assertNotIn("Arezzo-Siena", arezzo)
         data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
-        self.assertEqual(len(data), 56)
+        self.assertEqual(len(data), 53)
         aree = {}
         for row in data:
             aree[row["regione"]] = aree.get(row["regione"], 0) + 1
-        self.assertEqual(aree, {"Nazionale": 8, "Toscana": 25, "Umbria": 6, "Emilia-Romagna": 17})
-        self.assertEqual(max(row["ultimo_controllo"] for row in data), "2026-10-26")
-        self.assertEqual(
-            sorted(row["id"] for row in data if row["ultimo_controllo"] != "2026-10-26"),
-            [
-                "cciaa-arezzo-siena-export-2026-arezzo",
-                "cciaa-arezzo-siena-export-2026-siena",
-                "cciaa-maremma-tirreno-creazione-impresa-2026",
-            ],
-        )
+        self.assertEqual(aree, {"Nazionale": 8, "Toscana": 23, "Umbria": 5, "Emilia-Romagna": 17})
+        self.assertEqual(max(row["ultimo_controllo"] for row in data), "2026-10-29")
+        self.assertIn("trasferimento-tecnologico-er-2026", [row["id"] for row in data if row["ultimo_controllo"] == "2026-10-29"])
         oggi = datetime.date(2026, 10, 24)
         prepared = build.prepare(data, oggi)
         self.assertEqual(sum(1 for b in prepared if b["scaduto"]), 0)
         self.assertEqual(sum(1 for b in prepared if b["in_arrivo"]), 2)
-        self.assertEqual(sum(1 for b in prepared if build.is_aperto(b)), 54)
+        self.assertEqual(sum(1 for b in prepared if build.is_aperto(b)), 51)
         toscana = [b for b in prepared if b["regione"] == "Toscana"]
         emilia = [b for b in prepared if b["regione"] == "Emilia-Romagna"]
-        self.assertEqual(len(toscana), 25)
+        self.assertEqual(len(toscana), 23)
         self.assertEqual(sum(1 for b in toscana if b["scaduto"]), 0)
         self.assertEqual(sum(1 for b in emilia if b["in_arrivo"]), 2)
-        self.assertEqual(sum(1 for b in prepared if b["regione"] == "Umbria"), 6)
+        self.assertEqual(sum(1 for b in prepared if b["regione"] == "Umbria"), 5)
         self.assertEqual(sum(1 for b in prepared if b["regione"] == "Nazionale"), 8)
         self.assertEqual(sum(1 for b in emilia if build.is_aperto(b)), 15)
-        self.assertEqual(sum(1 for b in toscana if build.is_aperto(b)), 25)
+        self.assertEqual(sum(1 for b in toscana if build.is_aperto(b)), 23)
         neve = next(b for b in prepared if b["id"] == "bando-neve-funzionamento-toscana-2026")
         self.assertFalse(neve["scaduto"])
         self.assertEqual(neve["scadenza"], "2026-11-16")
@@ -751,10 +744,10 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertIn("senza garanzia di copertura", note("cciaa-maremma-tirreno-agricoltura-green-2026"))
         self.assertIn("senza ulteriori risorse da assegnare", note("cciaa-maremma-tirreno-agricoltura-green-2026"))
         for slug, quando in (
-            ("cciaa-maremma-tirreno-internazionalizzazione-2026", "26/10/2026"),
-            ("cciaa-maremma-tirreno-imprese-vicinato-2026", "26/10/2026"),
-            ("cciaa-maremma-tirreno-creazione-impresa-2026", "24/10/2026"),
-            ("cciaa-maremma-tirreno-doppia-transizione-2026", "26/10/2026"),
+            ("cciaa-maremma-tirreno-internazionalizzazione-2026", "29/10/2026"),
+            ("cciaa-maremma-tirreno-imprese-vicinato-2026", "29/10/2026"),
+            ("cciaa-maremma-tirreno-creazione-impresa-2026", "29/10/2026"),
+            ("cciaa-maremma-tirreno-doppia-transizione-2026", "29/10/2026"),
         ):
             text = note(slug)
             self.assertIn("Risorse esaurite: nuove domande solo in lista d&#x27;attesa.", text, slug)
@@ -763,10 +756,11 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertIn("18.481,60", note("cciaa-maremma-tirreno-internazionalizzazione-2026"))
         self.assertIn("0,00", note("cciaa-maremma-tirreno-imprese-vicinato-2026"))
         self.assertIn("0,00", note("cciaa-maremma-tirreno-creazione-impresa-2026"))
-        poli = note("umbria-poli-innovazione-2026")
-        self.assertIn("30/10/2026", poli)
-        self.assertIn("30/11/2026", poli)
-        self.assertIn("termine da verificare", poli)
+        poli_card = cards["/bando/umbria-poli-innovazione-2026"]
+        self.assertIn("30/11/2026", poli_card)
+        self.assertIn('data-scadenza="2026-11-30"', poli_card)
+        self.assertNotIn("termine da verificare", poli_card)
+        self.assertNotIn('class="note"', poli_card)
         turismo = note("cciaa-maremma-tirreno-turismo-sostenibile-2026")
         self.assertIn("40.000", turismo)
         self.assertIn("60.000", turismo)
@@ -793,8 +787,7 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
             page = (DIST / "bando" / f"{slug}.html").read_text(encoding="utf-8")
             scheda = page.split("<article", 1)[1].split('class="related"', 1)[0]
             self.assertIn(frase, scheda, slug)
-            quando = "24/10/2026" if slug == "cciaa-maremma-tirreno-creazione-impresa-2026" else "26/10/2026"
-            self.assertIn(f"Verificato il {quando}", scheda, slug)
+            self.assertIn("Verificato il 29/10/2026", scheda, slug)
             self.assertIn(">Fonte ufficiale<", scheda, slug)
             self.assertIn(row["fonte"], scheda, slug)
             self.assertIn('class="badge"', scheda, slug)
@@ -827,7 +820,7 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertIn("60.000", turismo_page)
         self.assertIn("50.000", turismo_page)
         self.assertIn("23:59 del 10/11/2026", turismo_page)
-        self.assertIn("Verificato il 26/10/2026", turismo_page)
+        self.assertIn("Verificato il 29/10/2026", turismo_page)
         self.assertIn(">Fonte ufficiale<", turismo_page)
         self.assertNotIn("lista d&#x27;attesa", turismo_page)
         self.assertNotIn('data-avviso="fondi"', turismo_page)
@@ -928,8 +921,8 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertEqual(og[16:24], (1200).to_bytes(4, "big") + (630).to_bytes(4, "big"))
         visible = re.sub(r"<script\b.*?</script>", "", home, flags=re.S)
         self.assertNotIn("Mancano", visible)
-        self.assertIn('data-scadenza="2026-10-26"', home)
-        self.assertIn("Scade il 26/10/2026", home)
+        self.assertIn('data-scadenza="2026-10-30"', home)
+        self.assertIn("Scade il 30/10/2026", home)
         self.assertIn("data-scadenza", home)
         self.assertIn("Mancano ", home)
         cards = re.findall(r'<article class="card\b.*?</article>', home, re.S)
@@ -941,7 +934,7 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         sponsor_at = next(i for i, block in enumerate(blocks) if block.startswith("<aside"))
         aperti = sum(1 for block in blocks[:sponsor_at] if 'data-scaduto="0"' in block)
         self.assertEqual(aperti, 6)
-        self.assertNotIn("1 bandi", visible)
+        self.assertNotRegex(visible, r"(?<!\d)1 bandi")
         page = (DIST / "check-up.html").read_text(encoding="utf-8")
         self.assertIn(f'rel="canonical" href="{BASE}check-up"', page)
         self.assertIn("una relazione scritta sui bandi adatti", page)
@@ -1088,7 +1081,7 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         for banned in ("Sorbolini", "Frascadore", "Invitalia"):
             self.assertNotIn(banned, page)
         bandi = sorted((DIST / "bando").glob("*.html"))
-        self.assertGreaterEqual(len(bandi), 56)
+        self.assertGreaterEqual(len(bandi), 53)
         phrase = "Documenti da preparare, calendario ed errori da evitare per questo bando"
         for path in bandi:
             text = path.read_text(encoding="utf-8")
@@ -1327,13 +1320,13 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
             self.assertIn('open + " bandi aperti"', text, path.name)
             self.assertIn("list.appendChild", text, path.name)
             self.assertIn('node.textContent = "Scaduto il "', text, path.name)
-        scheda = (DIST / "bando" / "cciaa-tno-doppia-transizione-2-2026.html").read_text(encoding="utf-8")
+        scheda = (DIST / "bando" / "trasferimento-tecnologico-er-2026.html").read_text(encoding="utf-8")
         visible = re.sub(r"<script\b.*?</script>", "", scheda, flags=re.S)
-        self.assertIn("Aperto fino al 26/10/2026", visible)
-        self.assertIn(">Scade il 26/10/2026<", visible)
-        self.assertNotIn(">Scaduto il 26/10/2026<", visible)
-        self.assertIn('data-deadline="2026-10-26"', scheda)
-        self.assertIn('data-scadenza="2026-10-26"', scheda)
+        self.assertIn("Aperto fino al 30/10/2026", visible)
+        self.assertIn(">Scade il 30/10/2026<", visible)
+        self.assertNotIn(">Scaduto il 30/10/2026<", visible)
+        self.assertIn('data-deadline="2026-10-30"', scheda)
+        self.assertIn('data-scadenza="2026-10-30"', scheda)
         script = re.search(r"<script>\s*(\(function \(\) \{.*?startOfToday.*?\}\)\(\);)\s*</script>", scheda, re.S)
         self.assertIsNotNone(script)
         runner = r"""
@@ -1678,12 +1671,10 @@ process.stdout.write(JSON.stringify({
             self.assertEqual(title, build.seo_copy.TITOLO_SCHEDA[path.stem], path.name)
             if path.stem in build.seo_copy.META_FISSA:
                 self.assertEqual(desc, " ".join(build.seo_copy.META_FISSA[path.stem].split()), path.name)
-        premio = (DIST / "bando" / "premio-innovazione-toscana-2026.html").read_text(encoding="utf-8")
-        self.assertNotIn("Amerigo", premio)
-        self.assertNotIn("Vespucci", premio)
         home = (DIST / "index.html").read_text(encoding="utf-8")
         self.assertNotIn("Amerigo", home)
         self.assertNotIn("Vespucci", home)
+        self.assertFalse((DIST / "bando" / "premio-innovazione-toscana-2026.html").exists())
         neve = (DIST / "bando" / "bando-neve-funzionamento-toscana-2026.html").read_text(encoding="utf-8")
         neve_title = html.unescape(re.search(r"<title>(.*?)</title>", neve).group(1))
         neve_h1 = html.unescape(re.search(r"<h1>(.*?)</h1>", neve).group(1))
@@ -1797,13 +1788,13 @@ process.stdout.write(JSON.stringify({
         self.assertEqual(locs[:-10], attesi)
         by = {field(node, "loc"): node for node in urls}
         for slug in ("cookie", "note-legali", "disclaimer", "privacy"):
-            self.assertEqual(field(by[BASE + slug], "lastmod"), "2026-10-26", slug)
+            self.assertEqual(field(by[BASE + slug], "lastmod"), "2026-10-29", slug)
             self.assertEqual(field(by[BASE + slug], "changefreq"), "yearly", slug)
             self.assertEqual(field(by[BASE + slug], "priority"), "0.3", slug)
         self.assertEqual(field(by[BASE], "changefreq"), "weekly")
         self.assertEqual(field(by[BASE], "priority"), "1.0")
-        self.assertEqual(field(by[BASE], "lastmod"), "2026-10-26")
-        self.assertEqual(field(by[BASE + "check-up"], "lastmod"), "2026-10-26")
+        self.assertEqual(field(by[BASE], "lastmod"), "2026-10-29")
+        self.assertEqual(field(by[BASE + "check-up"], "lastmod"), "2026-10-29")
         self.assertEqual(field(by[BASE + "check-up"], "changefreq"), "monthly")
         self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "lastmod"), "2026-10-26")
         self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "changefreq"), "weekly")
@@ -1842,8 +1833,8 @@ process.stdout.write(JSON.stringify({
         self.assertNotIn(codice, dopo)
         self.assertNotIn("LANCIO15", dopo)
         data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
-        slug = "cciaa-tno-doppia-transizione-2-2026"
-        righe = build.prepare(data, datetime.date(2026, 10, 27))
+        slug = "trasferimento-tecnologico-er-2026"
+        righe = build.prepare(data, datetime.date(2026, 10, 31))
         chiuso = next(b for b in righe if b["id"] == slug)
         self.assertTrue(chiuso["scaduto"])
         card = build.card(chiuso, "", datetime.date(2026, 10, 27))
@@ -2198,9 +2189,7 @@ process.stdout.write(JSON.stringify({
             if row.get("scadenza"):
                 self.assertIn(f'data-scadenza="{row["scadenza"]}"', page, row["id"])
             self.assertIn("Europe/Rome", page, row["id"])
-        feampa = (DIST / "bando" / "umbria-feampa-indennizzo-pesca-acquacoltura-2026.html").read_text(encoding="utf-8")
-        self.assertIn('data-scadenza="2026-10-27"', feampa)
-        self.assertIn('data-deadline="2026-10-27"', feampa)
+        self.assertFalse((DIST / "bando" / "umbria-feampa-indennizzo-pesca-acquacoltura-2026.html").exists())
         for name in ("index.html", "umbria.html", "nazionale.html", "scadenze.html"):
             text = (DIST / name).read_text(encoding="utf-8")
             self.assertIn("Europe/Rome", text, name)
@@ -2252,7 +2241,8 @@ process.stdout.write(JSON.stringify({
                 ids.append(ev["UID"].split("@", 1)[0])
             self.assertNotIn("umbria-feampa-indennizzo-pesca-acquacoltura-2026", ids)
             self.assertNotIn("cciaa-tno-doppia-transizione-2-2026", ids)
-            self.assertIn("premio-innovazione-toscana-2026", ids)
+            self.assertNotIn("premio-innovazione-toscana-2026", ids)
+            self.assertIn("trasferimento-tecnologico-er-2026", ids)
             self.assertEqual(
                 [ev["UID"] for ev in trovati],
                 [f"{bid}@incentiviperte.github.io" for bid in ids],

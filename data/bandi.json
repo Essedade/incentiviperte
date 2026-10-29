@@ -12,7 +12,7 @@
     "sintesi": "Startup innovative di piccola dimensione, costituite da non più di 60 mesi e iscritte nella sezione speciale del Registro delle imprese: finanziamento a tasso zero dell'80% delle spese ammissibili, 90% se la startup è costituita interamente da donne e/o under 36 o se è presente un dottore di ricerca impegnato all'estero. Il contributo a fondo perduto del 30% vale solo per le startup con sede in Abruzzo, Basilicata, Calabria, Campania, Molise, Puglia, Sardegna e Sicilia: non è previsto in Toscana, Umbria ed Emilia-Romagna. Incentivo a sportello, domande esaminate entro 60 giorni.",
     "url": "https://www.invitalia.it/incentivi-e-strumenti/smartstart-italia",
     "check": "Le domande sono esaminate",
-    "ultimo_controllo": "2026-10-26",
+    "ultimo_controllo": "2026-10-29",
     "importo": "Finanziamento a tasso zero dell'80–90% delle spese (fondo perduto solo nel Mezzogiorno)"
   },
   {
@@ -30,7 +30,7 @@
     "sintesi": "Per micro e piccole imprese costituite da non più di 60 mesi (o da costituire) con compagine composta per oltre metà di soci e quote da giovani 18-35 anni o da donne. Progetti fino a 1,5 mln € (imprese fino a 36 mesi) o 3 mln € (da 36 a 60 mesi). Il fondo perduto è esaurito: per le domande presentate dal 1° luglio 2026 l'agevolazione è solo un finanziamento a tasso zero, da rimborsare in 10 anni. Il 12/10/2026 il MIMIT ha comunicato un rifinanziamento di 59 mln € (decreto 16 giugno 2026).",
     "url": "https://www.invitalia.it/incentivi-e-strumenti/ON-nuove-imprese-tasso-zero",
     "check": "tasso zero",
-    "ultimo_controllo": "2026-10-26",
+    "ultimo_controllo": "2026-10-29",
     "importo": "Solo finanziamento a tasso zero dal 01/07/2026 · progetti fino a 1,5 mln € (3 mln € da 36 a 60 mesi)"
   },
   {
@@ -136,23 +136,6 @@
     "importo": "Contributo sugli interessi: 2,75% (ordinari), 3,575% (4.0 e green) · finanziamenti 20.000 € – 4 mln €"
   },
   {
-    "id": "premio-innovazione-toscana-2026",
-    "titolo": "Premio Innovazione Toscana \"Amerigo Vespucci\" 2026",
-    "ente": "Consiglio regionale della Toscana / Confindustria Toscana",
-    "regione": "Toscana",
-    "destinatari": [
-      "PMI",
-      "Startup"
-    ],
-    "scadenza": "2026-10-28",
-    "nota_scadenza": "28/10/2026 ore 16:00",
-    "sintesi": "Premi da 15.000 € e 4.000 € in quattro sezioni (start-up innovative, R&S e innovazione digitale, brevetti, manifattura) più premio speciale Giovani. Dotazione 80.000 €.",
-    "url": "https://www.sviluppo.toscana.it/bando/premio-innovazione-toscana-2026/",
-    "check": "28 Ottobre 2026",
-    "ultimo_controllo": "2026-10-26",
-    "importo": "Premi da 15.000 € e 4.000 € · dotazione 80.000 €"
-  },
-  {
     "id": "bando-132-bei-2026",
     "titolo": "Bando 1.3.2 – Sostegno alle PMI (BEI) – ed. 2026",
     "ente": "Regione Toscana / Sviluppo Toscana",
@@ -187,7 +170,7 @@
     "sintesi": "Sovvenzioni a fondo perduto per abbattere interessi e commissioni di garanzia su finanziamenti fino a 50.000 € per investimenti produttivi di PMI e professionisti in Toscana, garantiti dalla Sezione speciale Regione Toscana del Fondo di garanzia. Tre linee: A1 creazione di impresa giovanile, femminile o di destinatari di ammortizzatori sociali; A2 PMI fino a 36 mesi che rilevano uno stabilimento chiuso; B PMI già costituite. Dotazione 803.114,53 €.",
     "url": "https://www.sviluppo.toscana.it/bando/bando-1-3-2-sostegno-alle-pmi-fino-a-50-000-e-ed-2026/",
     "check": "c/interessi e in c/commissione di garanzia",
-    "ultimo_controllo": "2026-10-26",
+    "ultimo_controllo": "2026-10-29",
     "importo": "Finanziamenti fino a 50.000 € · dotazione 803.114,53 €"
   },
   {
@@ -256,24 +239,8 @@
     "sintesi": "Contributo a fondo perduto (de minimis) per le MPMI delle province di Pistoia e Prato che ospitano percorsi di Formazione Scuola Lavoro (ex PCTO), stage ITS, IFTS, universitari o IeFP, o che assumono giovani 18-39 anni con tutor aziendale. Quattro linee: da 1.000 a 2.000 € (linea 1), 500 € a percorso (linea 2), 1.000 € a percorso (linea 3), 2.000 € (linea 4). Massimo 4.000 € per impresa più eventuali premialità. Dotazione 180.000 €.",
     "url": "https://www.ptpo.camcom.it/servizi/contributi/fsl-certificazione-competenze-2026/formazione-scuola-lavoro-contributi-2026",
     "check": "12/11/2026",
-    "ultimo_controllo": "2026-10-26",
+    "ultimo_controllo": "2026-10-29",
     "importo": "Fino a 4.000 € per impresa · dotazione 180.000 €"
-  },
-  {
-    "id": "cciaa-tno-doppia-transizione-2-2026",
-    "titolo": "Voucher Doppia Transizione – II edizione 2026 (Lucca, Massa-Carrara, Pisa)",
-    "ente": "Camera di Commercio Toscana Nord-Ovest",
-    "regione": "Toscana",
-    "destinatari": [
-      "PMI"
-    ],
-    "scadenza": "2026-10-26",
-    "nota_scadenza": "Dalle 10:00 del 20/10/2026 alle 18:00 del 26/10/2026 (piattaforma ReStart)",
-    "sintesi": "Voucher a fondo perduto per le imprese delle province di Lucca, Massa-Carrara e Pisa che investono in consulenza, formazione e beni materiali e immateriali legati alle tecnologie abilitanti del Piano Transizione 5.0. Voucher fino al 50% delle spese, massimo 5.000 € per le imprese con meno di 10 dipendenti e 10.000 € per le altre. Dotazione 500.000 €, graduatoria in ordine cronologico.",
-    "url": "https://tno.camcom.it/bandi/2026/bando-voucher-doppia-transizione-ii-edizione-2026",
-    "check": "26 Ottobre 2026",
-    "ultimo_controllo": "2026-10-26",
-    "importo": "Voucher 50% · fino a 5.000 € (meno di 10 dipendenti) o 10.000 €"
   },
   {
     "id": "cciaa-maremma-tirreno-doppia-transizione-2026",
@@ -288,7 +255,7 @@
     "sintesi": "Contributi a fondo perduto per le micro, piccole e medie imprese delle province di Livorno e Grosseto che acquistano soluzioni tecnologiche, consulenza e formazione per la digitalizzazione e la transizione sostenibile (ESG, energia, comunità energetiche rinnovabili). Contributo del 60%, fino a 5.000 € (2.000 € se solo consulenza o formazione), più 300 € di premialità; investimento minimo 2.000 €. Bando rifinanziato il 14/09/2026 (dotazione 230.000 €; domande dalle 12:00 dell'08/07/2026 secondo il testo rifinanziato). La scheda di avanzamento del 21/10/2026 indica che le risorse disponibili sono 0,00 € (liquidate 129.210,04 €, pratiche in corso 100.789,96 €).",
     "url": "https://www.lg.camcom.it/bandi/bando-doppia-transizione-digitale-sostenibile-2026",
     "check": "10/11/2026",
-    "ultimo_controllo": "2026-10-26",
+    "ultimo_controllo": "2026-10-29",
     "importo": "Fondo perduto 60% · massimo 5.000 €",
     "stato": "lista_attesa",
     "fonte": "https://www.lg.camcom.it/sites/default/files/contenuto_redazione/BANDI%20CCIAA/2026/DOPPIA%20TRANSIZIONE/AVANZAMENTO%20BANDO%20DT26%2021O.pdf"
@@ -408,7 +375,7 @@
     "sintesi": "Contributo a fondo perduto fino a 300.000 € per progetti da almeno 200.000 € di sviluppo sperimentale con prototipo o dimostratore, in collaborazione obbligatoria (min. 40.000 €) con università/enti della Rete Alta Tecnologia.",
     "url": "https://fesr.regione.emilia-romagna.it/novita/notizie/2026/bando-progetti-trasferimento-tecnologico",
     "check": "30 ottobre 2026",
-    "ultimo_controllo": "2026-10-26",
+    "ultimo_controllo": "2026-10-29",
     "importo": "Fondo perduto fino a 300.000 € per progetto"
   },
   {
@@ -459,7 +426,7 @@
     "sintesi": "Contributo a fondo perduto del 50% per le MPMI con sede legale e unità locale nell'area metropolitana di Bologna che attivano crowdfunding, minibond, venture capital e business angel, invoice trading, vendor loan o strumenti finanziari partecipativi (consulenze, primo rating, piattaforme, arranger, comunicazione). Spesa minima 5.000 €, contributo massimo 15.000 €. Priorità a imprese femminili, giovanili, con rating di legalità o certificazione di parità di genere. Dotazione 129.000 €.",
     "url": "https://www.bo.camcom.gov.it/it/promozione-interna/contributi-alle-imprese-bolognesi-l%E2%80%99attivazione-degli-strumenti-di-finanza",
     "check": "4 novembre 2026",
-    "ultimo_controllo": "2026-10-26",
+    "ultimo_controllo": "2026-10-29",
     "importo": "Fondo perduto 50% · massimo 15.000 €"
   },
   {
@@ -491,9 +458,9 @@
     "nota_scadenza": "Dalle 10:00 del 25/03/2026 alle 23:59 del 10/11/2026 su ReStart, salvo esaurimento risorse",
     "sintesi": "Contributo a fondo perduto per le micro, piccole e medie imprese iscritte e attive dal 01/01/2026, con sede legale e operativa nelle province di Livorno o Grosseto, anche nate da un passaggio generazionale. Contributo del 60% (70% in caso di passaggio generazionale), fino a 5.000 €, più premialità fino a 300 €; investimento minimo 3.000 €. Obbligatori la partecipazione a un evento formativo e il test Self i4.0; serve DURC regolare. Dotazione 200.000 €. La scheda di avanzamento del 21/10/2026 indica risorse residue pari a 0,00 € (liquidate 137.094,15 €, assegnate 15.300 €, pratiche in corso 47.605,85 €): le risorse disponibili sono 0,00 €.",
     "url": "https://www.lg.camcom.it/bandi/bando-sostegno-creazione-impresa-2026",
-    "check": "creazione d'impresa",
+    "check": "sostegno della creazione",
     "importo": "Fondo perduto 60-70% · massimo 5.000 €",
-    "ultimo_controllo": "2026-10-24",
+    "ultimo_controllo": "2026-10-29",
     "stato": "lista_attesa",
     "fonte": "https://www.lg.camcom.it/sites/default/files/contenuto_redazione/BANDI%20CCIAA/2026/CREAZIONE%20IMPRESA/AVANZAMENTO%20CI2026%2021O.pdf"
   },
@@ -511,7 +478,7 @@
     "url": "https://www.lg.camcom.it/bandi/bando-transizione-sostenibile-imprese-turistiche-2026",
     "check": "imprese turistiche",
     "importo": "Fondo perduto 60% · massimo 3.000 €",
-    "ultimo_controllo": "2026-10-26",
+    "ultimo_controllo": "2026-10-29",
     "fonte": "https://www.lg.camcom.it/sites/default/files/contenuto_redazione/BANDI%20CCIAA/2026/TURISMO%20SOSTENIBILE/AVANZAMENTO%20SITO%20TS26%2007O.pdf"
   },
   {
@@ -715,7 +682,7 @@
     "url": "https://www.romagna.camcom.it/opportunita/finanziamenti-1/bando-per-la-concessione-di-contributi-per-linstallazione-di-sistemi-di-sicurezza-antirapina-anno-2026",
     "check": "antirapina",
     "importo": "Fondo perduto 50% · massimo 3.000 €",
-    "ultimo_controllo": "2026-10-26"
+    "ultimo_controllo": "2026-10-29"
   },
   {
     "id": "cciaa-romagna-credito-confidi-2026",
@@ -763,7 +730,7 @@
     "url": "https://www.lg.camcom.it/bandi/bando-sostegno-internazionalizzazione-delle-imprese-2026",
     "check": "110.000",
     "importo": "Fondo perduto 60% · massimo 2.500 €",
-    "ultimo_controllo": "2026-10-26",
+    "ultimo_controllo": "2026-10-29",
     "stato": "lista_attesa",
     "fonte": "https://www.lg.camcom.it/sites/default/files/contenuto_redazione/BANDI%20CCIAA/2026/INTERNAZIONALIZZAZIONE/SCHEDA%20AVANZAMENTO%20BANDO%20INTERNAZIONALIZZAZIONE%202SETT.pdf"
   },
@@ -781,7 +748,7 @@
     "url": "https://www.lg.camcom.it/bandi/bando-agricoltura-green-2026",
     "check": "430.000",
     "importo": "Fondo perduto 60% · massimo 3.000-4.000 €",
-    "ultimo_controllo": "2026-10-26"
+    "ultimo_controllo": "2026-10-29"
   },
   {
     "id": "cciaa-maremma-tirreno-imprese-vicinato-2026",
@@ -797,7 +764,7 @@
     "url": "https://www.lg.camcom.it/bandi/bando-sostegno-imprese-vicinato-2026",
     "check": "250.000",
     "importo": "Fondo perduto 60% · massimo 2.500 €",
-    "ultimo_controllo": "2026-10-26",
+    "ultimo_controllo": "2026-10-29",
     "stato": "lista_attesa",
     "fonte": "https://www.lg.camcom.it/sites/default/files/contenuto_redazione/BANDI%20CCIAA/2026/VICINATO/AVANZAMENTO%20SITO%20BV26%2021O.pdf"
   },
@@ -815,7 +782,7 @@
     "url": "https://www.lg.camcom.it/bandi/bando-certificazioni-qualita-2026",
     "check": "30.000",
     "importo": "Fondo perduto 60% · massimo 2.000 €",
-    "ultimo_controllo": "2026-10-26"
+    "ultimo_controllo": "2026-10-29"
   },
   {
     "id": "cciaa-maremma-tirreno-societa-benefit-2026",
@@ -832,7 +799,7 @@
     "url": "https://www.lg.camcom.it/bandi/bando-sostegno-della-creazione-societa-benefit-anno-2026",
     "check": "20.000",
     "importo": "Fondo perduto 60% · massimo 4.000 €",
-    "ultimo_controllo": "2026-10-26"
+    "ultimo_controllo": "2026-10-29"
   },
   {
     "id": "cciaa-maremma-tirreno-frihub-2026",
@@ -848,7 +815,7 @@
     "url": "https://www.lg.camcom.it/bandi/bando-voucher-la-partecipazione-di-mpmi-al-progetto-frihub",
     "check": "6 novembre 2026",
     "importo": "Voucher 100% · massimo 6.900 €",
-    "ultimo_controllo": "2026-10-26"
+    "ultimo_controllo": "2026-10-29"
   },
   {
     "id": "cciaa-tno-competenze-trasversali-2026",
@@ -865,7 +832,7 @@
     "url": "https://tno.camcom.it/bandi/2026/bando-la-realizzazione-di-percorsi-le-competenze-trasversali-lorientamento-e-la",
     "check": "31 ottobre 2026",
     "importo": "Voucher · massimo 5.000 €",
-    "ultimo_controllo": "2026-10-26"
+    "ultimo_controllo": "2026-10-29"
   },
   {
     "id": "cciaa-arezzo-siena-export-2026-arezzo",
@@ -900,22 +867,6 @@
     "ultimo_controllo": "2026-10-24"
   },
   {
-    "id": "umbria-feampa-indennizzo-pesca-acquacoltura-2026",
-    "titolo": "FEAMPA – Indennizzo per la pesca nelle acque interne e l'acquacoltura (Intervento 222507)",
-    "ente": "Regione Umbria",
-    "regione": "Umbria",
-    "destinatari": [
-      "PMI"
-    ],
-    "scadenza": "2026-10-27",
-    "nota_scadenza": "Domande via PEC dal 07/10/2026 al 27/10/2026 (20 giorni dalla pubblicazione sul BUR n. 47)",
-    "sintesi": "Indennizzo per le micro, piccole e medie imprese con sede in Umbria della pesca professionale nelle acque interne (ATECO 03.1, lago Trasimeno) e dell'acquacoltura (ATECO 03.2), per i costi aggiuntivi dovuti alla crisi in Medio Oriente tra il 28/02 e il 31/12/2026. Intensità del 100%, entro i massimali dell'avviso (80.000 € per imbarcazione, 360.000 € per impresa acquicola). Dotazione 18.958 €, aumentabile fino a 60.000 €.",
-    "url": "https://applicazioni.regione.umbria.it/widget/bandi1?p_p_id=bandi_WAR_bandiportlet&p_p_lifecycle=1&p_p_state=maximized&p_p_mode=view&_bandi_WAR_bandiportlet_codBando=2026-002-11091&_bandi_WAR_bandiportlet_javax.portlet.action=viewDettaglio",
-    "check": "27/10/2026",
-    "importo": "Indennizzo 100% dei costi aggiuntivi",
-    "ultimo_controllo": "2026-10-26"
-  },
-  {
     "id": "umbria-poli-innovazione-2026",
     "titolo": "Avviso Poli di Innovazione 2026",
     "ente": "Regione Umbria",
@@ -924,13 +875,13 @@
       "PMI",
       "Grandi imprese"
     ],
-    "scadenza": "2026-10-30",
-    "nota_scadenza": "La scheda del portale regionale indica domande dal 21/10 al 30/10/2026; l'avviso aggiornato dopo la proroga (09/10/2026) indica invio via PEC fino alle 12:00 del 30/11/2026: termine da verificare",
+    "scadenza": "2026-11-30",
+    "nota_scadenza": "Domande via PEC dalle 12:00 del 10/09/2026 fino alle 12:00 del 30/11/2026 (proroga D.D. n. 10238 del 12/10/2026)",
     "sintesi": "Contributi a fondo perduto per creare, ammodernare e gestire Poli di innovazione in Umbria: consorzi o società (già costituiti o da costituire) formati da almeno 3 imprese, che condividono strutture e competenze con imprese e organismi di ricerca. Spesa ammissibile da 500.000 € a 2 milioni € (fino a 4 milioni € con requisiti di solidità); aiuto del 50% dei costi ammissibili (+5 punti nelle zone assistite per gli investimenti). Dotazione 4 milioni €, aumentabile fino a 6 milioni € (PR FESR Umbria 2021-2027).",
-    "url": "https://applicazioni.regione.umbria.it/widget/bandi1?p_p_id=bandi_WAR_bandiportlet&p_p_lifecycle=1&p_p_state=maximized&p_p_mode=view&_bandi_WAR_bandiportlet_codBando=2026-002-8261&_bandi_WAR_bandiportlet_javax.portlet.action=viewDettaglio",
-    "check": "Poli di Innovazione 2026",
+    "url": "https://www.regione.umbria.it/attivita-produttive-e-imprese/poli-di-innovazione",
+    "check": "Poli di Innovazione",
     "importo": "Fondo perduto 50% · spesa 0,5-2 milioni €",
-    "ultimo_controllo": "2026-10-26"
+    "ultimo_controllo": "2026-10-29"
   },
   {
     "id": "bando-neve-funzionamento-toscana-2026",
