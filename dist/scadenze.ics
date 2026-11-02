@@ -5,32 +5,6 @@ CALSCALE:GREGORIAN
 METHOD:PUBLISH
 X-WR-CALNAME:Scadenze bandi IncentiviPerTe
 BEGIN:VEVENT
-UID:trasferimento-tecnologico-er-2026@incentiviperte.github.io
-DTSTAMP:20261013T000000Z
-DTSTART;VALUE=DATE:20261030
-DTEND;VALUE=DATE:20261031
-SUMMARY:Bando progetti di trasferimento tecnologico delle PMI
-DESCRIPTION:Dal 24/09 al 30/10/2026 (piattaforma Sfinge 2020)\nScheda: http
- s://incentiviperte.github.io/bando/trasferimento-tecnologico-er-2026
-URL:https://incentiviperte.github.io/bando/trasferimento-tecnologico-er-202
- 6
-LOCATION:Emilia-Romagna
-END:VEVENT
-BEGIN:VEVENT
-UID:cciaa-tno-competenze-trasversali-2026@incentiviperte.github.io
-DTSTAMP:20261013T000000Z
-DTSTART;VALUE=DATE:20261031
-DTEND;VALUE=DATE:20261101
-SUMMARY:Bando per percorsi per le competenze trasversali e per l'orientamen
- to (PCTO) – 2026
-DESCRIPTION:Dalle 14:00 del 02/03/2026 alle 18:00 del 31/10/2026\, salvo ch
- iusura anticipata per esaurimento risorse (ReStart)\nScheda: https://incen
- tiviperte.github.io/bando/cciaa-tno-competenze-trasversali-2026
-URL:https://incentiviperte.github.io/bando/cciaa-tno-competenze-trasversali
- -2026
-LOCATION:Toscana
-END:VEVENT
-BEGIN:VEVENT
 UID:cciaa-bologna-finanza-innovativa-2026@incentiviperte.github.io
 DTSTAMP:20261013T000000Z
 DTSTART;VALUE=DATE:20261104
@@ -56,6 +30,19 @@ DESCRIPTION:Domande dal 03/08/2026\, prorogate al 06/11/2026 (determinazion
 URL:https://incentiviperte.github.io/bando/cciaa-maremma-tirreno-frihub-202
  6
 LOCATION:Toscana
+END:VEVENT
+BEGIN:VEVENT
+UID:trasferimento-tecnologico-er-2026@incentiviperte.github.io
+DTSTAMP:20261013T000000Z
+DTSTART;VALUE=DATE:20261106
+DTEND;VALUE=DATE:20261107
+SUMMARY:Bando progetti di trasferimento tecnologico delle PMI
+DESCRIPTION:Prorogato alle ore 13:00 del 06/11/2026 (determinazione n. 2100
+ 9 del 30/10/2026)\; domande su Sfinge 2020\nScheda: https://incentiviperte
+ .github.io/bando/trasferimento-tecnologico-er-2026
+URL:https://incentiviperte.github.io/bando/trasferimento-tecnologico-er-202
+ 6
+LOCATION:Emilia-Romagna
 END:VEVENT
 BEGIN:VEVENT
 UID:cciaa-maremma-tirreno-agricoltura-green-2026@incentiviperte.github.io
