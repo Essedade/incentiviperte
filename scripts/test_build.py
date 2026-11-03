@@ -17,8 +17,23 @@ import update
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
+# Data di build dei test, non il calendario di quando gira la suite.
+# Resta prima del 30/10/2026: così LANCIO15 c'è ancora nelle pagine generate qui.
 TODAY = datetime.date(2026, 10, 13)
 BASE = build.BASE
+
+
+def carica_bandi():
+    """Catalogo vivo. Il lunedì e il giovedì cambiano date, testi e numero di bandi."""
+    return json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
+
+
+def controllo_piu_recente(data):
+    return max(row["ultimo_controllo"] for row in data)
+
+
+def preparati(today=None):
+    return build.prepare(carica_bandi(), today or TODAY)
 
 
 def sample(**over):
@@ -516,19 +531,21 @@ class Sito(unittest.TestCase):
                 upcoming.append(card)
             else:
                 open_cards.append(card)
-        data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
-        prepared = build.prepare(data, TODAY)
-        self.assertGreaterEqual(len(upcoming), 1)
+        prepared = preparati()
         self.assertEqual(int(hero.group(1)), len(open_cards))
         self.assertEqual(int(found.group(1)), len(open_cards))
         self.assertEqual(len(open_cards), build.conto_aperti(prepared))
         self.assertEqual(len(open_cards), sum(1 for b in prepared if build.is_aperto(b)))
+        attesi_arrivo = {b["id"] for b in prepared if b["in_arrivo"]}
+        trovati_arrivo = set()
         for card in upcoming:
             self.assertIn('data-scaduto="0"', card)
             self.assertNotRegex(card[:card.find(">") + 1], r"\shidden(?:\s|>|$)")
             self.assertIn("Apre il ", card)
-        for bid in ("cciaa-modena-occupazione-giovanile-2026", "eureca-er-tutti-settori-2026"):
-            self.assertTrue(any(f"/bando/{bid}" in card for card in upcoming), bid)
+            link = re.search(r'href="(/bando/[^"]+)"', card)
+            self.assertIsNotNone(link)
+            trovati_arrivo.add(link.group(1).removeprefix("/bando/"))
+        self.assertEqual(trovati_arrivo, attesi_arrivo)
         script = re.search(
             r"<script>\s*(\(function \(\) \{\s*var form = document\.getElementById\(\"filtri-form\"\);.*?\}\)\(\);)\s*</script>",
             home,
@@ -669,63 +686,69 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertEqual(opened["filtered"]["count"], "1 bando trovato")
 
     def test_bandi_20_ottobre_e_conto_alla_rovescia(self):
+        """La home stampa la data dei dati e la scadenza per intero: il conto dei giorni sta solo nello script."""
         home = (DIST / "index.html").read_text(encoding="utf-8")
-        self.assertIn("Aggiornato il 29/10/2026", home)
-        self.assertNotIn("Aggiornato il 26/10/2026", home)
-        self.assertNotIn("Aggiornato il 24/10/2026", home)
-        self.assertNotIn("Aggiornato il 20/10/2026", home)
+        data = carica_bandi()
+        prepared = preparati()
+        agg = controllo_piu_recente(data)
+        quando_agg = build.it_date(agg)
+        self.assertIn(f"Aggiornato il {quando_agg}", home)
+        self.assertIn(f"Aggiornato al {quando_agg}", home)
+        stamp = set(re.findall(r"Aggiornato il \d{2}/\d{2}/\d{4}", home))
+        self.assertEqual(stamp, {f"Aggiornato il {quando_agg}"})
         self.assertIn('getAttribute("data-scadenza")', home)
         self.assertIn('getAttribute("data-apre")', home)
-        self.assertIn('data-scad="2026-10-30"', home)
-        self.assertIn('data-scadenza="2026-10-30"', home)
+        # Fixture: il 30/10/2026 resta una data, non «Mancano N giorni». Non dipende dal catalogo.
+        fisso = build.prepare(
+            [sample(scadenza="2026-10-30", nota_scadenza="30/10/2026")],
+            TODAY,
+        )[0]
+        badge_fisso = build.badge(fisso, TODAY)
+        self.assertIn('data-scadenza="2026-10-30"', badge_fisso)
+        self.assertIn("Scade il 30/10/2026", badge_fisso)
+        self.assertNotIn("Mancano", badge_fisso)
+        self.assertEqual(build.deadline_text(fisso), "Aperto fino al 30/10/2026")
         visible = re.sub(r"<script\b.*?</script>", "", home, flags=re.S)
-        self.assertIn("Scade il 30/10/2026", visible)
-        self.assertIn("Aperto fino al 30/10/2026", visible)
-        self.assertNotIn("Mancano 10 giorni", visible)
-        self.assertNotIn("Mancano 3 giorni", visible)
+        self.assertIsNone(re.search(r"Mancano \d+ giorn", visible))
         self.assertIn('"Mancano " + left + " giorni"', home)
         self.assertNotIn("Myself Plus", home)
-        smart = (DIST / "bando" / "smart-start-italia.html").read_text(encoding="utf-8")
-        self.assertIn("non è previsto in Toscana, Umbria ed Emilia-Romagna", smart)
-        self.assertIn("fondo perduto solo nel Mezzogiorno", smart)
-        on_page = (DIST / "bando" / "on-nuove-imprese-tasso-zero.html").read_text(encoding="utf-8")
-        self.assertIn("Solo finanziamento a tasso zero dal 01/07/2026", on_page)
-        self.assertIn("solo un finanziamento a tasso zero", on_page)
-        arezzo = (DIST / "bando" / "cciaa-arezzo-siena-certificazioni-2026.html").read_text(encoding="utf-8")
-        self.assertIn("Camera di Commercio di Arezzo e Siena", arezzo)
-        self.assertNotIn("Arezzo-Siena", arezzo)
-        data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
-        self.assertEqual(len(data), 53)
-        aree = {}
-        for row in data:
-            aree[row["regione"]] = aree.get(row["regione"], 0) + 1
-        self.assertEqual(aree, {"Nazionale": 8, "Toscana": 23, "Umbria": 5, "Emilia-Romagna": 17})
-        self.assertEqual(max(row["ultimo_controllo"] for row in data), "2026-10-29")
-        self.assertIn("trasferimento-tecnologico-er-2026", [row["id"] for row in data if row["ultimo_controllo"] == "2026-10-29"])
-        oggi = datetime.date(2026, 10, 24)
-        prepared = build.prepare(data, oggi)
-        self.assertEqual(sum(1 for b in prepared if b["scaduto"]), 0)
-        self.assertEqual(sum(1 for b in prepared if b["in_arrivo"]), 2)
-        self.assertEqual(sum(1 for b in prepared if build.is_aperto(b)), 51)
-        toscana = [b for b in prepared if b["regione"] == "Toscana"]
-        emilia = [b for b in prepared if b["regione"] == "Emilia-Romagna"]
-        self.assertEqual(len(toscana), 23)
-        self.assertEqual(sum(1 for b in toscana if b["scaduto"]), 0)
-        self.assertEqual(sum(1 for b in emilia if b["in_arrivo"]), 2)
-        self.assertEqual(sum(1 for b in prepared if b["regione"] == "Umbria"), 5)
-        self.assertEqual(sum(1 for b in prepared if b["regione"] == "Nazionale"), 8)
-        self.assertEqual(sum(1 for b in emilia if build.is_aperto(b)), 15)
-        self.assertEqual(sum(1 for b in toscana if build.is_aperto(b)), 23)
-        neve = next(b for b in prepared if b["id"] == "bando-neve-funzionamento-toscana-2026")
-        self.assertFalse(neve["scaduto"])
-        self.assertEqual(neve["scadenza"], "2026-11-16")
-        for bid, when in (
-            ("cciaa-modena-occupazione-giovanile-2026", "Apre il 02/11/2026"),
-            ("eureca-er-tutti-settori-2026", "Apre il 02/12/2026"),
-        ):
-            page = (DIST / "bando" / f"{bid}.html").read_text(encoding="utf-8")
-            self.assertIn(when, page)
-            self.assertTrue(next(b for b in prepared if b["id"] == bid)["in_arrivo"])
+        self.assertEqual(
+            {p.stem for p in (DIST / "bando").glob("*.html")},
+            {row["id"] for row in data},
+        )
+        self.assertIn(
+            f'<span data-aperti>{build.qty(build.conto_aperti(prepared), "bando aperto", "bandi aperti")}</span>',
+            home,
+        )
+        pagine_area = {
+            "Nazionale": "nazionale.html",
+            "Toscana": "toscana.html",
+            "Umbria": "umbria.html",
+            "Emilia-Romagna": "emilia-romagna.html",
+        }
+        for regione, nome in pagine_area.items():
+            n = sum(1 for b in prepared if b["regione"] == regione and build.is_aperto(b))
+            pagina = (DIST / nome).read_text(encoding="utf-8")
+            self.assertIn(build.qty(n, "bando aperto", "bandi aperti"), pagina, regione)
+        for b in prepared:
+            pagina = (DIST / "bando" / f"{b['id']}.html").read_text(encoding="utf-8")
+            self.assertIn(html.escape(b["sintesi"]), pagina, b["id"])
+            self.assertIn(html.escape(b["importo"]), pagina, b["id"])
+            self.assertIn(html.escape(b["ente"]), pagina, b["id"])
+            testo_bando = " ".join(b.get(campo) or "" for campo in ("titolo", "ente", "sintesi", "importo", "nota_scadenza"))
+            if "Arezzo-Siena" not in testo_bando:
+                self.assertNotIn("Arezzo-Siena", pagina, b["id"])
+            if b["in_arrivo"]:
+                self.assertIn(f"Apre il {build.it_date(b['apertura'])}", pagina, b["id"])
+                self.assertIn(f'data-apre="{b["apertura"]}"', home, b["id"])
+                continue
+            if not b["scadenza"] or b["scaduto"]:
+                continue
+            quando = build.it_date(b["scadenza"])
+            self.assertIn(f'data-scad="{b["scadenza"]}"', home, b["id"])
+            self.assertIn(f'data-scadenza="{b["scadenza"]}"', home, b["id"])
+            self.assertIn(f"Scade il {quando}", visible, b["id"])
+            self.assertIn(f"Aperto fino al {quando}", visible, b["id"])
 
     def test_note_fondi_data_e_importi_sulla_card(self):
         home = (DIST / "index.html").read_text(encoding="utf-8")
@@ -741,101 +764,108 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
             self.assertNotIn('class="note"', summary)
             return "".join(re.findall(r'<p class="note"[^>]*>(.*?)</p>', card, re.S))
 
-        self.assertIn("senza garanzia di copertura", note("cciaa-maremma-tirreno-agricoltura-green-2026"))
-        self.assertIn("senza ulteriori risorse da assegnare", note("cciaa-maremma-tirreno-agricoltura-green-2026"))
-        for slug, quando in (
-            ("cciaa-maremma-tirreno-internazionalizzazione-2026", "29/10/2026"),
-            ("cciaa-maremma-tirreno-imprese-vicinato-2026", "29/10/2026"),
-            ("cciaa-maremma-tirreno-creazione-impresa-2026", "29/10/2026"),
-            ("cciaa-maremma-tirreno-doppia-transizione-2026", "29/10/2026"),
-        ):
-            text = note(slug)
-            self.assertIn("Risorse esaurite: nuove domande solo in lista d&#x27;attesa.", text, slug)
-            self.assertIn(f"Verificato il {quando}", text, slug)
-            self.assertNotIn("senza garanzia di copertura", text, slug)
-        self.assertIn("18.481,60", note("cciaa-maremma-tirreno-internazionalizzazione-2026"))
-        self.assertIn("0,00", note("cciaa-maremma-tirreno-imprese-vicinato-2026"))
-        self.assertIn("0,00", note("cciaa-maremma-tirreno-creazione-impresa-2026"))
-        poli_card = cards["/bando/umbria-poli-innovazione-2026"]
-        self.assertIn("30/11/2026", poli_card)
-        self.assertIn('data-scadenza="2026-11-30"', poli_card)
-        self.assertNotIn("termine da verificare", poli_card)
-        self.assertNotIn('class="note"', poli_card)
-        turismo = note("cciaa-maremma-tirreno-turismo-sostenibile-2026")
-        self.assertIn("40.000", turismo)
-        self.assertIn("60.000", turismo)
-        self.assertIn("50.000", turismo)
-        self.assertIn("48.677,68", turismo)
-        self.assertNotIn("lista d&#x27;attesa", turismo)
+        # Fixture: «Verificato il 29/10/2026» resta il controllo del 29/10, non una data del catalogo.
+        fisso = build.prepare(
+            [sample(
+                stato="lista_attesa",
+                fonte="https://example.com/scheda.pdf",
+                ultimo_controllo="2026-10-29",
+            )],
+            TODAY,
+        )[0]
+        avviso_fisso = build.avviso_fondi(fisso)
+        self.assertIn("Verificato il 29/10/2026", avviso_fisso)
+        self.assertIn("Risorse esaurite: nuove domande solo in lista d&#x27;attesa.", avviso_fisso)
+        prepared = {b["id"]: b for b in preparati()}
+        frase = "Risorse esaurite: nuove domande solo in lista d&#x27;attesa."
+        for bid, b in prepared.items():
+            card = cards["/bando/" + bid]
+            text = note(bid)
+            attesa = build.avviso_fondi(b)
+            extra = build.card_note(b)
+            if attesa:
+                self.assertIn(attesa, card, bid)
+                self.assertIn(frase, text, bid)
+                self.assertIn(f"Verificato il {build.it_date(b['ultimo_controllo'])}", text, bid)
+                self.assertIn('data-avviso="fondi"', card, bid)
+            else:
+                self.assertNotIn('data-avviso="fondi"', card, bid)
+                self.assertNotIn(frase, text, bid)
+            if extra:
+                self.assertIn(extra, card, bid)
+            if "senza garanzia di copertura" in extra:
+                self.assertIn("senza garanzia di copertura", text, bid)
+            elif "senza garanzia di copertura" not in (b["sintesi"] + b["nota_scadenza"]):
+                self.assertNotIn("senza garanzia di copertura", text, bid)
+            if "senza ulteriori risorse da assegnare" in extra:
+                self.assertIn("senza ulteriori risorse da assegnare", text, bid)
+            if b.get("scadenza"):
+                self.assertIn(f'data-scadenza="{b["scadenza"]}"', card, bid)
+            if b["in_arrivo"]:
+                self.assertIn(f"Apre il {build.it_date(b['apertura'])}", card, bid)
+            elif b.get("scadenza"):
+                self.assertIn(build.it_date(b["scadenza"]), card, bid)
+            self.assertNotIn("termine da verificare", card, bid)
 
     def test_avviso_fondi_esauriti_sulle_schede(self):
-        lista = (
-            "cciaa-maremma-tirreno-creazione-impresa-2026",
-            "cciaa-maremma-tirreno-doppia-transizione-2026",
-            "cciaa-maremma-tirreno-imprese-vicinato-2026",
-            "cciaa-maremma-tirreno-internazionalizzazione-2026",
-        )
-        data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
-        prepared = build.prepare(data, datetime.date(2026, 10, 24))
-        by_id = {b["id"]: b for b in prepared}
+        """L'avviso usa la data di ultimo controllo del bando. Una fixture tiene fermo il 29/10/2026."""
+        fisso = build.prepare(
+            [sample(
+                stato="lista_attesa",
+                fonte="https://example.com/scheda.pdf",
+                ultimo_controllo="2026-10-29",
+            )],
+            TODAY,
+        )[0]
+        avviso_fisso = build.avviso_fondi(fisso, con_link=True)
+        self.assertIn("Verificato il 29/10/2026", avviso_fisso)
+        self.assertIn("https://example.com/scheda.pdf", avviso_fisso)
+        self.assertIn(">Fonte ufficiale<", avviso_fisso)
+        prepared = preparati()
         frase = "Risorse esaurite: nuove domande solo in lista d&#x27;attesa."
-        for slug in lista:
-            row = by_id[slug]
-            self.assertEqual(row["stato"], "lista_attesa", slug)
-            self.assertFalse(row["scaduto"], slug)
-            self.assertTrue(build.is_aperto(row), slug)
-            page = (DIST / "bando" / f"{slug}.html").read_text(encoding="utf-8")
+        for b in prepared:
+            page = (DIST / "bando" / f"{b['id']}.html").read_text(encoding="utf-8")
             scheda = page.split("<article", 1)[1].split('class="related"', 1)[0]
-            self.assertIn(frase, scheda, slug)
-            self.assertIn("Verificato il 29/10/2026", scheda, slug)
-            self.assertIn(">Fonte ufficiale<", scheda, slug)
-            self.assertIn(row["fonte"], scheda, slug)
-            self.assertIn('class="badge"', scheda, slug)
-            self.assertNotIn('class="badge exp"', scheda, slug)
-            self.assertNotIn(">Scaduto<", scheda, slug)
-            self.assertIn('data-avviso="fondi"', scheda, slug)
-        doppia = (DIST / "bando" / "cciaa-maremma-tirreno-doppia-transizione-2026.html").read_text(encoding="utf-8")
-        self.assertIn("12:00 dell&#x27;08/07/2026", doppia)
-        self.assertIn("0,00", doppia)
-        vicinato = (DIST / "bando" / "cciaa-maremma-tirreno-imprese-vicinato-2026.html").read_text(encoding="utf-8")
-        self.assertIn("21/10/2026", vicinato)
-        self.assertNotIn("20/10/2026", vicinato)
-        creazione = (DIST / "bando" / "cciaa-maremma-tirreno-creazione-impresa-2026.html").read_text(encoding="utf-8")
-        self.assertIn("137.094,15", creazione)
-        self.assertIn("0,00", creazione)
-        internaz = (DIST / "bando" / "cciaa-maremma-tirreno-internazionalizzazione-2026.html").read_text(encoding="utf-8")
-        self.assertIn("−18.481,60", internaz)
-        self.assertIn("02/09/2026", internaz)
-        firenze = (DIST / "bando" / "cciaa-firenze-nuove-imprese-2026.html").read_text(encoding="utf-8")
-        self.assertIn("150.000", firenze)
-        self.assertIn("90.000", firenze)
-        self.assertIn("15:00 del 14/09/2026", firenze)
-        self.assertIn("16:00 del 31/12/2026", firenze)
-        self.assertIn("26/10/2026", firenze)
-        self.assertIn("https://www.fi.camcom.gov.it/", firenze)
-        self.assertNotIn("lista d&#x27;attesa", firenze)
-        self.assertNotIn('data-avviso="fondi"', firenze)
-        turismo_page = (DIST / "bando" / "cciaa-maremma-tirreno-turismo-sostenibile-2026.html").read_text(encoding="utf-8")
-        self.assertIn("48.677,68", turismo_page)
-        self.assertIn("60.000", turismo_page)
-        self.assertIn("50.000", turismo_page)
-        self.assertIn("23:59 del 10/11/2026", turismo_page)
-        self.assertIn("Verificato il 29/10/2026", turismo_page)
-        self.assertIn(">Fonte ufficiale<", turismo_page)
-        self.assertNotIn("lista d&#x27;attesa", turismo_page)
-        self.assertNotIn('data-avviso="fondi"', turismo_page)
-        agri = (DIST / "bando" / "cciaa-maremma-tirreno-agricoltura-green-2026.html").read_text(encoding="utf-8")
-        self.assertNotIn('data-avviso="fondi"', agri)
+            self.assertIn(html.escape(b["sintesi"]), scheda, b["id"])
+            self.assertIn(html.escape(b["importo"]), scheda, b["id"])
+            self.assertIn(html.escape(b["nota_scadenza"]), scheda, b["id"])
+            self.assertIn(html.escape(b["url"], quote=True), scheda, b["id"])
+            quando = build.it_date(b["ultimo_controllo"])
+            self.assertIn(f"<dt>Ultimo controllo</dt><dd>{quando}</dd>", scheda, b["id"])
+            attesa = (b.get("stato") or "aperto") == "lista_attesa"
+            if attesa:
+                self.assertFalse(b["scaduto"], b["id"])
+                self.assertTrue(build.is_aperto(b), b["id"])
+                self.assertIn(build.avviso_fondi(b, con_link=True), scheda, b["id"])
+                self.assertIn(frase, scheda, b["id"])
+                self.assertIn(f"Verificato il {quando}", scheda, b["id"])
+                self.assertIn(">Fonte ufficiale<", scheda, b["id"])
+                self.assertIn(b["fonte"], scheda, b["id"])
+                self.assertIn('class="badge"', scheda, b["id"])
+                self.assertNotIn('class="badge exp"', scheda, b["id"])
+                self.assertNotIn(">Scaduto<", scheda, b["id"])
+                self.assertIn('data-avviso="fondi"', scheda, b["id"])
+            else:
+                self.assertNotIn('data-avviso="fondi"', scheda, b["id"])
+                testo = (b["sintesi"] + " " + b["nota_scadenza"]).lower()
+                if "lista d'attesa" not in testo and "lista d’attesa" not in testo:
+                    self.assertNotIn("lista d&#x27;attesa", scheda, b["id"])
+            if b.get("fonte") and not attesa:
+                self.assertIn(build.fonte_fuori_avviso(b), scheda, b["id"])
+                self.assertIn(f"Verificato il {quando}", scheda, b["id"])
+                self.assertIn(">Fonte ufficiale<", scheda, b["id"])
         home = (DIST / "index.html").read_text(encoding="utf-8")
-        for slug in lista:
-            card = next(
-                block for block in re.findall(r'<article class="card\b.*?</article>', home, re.S)
-                if f'href="/bando/{slug}"' in block
-            )
-            self.assertIn('data-scaduto="0"', card, slug)
-            self.assertNotIn('data-scaduto="1"', card, slug)
-            self.assertIn('data-avviso="fondi"', card, slug)
-            self.assertNotIn(">Scaduto<", card, slug)
+        cards = re.findall(r'<article class="card\b.*?</article>', home, re.S)
+        for b in prepared:
+            card = next(block for block in cards if f'href="/bando/{b["id"]}"' in block)
+            if b["scaduto"]:
+                self.assertIn('data-scaduto="1"', card, b["id"])
+            else:
+                self.assertIn('data-scaduto="0"', card, b["id"])
+                self.assertNotIn('data-scaduto="1"', card, b["id"])
+                self.assertNotIn(">Scaduto<", card, b["id"])
+            if (b.get("stato") or "aperto") == "lista_attesa":
+                self.assertIn('data-avviso="fondi"', card, b["id"])
 
     def test_dominio_pubblico_e_niente_vecchio_percorso(self):
         self.assertEqual(build.BASE, "https://incentiviperte.github.io/")
@@ -921,10 +951,14 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertEqual(og[16:24], (1200).to_bytes(4, "big") + (630).to_bytes(4, "big"))
         visible = re.sub(r"<script\b.*?</script>", "", home, flags=re.S)
         self.assertNotIn("Mancano", visible)
-        self.assertIn('data-scadenza="2026-10-30"', home)
-        self.assertIn("Scade il 30/10/2026", home)
         self.assertIn("data-scadenza", home)
         self.assertIn("Mancano ", home)
+        prepared = preparati()
+        for b in prepared:
+            if not b.get("scadenza") or b["scaduto"] or b["in_arrivo"]:
+                continue
+            self.assertIn(f'data-scadenza="{b["scadenza"]}"', home, b["id"])
+            self.assertIn(f"Scade il {build.it_date(b['scadenza'])}", home, b["id"])
         cards = re.findall(r'<article class="card\b.*?</article>', home, re.S)
         self.assertGreaterEqual(len(cards), 6)
         for card in cards:
@@ -933,7 +967,8 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         blocks = re.findall(r'<article class="card\b.*?</article>|<aside class="card spc\b.*?</aside>', home, re.S)
         sponsor_at = next(i for i, block in enumerate(blocks) if block.startswith("<aside"))
         aperti = sum(1 for block in blocks[:sponsor_at] if 'data-scaduto="0"' in block)
-        self.assertEqual(aperti, 6)
+        non_scaduti = sum(1 for b in prepared if not b["scaduto"])
+        self.assertEqual(aperti, min(6, non_scaduti))
         self.assertNotRegex(visible, r"(?<!\d)1 bandi")
         page = (DIST / "check-up.html").read_text(encoding="utf-8")
         self.assertIn(f'rel="canonical" href="{BASE}check-up"', page)
@@ -990,7 +1025,8 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertIn("nostra pagina LinkedIn", sponsor)
         self.assertNotIn("Scrivi a messaggi della", sponsor)
         donne = (DIST / "settore" / "donne.html").read_text(encoding="utf-8")
-        self.assertIn("6 bandi aperti", donne)
+        n_donne = sum(1 for b in prepared if "Donne" in b["destinatari"] and build.is_aperto(b))
+        self.assertIn(build.qty(n_donne, "bando aperto", "bandi aperti"), donne)
         self.assertNotIn("1 bandi", donne)
         for path in DIST.rglob("*.html"):
             if path.name == build.GSC_FILE:
@@ -1081,7 +1117,7 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         for banned in ("Sorbolini", "Frascadore", "Invitalia"):
             self.assertNotIn(banned, page)
         bandi = sorted((DIST / "bando").glob("*.html"))
-        self.assertGreaterEqual(len(bandi), 53)
+        self.assertEqual({path.stem for path in bandi}, {row["id"] for row in carica_bandi()})
         phrase = "Documenti da preparare, calendario ed errori da evitare per questo bando"
         for path in bandi:
             text = path.read_text(encoding="utf-8")
@@ -1320,13 +1356,31 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
             self.assertIn('open + " bandi aperti"', text, path.name)
             self.assertIn("list.appendChild", text, path.name)
             self.assertIn('node.textContent = "Scaduto il "', text, path.name)
-        scheda = (DIST / "bando" / "trasferimento-tecnologico-er-2026.html").read_text(encoding="utf-8")
-        visible = re.sub(r"<script\b.*?</script>", "", scheda, flags=re.S)
-        self.assertIn("Aperto fino al 30/10/2026", visible)
-        self.assertIn(">Scade il 30/10/2026<", visible)
-        self.assertNotIn(">Scaduto il 30/10/2026<", visible)
-        self.assertIn('data-deadline="2026-10-30"', scheda)
-        self.assertIn('data-scadenza="2026-10-30"', scheda)
+        # Fixture: fino al 30/10/2026 compreso il bando è aperto; dal 31/10 è scaduto.
+        # Il catalogo può prorogare una scadenza: questo caso non la segue.
+        il_30 = datetime.date(2026, 10, 30)
+        il_31 = datetime.date(2026, 10, 31)
+        ancora = build.prepare([sample(scadenza="2026-10-30", nota_scadenza="30/10/2026")], il_30)[0]
+        chiuso = build.prepare([sample(scadenza="2026-10-30", nota_scadenza="30/10/2026")], il_31)[0]
+        self.assertFalse(ancora["scaduto"])
+        self.assertEqual(build.deadline_text(ancora), "Aperto fino al 30/10/2026")
+        self.assertIn(">Scade il 30/10/2026<", build.badge(ancora, il_30))
+        self.assertTrue(chiuso["scaduto"])
+        self.assertEqual(build.deadline_text(chiuso), "Scaduto il 30/10/2026")
+        self.assertIn(">Scaduto<", build.badge(chiuso, il_31))
+        self.assertNotIn("Scade il 30/10/2026", build.badge(chiuso, il_31))
+        aperti = [b for b in preparati() if b.get("scadenza") and not b["scaduto"] and not b["in_arrivo"]]
+        self.assertGreaterEqual(len(aperti), 1)
+        for b in aperti:
+            scheda = (DIST / "bando" / f"{b['id']}.html").read_text(encoding="utf-8")
+            visibile_scheda = re.sub(r"<script\b.*?</script>", "", scheda, flags=re.S)
+            quando = build.it_date(b["scadenza"])
+            self.assertIn(f"Aperto fino al {quando}", visibile_scheda, b["id"])
+            self.assertIn(f">Scade il {quando}<", visibile_scheda, b["id"])
+            self.assertNotIn(f">Scaduto il {quando}<", visibile_scheda, b["id"])
+            self.assertIn(f'data-deadline="{b["scadenza"]}"', scheda, b["id"])
+            self.assertIn(f'data-scadenza="{b["scadenza"]}"', scheda, b["id"])
+        scheda = (DIST / "bando" / f"{aperti[0]['id']}.html").read_text(encoding="utf-8")
         script = re.search(r"<script>\s*(\(function \(\) \{.*?startOfToday.*?\}\)\(\);)\s*</script>", scheda, re.S)
         self.assertIsNotNone(script)
         runner = r"""
@@ -1728,9 +1782,19 @@ process.stdout.write(JSON.stringify({
         self.assertNotIn('id="elenco"', hub)
         self.assertIn('"@type": "BreadcrumbList"', hub)
         self.assertIn('"@type": "FAQPage"', hub)
-        scheda = (DIST / "bando" / "cciaa-arezzo-siena-export-2026-arezzo.html").read_text(encoding="utf-8")
-        self.assertIn('href="/bandi-camere-di-commercio-toscana#arezzo-siena"', scheda)
-        self.assertIn("Altri bandi della Camera di Commercio di Arezzo e Siena", scheda)
+        rimandi = 0
+        for b in preparati():
+            chiave = build.chiave_camera(b)
+            if not chiave:
+                continue
+            tabella = build.CAMERE_TOSCANA if b["regione"] == "Toscana" else build.CAMERE_ER
+            pagina_hub = build.HUB_TOSCANA if b["regione"] == "Toscana" else build.HUB_ER
+            etichetta = next(voce for cid, _h2, voce in tabella if cid == chiave)
+            scheda_bando = (DIST / "bando" / f"{b['id']}.html").read_text(encoding="utf-8")
+            self.assertIn(f'href="{build.site_href(pagina_hub, fragment=chiave)}"', scheda_bando, b["id"])
+            self.assertIn(html.escape(etichetta), scheda_bando, b["id"])
+            rimandi += 1
+        self.assertGreaterEqual(rimandi, 1)
 
         er = (DIST / "bandi-camere-di-commercio-emilia-romagna.html").read_text(encoding="utf-8")
         self.assertIn("Cosa sono i contributi tramite Confidi?", er)
@@ -1787,24 +1851,31 @@ process.stdout.write(JSON.stringify({
             attesi.append(BASE + slug)
         self.assertEqual(locs[:-10], attesi)
         by = {field(node, "loc"): node for node in urls}
+        agg = controllo_piu_recente(data)
         for slug in ("cookie", "note-legali", "disclaimer", "privacy"):
-            self.assertEqual(field(by[BASE + slug], "lastmod"), "2026-10-29", slug)
+            self.assertEqual(field(by[BASE + slug], "lastmod"), build.lastmod_pagina(slug + ".html", agg), slug)
             self.assertEqual(field(by[BASE + slug], "changefreq"), "yearly", slug)
             self.assertEqual(field(by[BASE + slug], "priority"), "0.3", slug)
         self.assertEqual(field(by[BASE], "changefreq"), "weekly")
         self.assertEqual(field(by[BASE], "priority"), "1.0")
-        self.assertEqual(field(by[BASE], "lastmod"), "2026-10-29")
-        self.assertEqual(field(by[BASE + "check-up"], "lastmod"), "2026-10-29")
+        self.assertEqual(field(by[BASE], "lastmod"), build.lastmod_pagina("index.html", agg))
+        self.assertEqual(field(by[BASE + "check-up"], "lastmod"), build.lastmod_pagina("check-up.html", agg))
         self.assertEqual(field(by[BASE + "check-up"], "changefreq"), "monthly")
-        self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "lastmod"), "2026-10-26")
-        self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "changefreq"), "weekly")
-        self.assertEqual(field(by[BASE + "bando/nuova-sabatini"], "priority"), "0.7")
+        for row in data:
+            nodo = by[BASE + "bando/" + row["id"]]
+            self.assertEqual(
+                field(nodo, "lastmod"),
+                build.lastmod_pagina(f"bando/{row['id']}.html", row["ultimo_controllo"]),
+                row["id"],
+            )
+            self.assertEqual(field(nodo, "changefreq"), "weekly", row["id"])
+            self.assertEqual(field(nodo, "priority"), "0.7", row["id"])
         for loc in nuovi[:3]:
-            self.assertEqual(field(by[loc], "lastmod"), "2026-10-25")
+            self.assertEqual(field(by[loc], "lastmod"), build.SEO_LASTMOD)
             self.assertEqual(field(by[loc], "changefreq"), "weekly")
             self.assertEqual(field(by[loc], "priority"), "0.8")
         for loc in nuovi[3:]:
-            self.assertEqual(field(by[loc], "lastmod"), "2026-10-25")
+            self.assertEqual(field(by[loc], "lastmod"), build.SEO_LASTMOD)
             self.assertEqual(field(by[loc], "changefreq"), "monthly")
             self.assertEqual(field(by[loc], "priority"), "0.6")
         fondo = (DIST / "guida" / "fondo-perduto-o-finanziamento-agevolato.html").read_text(encoding="utf-8")
@@ -1832,22 +1903,35 @@ process.stdout.write(JSON.stringify({
         self.assertNotIn(build.CHECKUP_LANCIO, dopo)
         self.assertNotIn(codice, dopo)
         self.assertNotIn("LANCIO15", dopo)
-        data = json.loads((ROOT / "data" / "bandi.json").read_text(encoding="utf-8"))
-        slug = "trasferimento-tecnologico-er-2026"
-        righe = build.prepare(data, datetime.date(2026, 10, 31))
-        chiuso = next(b for b in righe if b["id"] == slug)
+        # Fixture con scadenza 30/10/2026: dal giorno dopo la card è nascosta e dice Scaduto.
+        # Una proroga nel catalogo non deve far fallire questo caso.
+        slug = "scadenza-30-ottobre"
+        chiuso = build.prepare(
+            [sample(id=slug, scadenza="2026-10-30", nota_scadenza="30/10/2026")],
+            datetime.date(2026, 10, 31),
+        )[0]
+        aperto = build.prepare(
+            [sample(id="ancora-aperto", scadenza="2026-12-01")],
+            datetime.date(2026, 10, 31),
+        )[0]
         self.assertTrue(chiuso["scaduto"])
+        self.assertFalse(aperto["scaduto"])
         card = build.card(chiuso, "", datetime.date(2026, 10, 27))
         self.assertIn(" hidden>", card)
         self.assertIn(">Scaduto<", card)
-        urls = [item["url"] for item in build.item_list(righe)["itemListElement"]]
+        self.assertIn("Scaduto il 30/10/2026", card)
+        urls = [item["url"] for item in build.item_list([chiuso, aperto])["itemListElement"]]
         self.assertNotIn(build.public_url(f"bando/{slug}.html"), urls)
+        self.assertIn(build.public_url("bando/ancora-aperto.html"), urls)
         home = (DIST / "index.html").read_text(encoding="utf-8")
-        visibile = next(
-            block for block in re.findall(r'<article class="card\b.*?</article>', home, re.S)
-            if f"/bando/{slug}" in block
-        )
-        self.assertNotIn(" hidden>", visibile)
+        blocchi = re.findall(r'<article class="card\b.*?</article>', home, re.S)
+        for b in preparati():
+            visibile = next(block for block in blocchi if f"/bando/{b['id']}" in block)
+            if b["scaduto"]:
+                self.assertIn(" hidden>", visibile, b["id"])
+                self.assertIn(">Scaduto<", visibile, b["id"])
+            else:
+                self.assertNotIn(" hidden>", visibile, b["id"])
 
     def test_lancio_sulle_pagine_nuove_fino_al_30_ottobre(self):
         """Il codice sulle pagine nuove vale fino al 30/10/2026, in generazione e nel browser."""
@@ -2222,7 +2306,8 @@ process.stdout.write(JSON.stringify({
             return out
 
         try:
-            env["BUILD_DATE"] = "2026-10-28"
+            giorno = datetime.date(2026, 10, 28)
+            env["BUILD_DATE"] = giorno.isoformat()
             build.build()
             raw = (DIST / "scadenze.ics").read_bytes()
             self.assertTrue(raw.endswith(b"\r\n"))
@@ -2237,12 +2322,10 @@ process.stdout.write(JSON.stringify({
             ids = []
             for ev in trovati:
                 self.assertRegex(ev["UID"], r"^[a-z0-9-]+@incentiviperte\.github\.io$")
-                self.assertGreaterEqual(ev["DTSTART"], "20261028")
+                self.assertGreaterEqual(ev["DTSTART"], giorno.strftime("%Y%m%d"))
                 ids.append(ev["UID"].split("@", 1)[0])
-            self.assertNotIn("umbria-feampa-indennizzo-pesca-acquacoltura-2026", ids)
-            self.assertNotIn("cciaa-tno-doppia-transizione-2-2026", ids)
-            self.assertNotIn("premio-innovazione-toscana-2026", ids)
-            self.assertIn("trasferimento-tecnologico-er-2026", ids)
+            attesi = [b["id"] for b in build.scadenze_aperte(preparati(giorno))]
+            self.assertEqual(ids, attesi)
             self.assertEqual(
                 [ev["UID"] for ev in trovati],
                 [f"{bid}@incentiviperte.github.io" for bid in ids],
