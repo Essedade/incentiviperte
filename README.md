@@ -19,6 +19,6 @@ Il Check-up Bandi è un controllo personalizzato di quali bandi regionali e nazi
 Dopo `python3 scripts/build.py`:
 
 - Cloudflare Pages (mirror): `wrangler pages deploy dist --project-name=incentiviperte --branch=main`
-- Branch `gh-pages` (solo il rimando, non il sito): `python3 scripts/build_redirect.py`, poi pubblica il contenuto di `dist-redirect/`. Ogni pagina rimanda allo stesso percorso su https://incentiviperte.pages.dev/; la 404 del rimando manda alla home nuova.
+- Branch `gh-pages` (solo il rimando, non il sito): `python3 scripts/build_redirect.py`, poi pubblica il contenuto di `dist-redirect/`. Ogni pagina rimanda allo stesso percorso su https://incentiviperte.github.io/; la 404 del rimando manda alla home nuova.
 
 Niente cookie e niente script di terze parti. Ogni spazio a pagamento porta l'etichetta Sponsorizzato. FoglioPEF è un progetto dello stesso titolare, non un link affiliato.

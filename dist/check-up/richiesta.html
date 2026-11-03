@@ -51,7 +51,7 @@
 <li><strong>Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi, con tutto il Base più requisiti punto per punto, cumulo e de minimis, documenti da preparare, priorità motivata, stima indicativa dell&#x27;agevolazione (non garantita), scadenzario e colloquio telefonico di 30 minuti.</li>
 </ul>
 <p>Con carta su Gumroad, ai clienti privati dell'UE Gumroad può aggiungere l'IVA del loro paese al pagamento.</p>
-<aside class="promo" aria-label="Codice di lancio"><p class="lab">Codice di lancio</p><p class="code">LANCIO15</p><p>Con LANCIO15 fino al 30/10/2026: Base 41,65 €, Completo 67,15 €.</p></aside>
+
 <p>Nessun dato inviato a terzi. Il pulsante apre il programma di posta sul tuo dispositivo, con oggetto e testo già compilati: i dati non passano da un server. Dopo l'invio ricevi per email il link al pagamento.</p>
 <form id="richiesta-form" class="checkup-form" method="post" action="#">
 <div><label for="rq-ragione">Ragione sociale o nome del progetto</label><input id="rq-ragione" name="ragione" type="text" required autocomplete="organization"></div>
@@ -134,49 +134,7 @@
   });
 })();
 </script>
-<script>
-(function () {
-  var ultimo = "2026-10-30";
-  function oggi() {
-    var override = (typeof window !== "undefined" && window.INCENTIVI_OGGI) ? String(window.INCENTIVI_OGGI) : "";
-    var match = /^(\d{4}-\d{2}-\d{2})/.exec(override);
-    if (match) return match[1];
-    try {
-      var fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome", year: "numeric", month: "2-digit", day: "2-digit" });
-      var iso = fmt.format(new Date());
-      if (/^\d{4}-\d{2}-\d{2}/.test(iso)) return iso.slice(0, 10);
-    } catch (err) {}
-    var now = new Date();
-    var m = now.getMonth() + 1;
-    var d = now.getDate();
-    return now.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (d < 10 ? "0" : "") + d;
-  }
-  if (oggi() <= ultimo) return;
-  var promo = document.querySelector("aside.promo");
-  if (promo && promo.parentNode) promo.parentNode.removeChild(promo);
-  var links = document.querySelectorAll("a[href]");
-  for (var i = 0; i < links.length; i++) {
-    var href = links[i].getAttribute("href") || "";
-    if (href.indexOf("LANCIO15") === -1) continue;
-    var q = href.split("?");
-    if (q.length < 2) continue;
-    var params = q[1].split("&");
-    var out = [];
-    for (var p = 0; p < params.length; p++) {
-      var kv = params[p].split("=");
-      var key = decodeURIComponent((kv[0] || "").replace(/\+/g, " "));
-      var val = decodeURIComponent((kv.slice(1).join("=") || "").replace(/\+/g, " "));
-      if (key === "body") {
-        val = val.split("\n").filter(function (line) {
-          return line.indexOf("LANCIO15") === -1;
-        }).join("\n");
-      }
-      out.push(encodeURIComponent(key) + "=" + encodeURIComponent(val));
-    }
-    links[i].setAttribute("href", q[0] + "?" + out.join("&"));
-  }
-})();
-</script></div></main>
+</div></main>
 <footer><div class="wrap">
 <p><strong>IncentiviPerTe</strong> · raccolta gratuita e indipendente di bandi per startup e PMI, da Arezzo, per le imprese di tutta la Toscana, dell'Umbria e dell'Emilia-Romagna, più gli incentivi nazionali. Le schede sono sintesi: fa fede solo il bando ufficiale.</p>
 <nav aria-label="Aree"><p><strong>Aree</strong></p><ul><li><a href="/nazionale">Nazionali</a></li><li><a href="/toscana">Toscana</a></li><li><a href="/umbria">Umbria</a></li><li><a href="/emilia-romagna">Emilia-Romagna</a></li></ul></nav>
