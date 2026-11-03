@@ -2282,6 +2282,272 @@ process.stdout.write(JSON.stringify({
                 env["BUILD_DATE"] = old
             build.build(TODAY)
 
+    def test_spazi_sponsor_multipli(self):
+        """Fino a 3 segnaposto negli elenchi e 2 nelle schede. Nessun IVA né pages.dev negli spazi."""
+        blocco = re.compile(
+            r'<article class="card\b.*?</article>|<aside class="card spc\b.*?</aside>',
+            re.S,
+        )
+
+        def nascosto(html_blocco):
+            apertura = html_blocco[: html_blocco.find(">")]
+            senza_valori = re.sub(r'"[^"]*"', "", apertura)
+            return bool(re.search(r"\shidden\b", senza_valori))
+
+        def visibili(html_pagina):
+            return [b for b in blocco.findall(html_pagina) if not nascosto(b)]
+
+        pagine = [p for p in DIST.rglob("*.html") if 'id="elenco"' in p.read_text(encoding="utf-8")]
+        self.assertGreaterEqual(len(pagine), 8)
+        spazi_per_pagina = []
+        for path in pagine:
+            testo = path.read_text(encoding="utf-8")
+            sequenza = visibili(testo)
+            articoli = 0
+            posizioni = []
+            etichette = []
+            for i, elemento in enumerate(sequenza):
+                if elemento.startswith("<aside"):
+                    self.assertGreater(i, 0, path.name)
+                    self.assertLess(i, len(sequenza) - 1, path.name)
+                    self.assertTrue(sequenza[i - 1].startswith("<article"), path.name)
+                    self.assertTrue(sequenza[i + 1].startswith("<article"), path.name)
+                    posizioni.append(articoli)
+                    etichetta = re.search(r'aria-label="([^"]+)"', elemento)
+                    self.assertIsNotNone(etichetta, path.name)
+                    etichette.append(etichetta.group(1))
+                    self.assertIn(
+                        "Spazio disponibile: qui può comparire il tuo studio o la tua azienda",
+                        elemento,
+                        path.name,
+                    )
+                    self.assertIn(build.SPONSOR_DA, elemento, path.name)
+                    self.assertIn('href="/sponsor"', elemento, path.name)
+                    self.assertIn(">Scopri gli spazi sponsor<", elemento, path.name)
+                    self.assertIn(build.sponsor_mailto(), elemento, path.name)
+                    self.assertNotIn("IVA", elemento, path.name)
+                    self.assertNotIn("pages.dev", elemento, path.name)
+                    self.assertNotIn("prestazione occasionale", elemento, path.name)
+                    self.assertNotIn("forfettario", elemento, path.name)
+                else:
+                    articoli += 1
+            self.assertEqual(posizioni, [s for s in build.SOGLIE_SPAZIO if s < articoli], path.name)
+            self.assertEqual(
+                etichette,
+                [f"Spazio sponsor {n} di {build.SPAZI_ELENCO}" for n in range(1, len(posizioni) + 1)],
+                path.name,
+            )
+            self.assertEqual(len(etichette), len(set(etichette)), path.name)
+            spazi_per_pagina.append(len(posizioni))
+        self.assertGreater(max(spazi_per_pagina), 1)
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        self.assertGreaterEqual(home.count('<aside class="card spc"'), 2)
+
+        for path in (DIST / "bando").glob("*.html"):
+            testo = path.read_text(encoding="utf-8")
+            spazi = re.findall(r'<aside class="sp" .*?</aside>', testo, re.S)
+            self.assertEqual(len(spazi), build.SPAZI_SCHEDA, path.name)
+            etichette = [re.search(r'aria-label="([^"]+)"', spazio).group(1) for spazio in spazi]
+            self.assertEqual(
+                etichette,
+                [f"Spazio sponsor {n} di {build.SPAZI_SCHEDA}" for n in range(1, build.SPAZI_SCHEDA + 1)],
+                path.name,
+            )
+            self.assertEqual(len(etichette), len(set(etichette)), path.name)
+            for spazio in spazi:
+                self.assertIn(
+                    "Spazio disponibile: qui può comparire il tuo studio o la tua azienda",
+                    spazio,
+                    path.name,
+                )
+                self.assertIn(build.SPONSOR_DA, spazio, path.name)
+                self.assertIn('href="/sponsor"', spazio, path.name)
+                self.assertIn(">Scopri gli spazi sponsor<", spazio, path.name)
+                self.assertNotIn("mailto:", spazio.lower(), path.name)
+                self.assertNotIn("IVA", spazio, path.name)
+                self.assertNotIn("pages.dev", spazio, path.name)
+
+        sponsor = (DIST / "sponsor.html").read_text(encoding="utf-8")
+        self.assertIn("In ogni pagina ci sono più spazi: fino a tre negli elenchi dei bandi e due in ogni scheda.", sponsor)
+        self.assertIn("Fino a <strong>tre spazi</strong>", sponsor)
+        self.assertIn("<strong>Due spazi</strong> in ogni scheda di bando", sponsor)
+        self.assertEqual(sponsor.count("Vuoi diventare sponsor? Scrivici"), 2)
+        self.assertNotIn("home page", sponsor)
+        self.assertNotIn("+ IVA", sponsor)
+        self.assertNotIn("pages.dev", sponsor)
+        for prezzo in ("49 €", "39 €", "69 €", "79 €", "99 €"):
+            self.assertIn(prezzo, sponsor)
+
+        for path in DIST.rglob("*"):
+            if not path.is_file() or path.suffix.lower() not in {".html", ".css", ".xml", ".txt", ".svg", ".js", ".ics"}:
+                continue
+            self.assertNotIn("pages.dev", path.read_text(encoding="utf-8"), path.as_posix())
+
+        script = re.search(
+            r"<script>\s*(\(function \(\) \{\s*var form = document\.getElementById\(\"filtri-form\"\);.*?\}\)\(\);)\s*</script>",
+            home,
+            re.S,
+        )
+        self.assertIsNotNone(script)
+        self.assertIn(".after(sponsor)", script.group(1))
+        self.assertIn("[6, 12, 18]", script.group(1))
+        runner = r"""
+const fs = require("fs");
+const script = fs.readFileSync(process.argv[2], "utf8");
+function node(attrs) {
+  const n = { attrs: Object.assign({}, attrs), hidden: false, parent: null, listeners: {} };
+  n.getAttribute = function (name) {
+    return Object.prototype.hasOwnProperty.call(n.attrs, name) ? n.attrs[name] : null;
+  };
+  n.addEventListener = function (type, fn) {
+    (n.listeners[type] = n.listeners[type] || []).push(fn);
+  };
+  n.dispatch = function (type) {
+    (n.listeners[type] || []).forEach(function (fn) { fn(); });
+  };
+  n.after = function (other) {
+    const list = n.parent;
+    if (!list) return;
+    const from = list.children.indexOf(other);
+    if (from >= 0) list.children.splice(from, 1);
+    const at = list.children.indexOf(n);
+    list.children.splice(at + 1, 0, other);
+    other.parent = list;
+  };
+  return n;
+}
+function card(id, reg) {
+  return node({
+    id: id,
+    class: "card",
+    "data-scaduto": "0",
+    "data-reg": reg,
+    "data-dest": "PMI",
+    "data-scad": "2027-06-01",
+    "data-apre": "",
+    "data-search": id
+  });
+}
+const list = { children: [] };
+const cards = [];
+for (let i = 1; i <= 20; i++) {
+  const item = card("c" + i, i <= 14 ? "Toscana" : "Umbria");
+  item.parent = list;
+  list.children.push(item);
+  cards.push(item);
+}
+const sponsors = [];
+for (let i = 1; i <= 3; i++) {
+  const item = node({ id: "s" + i, class: "card spc", "data-spazio": String(i) });
+  item.parent = list;
+  list.children.push(item);
+  sponsors.push(item);
+}
+function el(attrs) {
+  const n = node(attrs);
+  n.value = attrs.value || "";
+  n.options = attrs.options || [];
+  return n;
+}
+const area = el({ id: "r", options: [{ value: "" }, { value: "Toscana" }, { value: "Umbria" }, { value: "Nazionale" }] });
+const dest = el({ id: "d", options: [{ value: "" }, { value: "PMI" }] });
+const scad = el({ id: "s", options: [{ value: "" }, { value: "30" }, { value: "none" }] });
+const q = el({ id: "q" });
+const expired = el({ id: "x" });
+const count = el({ id: "n", text: "" });
+const reset = el({ id: "z" });
+const form = el({ id: "filtri-form" });
+const hero = el({ "data-aperti": "", text: "" });
+Object.defineProperty(count, "textContent", { value: "", writable: true });
+Object.defineProperty(hero, "textContent", { value: "", writable: true });
+const byId = { r: area, d: dest, s: scad, q: q, x: expired, n: count, z: reset, "filtri-form": form };
+const document = {
+  getElementById: function (id) { return byId[id] || null; },
+  querySelectorAll: function (sel) {
+    if (sel === "#elenco .card:not(.spc)") return cards.slice();
+    if (sel === "#elenco .spc") return sponsors.slice();
+    if (sel === ".hero [data-aperti]") return [hero];
+    return [];
+  }
+};
+const location = { search: "", pathname: "/", hash: "" };
+const history = { replaceState: function () {} };
+eval(script);
+function visibili() {
+  return list.children.filter(function (child) { return !child.hidden; }).map(function (child) { return child.attrs.id; });
+}
+function controllo(ids) {
+  const last = ids[ids.length - 1] || "";
+  let prev = false;
+  for (let i = 0; i < ids.length; i++) {
+    const spazio = ids[i].charAt(0) === "s";
+    if (spazio && prev) return { ok: false, ids: ids, motivo: "adiacenti" };
+    if (spazio && i === ids.length - 1) return { ok: false, ids: ids, motivo: "coda" };
+    prev = spazio;
+  }
+  return { ok: last.charAt(0) !== "s", ids: ids, motivo: last.charAt(0) === "s" ? "coda" : "" };
+}
+const tutti = controllo(visibili());
+area.value = "Toscana";
+area.dispatch("change");
+const toscana = controllo(visibili());
+const nascostiToscana = sponsors.filter(function (item) { return item.hidden; }).map(function (item) { return item.attrs.id; });
+area.value = "Umbria";
+area.dispatch("change");
+const umbria = controllo(visibili());
+const nascostiUmbria = sponsors.filter(function (item) { return item.hidden; }).map(function (item) { return item.attrs.id; });
+area.value = "Nazionale";
+area.dispatch("change");
+const nessuno = { ids: visibili(), nascosti: sponsors.filter(function (item) { return item.hidden; }).map(function (item) { return item.attrs.id; }) };
+process.stdout.write(JSON.stringify({
+  tutti: tutti,
+  toscana: toscana,
+  nascostiToscana: nascostiToscana,
+  umbria: umbria,
+  nascostiUmbria: nascostiUmbria,
+  nessuno: nessuno
+}));
+"""
+        script_path = DIST / "_spazi_filtro.js"
+        runner_path = DIST / "_spazi_filtro_runner.js"
+        script_path.write_text(script.group(1), encoding="utf-8")
+        runner_path.write_text(runner, encoding="utf-8")
+        try:
+            import subprocess
+            out = subprocess.run(
+                ["node", str(runner_path), str(script_path)],
+                check=True, capture_output=True, text=True,
+            )
+        finally:
+            script_path.unlink(missing_ok=True)
+            runner_path.unlink(missing_ok=True)
+        dati = json.loads(out.stdout)
+        self.assertTrue(dati["tutti"]["ok"], dati["tutti"])
+        self.assertEqual(
+            dati["tutti"]["ids"],
+            [
+                "c1", "c2", "c3", "c4", "c5", "c6", "s1",
+                "c7", "c8", "c9", "c10", "c11", "c12", "s2",
+                "c13", "c14", "c15", "c16", "c17", "c18", "s3",
+                "c19", "c20",
+            ],
+        )
+        self.assertTrue(dati["toscana"]["ok"], dati["toscana"])
+        self.assertEqual(
+            dati["toscana"]["ids"],
+            [
+                "c1", "c2", "c3", "c4", "c5", "c6", "s1",
+                "c7", "c8", "c9", "c10", "c11", "c12", "s2",
+                "c13", "c14",
+            ],
+        )
+        self.assertEqual(dati["nascostiToscana"], ["s3"])
+        self.assertTrue(dati["umbria"]["ok"], dati["umbria"])
+        self.assertEqual(dati["umbria"]["ids"], ["c15", "c16", "c17", "c18", "c19", "c20"])
+        self.assertEqual(dati["nascostiUmbria"], ["s1", "s2", "s3"])
+        self.assertEqual(dati["nessuno"]["ids"], [])
+        self.assertEqual(dati["nessuno"]["nascosti"], ["s1", "s2", "s3"])
+
 
 class Update(unittest.TestCase):
     def test_match_e_scrittura_atomica(self):
