@@ -99,6 +99,7 @@ a.tag.area:hover{background:var(--bd);color:#fff}
 .card .tag{background:#E7F4EE;border:0;color:var(--bd)}
 .spc{border:2px dashed #8b95a5;background:#f8fafc}
 .spt{font-size:1.05rem;font-weight:800;margin:8px 0}
+.spazio-nota{margin:0 0 10px}
 .spp{font-weight:800;color:var(--b);margin:0 0 8px}
 .lab{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:#e8edf3;color:#243044;border-radius:6px;padding:3px 8px}
 .checkup{margin:22px 0}

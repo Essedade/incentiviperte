@@ -75,6 +75,11 @@ GUIDE = (
 RNA_AIUTI = "https://www.rna.gov.it/"
 EURLEX_DE_MINIMIS = "https://eur-lex.europa.eu/legal-content/IT/TXT/?uri=CELEX%3A32023R2831"
 SPONSOR_DA = "Da 49 € al mese · prezzo di lancio"
+# Negli elenchi: fino a 3 spazi, dopo il 6°, il 12° e il 18° bando visibile.
+# Lo spazio non è mai l'ultimo elemento e due spazi non sono mai vicini.
+SOGLIE_SPAZIO = (6, 12, 18)
+SPAZI_ELENCO = 3
+SPAZI_SCHEDA = 2
 REG = ["Nazionale", "Toscana", "Umbria", "Emilia-Romagna"]
 REQUIRED = (
     "id", "titolo", "ente", "regione", "destinatari", "scadenza", "nota_scadenza",
@@ -800,20 +805,57 @@ def card(b, pre, today, mostra_scaduto=False):
     )
 
 
-def sponsor_card(pre):
-    return (
-        '<aside class="card spc" aria-label="Spazio sponsor"><span class="lab">Sponsorizzato</span>'
-        '<p class="spt">Il tuo studio qui, tra chi cerca un finanziamento</p>'
+def soglie_spazi(n_visibili, soglie=SOGLIE_SPAZIO, massimo=SPAZI_ELENCO):
+    """Soglie (1-based) dopo cui inserire uno spazio, solo se resta un bando visibile."""
+    scelte = []
+    for soglia in soglie:
+        if len(scelte) >= massimo:
+            break
+        if soglia < n_visibili:
+            scelte.append(soglia)
+    return scelte
+
+
+def _corpo_spazio(numero, totale):
+    titolo = f"Spazio sponsor {numero} di {totale}"
+    return titolo, (
+        '<span class="lab">Sponsorizzato</span>'
+        f'<p class="spt">{e(titolo)}</p>'
+        '<p class="spazio-nota">Spazio disponibile: qui può comparire il tuo studio o la tua azienda</p>'
         f'<p class="spp">{SPONSOR_DA}</p>'
-        f'<a class="btn outline" href="{site_href("sponsor.html")}">Scopri gli spazi sponsor</a></aside>'
+    )
+
+
+def sponsor_card(numero, totale=SPAZI_ELENCO):
+    """Segnaposto in elenco. Il mailto è quello dell'invito, il pulsante apre la pagina Sponsor."""
+    titolo, corpo = _corpo_spazio(numero, totale)
+    return (
+        f'<aside class="card spc" data-spazio="{numero}" aria-label="{e(titolo)}">'
+        f"{corpo}"
+        f'<a class="btn outline" href="{site_href("sponsor.html")}">Scopri gli spazi sponsor</a>'
+        '<p class="contact-links">'
+        f'<a class="mail" href="{e(sponsor_mailto())}">Scrivici per una sponsorizzazione</a>'
+        "</p></aside>"
+    )
+
+
+def sponsor_scheda(numero, totale=SPAZI_SCHEDA):
+    """Segnaposto nella scheda. Nessuna email: il pulsante apre la pagina Sponsor."""
+    titolo, corpo = _corpo_spazio(numero, totale)
+    return (
+        f'<aside class="sp" data-spazio="{numero}" aria-label="{e(titolo)}">'
+        f"{corpo}"
+        f'<p><a class="btn outline" href="{site_href("sponsor.html")}">Scopri gli spazi sponsor</a></p>'
+        "</aside>"
     )
 
 
 def grid(items, pre, today):
     blocks = [card(b, pre, today) for b in items]
-    active = [i for i, b in enumerate(items) if not b["scaduto"]]
-    pos = active[5] + 1 if len(active) >= 6 else len(blocks)
-    blocks.insert(pos, sponsor_card(pre))
+    attivi = [i for i, b in enumerate(items) if not b["scaduto"]]
+    # Dall'ultimo al primo: gli indici già calcolati non si spostano.
+    for numero, soglia in reversed(list(enumerate(soglie_spazi(len(attivi)), start=1))):
+        blocks.insert(attivi[soglia - 1] + 1, sponsor_card(numero))
     return '<div class="grid" id="elenco">' + "".join(blocks) + "</div>" + BADGE_JS
 
 
@@ -1011,12 +1053,19 @@ JS = r"""<script>
       card.hidden = !ok;
       if (ok) visible.push(card);
     });
-    var sponsor = document.querySelector("#elenco .spc");
-    if (sponsor) {
-      if (!visible.length) sponsor.hidden = true;
-      else {
+    var sponsors = Array.prototype.slice.call(document.querySelectorAll("#elenco .spc"));
+    sponsors.sort(function (a, b) {
+      return (+(a.getAttribute("data-spazio") || 0)) - (+(b.getAttribute("data-spazio") || 0));
+    });
+    var soglie = [6, 12, 18];
+    for (var s = 0; s < sponsors.length; s++) {
+      var sponsor = sponsors[s];
+      var soglia = soglie[s];
+      if (soglia && visible.length > soglia) {
         sponsor.hidden = false;
-        visible[Math.min(5, visible.length - 1)].after(sponsor);
+        visible[soglia - 1].after(sponsor);
+      } else {
+        sponsor.hidden = true;
       }
     }
     var n = 0;
@@ -1404,6 +1453,7 @@ a.tag.area:hover{background:var(--bd);color:#fff}
 .card .tag{background:#E7F4EE;border:0;color:var(--bd)}
 .spc{border:2px dashed #8b95a5;background:#f8fafc}
 .spt{font-size:1.05rem;font-weight:800;margin:8px 0}
+.spazio-nota{margin:0 0 10px}
 .spp{font-weight:800;color:var(--b);margin:0 0 8px}
 .lab{display:inline-block;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:#e8edf3;color:#243044;border-radius:6px;padding:3px 8px}
 .checkup{margin:22px 0}
@@ -1895,13 +1945,13 @@ def static_pages(today):
         ),
         "sponsor.html": (
             "Pubblicità per studi e consulenti – IncentiviPerTe",
-            "Spazi sponsor per studi, consulenti e banche davanti a chi cerca bandi: da 49 € al mese su IncentiviPerTe, 39 € su FoglioPEF, 69 € su entrambi i siti.",
+            "Più spazi sponsor in ogni pagina, per studi, consulenti e banche: da 49 € al mese su IncentiviPerTe, 39 € su FoglioPEF, 69 € su entrambi i siti.",
             f"""<div class="box">
-<p>IncentiviPerTe è letto da imprenditori, startup e PMI che cercano finanziamenti. Gli spazi sono per <strong>commercialisti, consulenti di finanza agevolata, banche e software</strong> per le imprese.</p>
+<p>IncentiviPerTe è letto da imprenditori, startup e PMI che cercano finanziamenti. Gli spazi sono per <strong>commercialisti, consulenti di finanza agevolata, banche e software</strong> per le imprese. In ogni pagina ci sono più spazi: fino a tre negli elenchi dei bandi e due in ogni scheda.</p>
 {invito}
 {sponsor_contacts}
 <h2>Cosa include lo spazio su IncentiviPerTe</h2>
-<ul><li>Un posto in <strong>home page</strong></li><li>Un posto nelle <strong>pagine regionali</strong> (Toscana, Umbria, Emilia-Romagna) e nei bandi nazionali</li><li>Un posto nelle <strong>schede dei bandi</strong></li><li>Etichetta <strong>Sponsorizzato</strong> sempre visibile</li></ul>
+<ul><li>Fino a <strong>tre spazi</strong> nella pagina dei bandi, dopo il 6°, il 12° e il 18° bando visibile</li><li>Fino a <strong>tre spazi</strong> nelle pagine regionali (Toscana, Umbria, Emilia-Romagna), nei bandi nazionali e negli elenchi per destinatario</li><li><strong>Due spazi</strong> in ogni scheda di bando</li><li>Etichetta <strong>Sponsorizzato</strong> sempre visibile</li></ul>
 <h2 id="prezzi">Prezzi</h2>
 <p>I prezzi qui sotto sono per uno spazio pubblicitario etichettato Sponsorizzato. Non sono il prezzo dei modelli Excel.</p>
 <div class="offers">
@@ -2069,7 +2119,7 @@ def self_check(written, bandi):
             href = href_m.group(1).lower() if href_m else ""
             if any(hint in href for hint in AFFILIATE_HINTS) and "link affiliato" not in text[text.find(tag):text.find(tag) + 240].lower():
                 raise ValueError(f"{name}: link affiliato senza etichetta")
-        if 'aria-label="Spazio sponsor"' in text and "Sponsorizzato" not in text:
+        if 'aria-label="Spazio sponsor' in text and "Sponsorizzato" not in text:
             raise ValueError(f"{name}: spazio sponsor senza etichetta Sponsorizzato")
         personal = "Davide" in text or "Davoglio" in text
         if personal and rel not in ("privacy.html", "note-legali.html"):
@@ -3791,10 +3841,7 @@ def build(today=None):
             + '<p class="note">Sintesi indicativa. Fa fede esclusivamente il testo ufficiale pubblicato dall&#39;ente. <a href="/disclaimer">Disclaimer</a></p></article>'
             + faq_block
             + related_html
-            + '<aside class="sp" aria-label="Spazio sponsor"><span class="lab">Sponsorizzato</span>'
-            + '<p class="spt">Spazio disponibile per commercialisti, consulenti, banche e software</p>'
-            + f'<p class="spp">{SPONSOR_DA}</p>'
-            + '<p><a class="btn outline" href="/sponsor">Scopri gli spazi sponsor</a></p></aside>'
+            + "".join(sponsor_scheda(n) for n in range(1, SPAZI_SCHEDA + 1))
             + fpef_box()
             + BADGE_JS
         )
