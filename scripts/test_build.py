@@ -912,11 +912,11 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
             self.assertIn('rel="canonical"', page, rel)
             self.assertIn("location.replace(", page, rel)
             if rel == "404.html" or rel == "index.html":
-                url = "https://incentiviperte.pages.dev/"
+                url = BASE
             elif rel.endswith(".html"):
-                url = "https://incentiviperte.pages.dev/" + rel[: -len(".html")]
+                url = BASE + rel[: -len(".html")]
             else:
-                url = "https://incentiviperte.pages.dev/" + rel
+                url = BASE + rel
             self.assertIn(f'content="0; url={url}"', page, rel)
             self.assertIn(f'rel="canonical" href="{url}"', page, rel)
             self.assertIn(f'location.replace("{url}")', page, rel)
@@ -1267,7 +1267,7 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
             "favicon-48.png": "a051afe7f8777ddd263284fd476e365612a39e886d758e3d545cd3a37ea7177f",
             "apple-touch-icon.png": "61990e384527a791c0ba0972a9cd0686d90d29f78c7de986ba42801dbb23a70b",
             "favicon-512.png": "ee6ae2045cd043586d72c742cb4f3a1af9827a08924fb9e4d9a402c262dd429c",
-            "og.png": "2f5f77e70348259d0a5413d07755fc1aff0bf925588bbd7d69044575331b783e",
+            "og.png": "9eaa800745ab0053fa966a371a8ec1b6c572590de9e7ba8fb2712e3257e8b630",
         }
         sizes = {
             "favicon-16.png": (16, 16),
@@ -2358,6 +2358,53 @@ process.stdout.write(JSON.stringify({
                 self.assertIn(build.CHECKUP_IVA_NOTE, pagina_prezzi)
             self.assertNotIn("Codice di lancio", dopo)
             self.assertNotIn("Codice di lancio", richiesta)
+        finally:
+            if old is None:
+                env.pop("BUILD_DATE", None)
+            else:
+                env["BUILD_DATE"] = old
+            build.build(TODAY)
+
+
+    def test_dopo_il_30_ottobre_niente_lancio_ne_pages_dev(self):
+        """Build dopo il 30/10: niente codice, prezzi scontati o pages.dev."""
+        import os
+
+        env = os.environ
+        old = env.get("BUILD_DATE")
+        try:
+            env["BUILD_DATE"] = "2026-11-03"
+            build.build()
+            visti = 0
+            for path in DIST.rglob("*"):
+                if not path.is_file():
+                    continue
+                if path.suffix.lower() not in {".html", ".css", ".svg", ".txt", ".xml"}:
+                    continue
+                visti += 1
+                text = path.read_text(encoding="utf-8")
+                rel = path.relative_to(DIST).as_posix()
+                for needle in ("LANCIO15", "41,65", "67,15", "41%2C65", "67%2C15", "pages.dev"):
+                    self.assertNotIn(needle, text, (rel, needle))
+                if path.suffix.lower() != ".html":
+                    continue
+                for meta in re.findall(r"<meta\b[^>]*>", text, flags=re.I):
+                    self.assertNotIn("pages.dev", html.unescape(meta), rel)
+                self.assertNotIn("pages.dev", build.visible_text(text), rel)
+                for href in re.findall(r'href="(mailto:[^"]*)"', text, flags=re.I):
+                    decoded = html.unescape(urllib.parse.unquote(href))
+                    for needle in ("LANCIO15", "41,65", "67,15"):
+                        self.assertNotIn(needle, decoded, rel)
+            self.assertGreater(visti, 10)
+            checkup = (DIST / "check-up.html").read_text(encoding="utf-8")
+            richiesta = (DIST / "check-up" / "richiesta.html").read_text(encoding="utf-8")
+            for pagina in (checkup, richiesta):
+                self.assertIn("49 €", pagina)
+                self.assertIn("79 €", pagina)
+                self.assertNotIn("Codice di lancio", pagina)
+                self.assertNotIn('<aside class="promo"', pagina)
+            self.assertIn("Base</strong>, 49 €", checkup)
+            self.assertIn("Completo</strong>, 79 €", checkup)
         finally:
             if old is None:
                 env.pop("BUILD_DATE", None)
