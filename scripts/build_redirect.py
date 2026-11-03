@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Genera dist-redirect/: rimando dal vecchio GitHub Pages al sito su Cloudflare.
+"""Genera dist-redirect/: rimando dal vecchio GitHub Pages al sito ufficiale.
 
 Per ogni pagina HTML di dist/ scrive una pagina minima con meta refresh,
 canonical e location.replace verso lo stesso percorso su
-https://incentiviperte.pages.dev/. La 404 rimanda alla home nuova.
+https://incentiviperte.github.io/. La 404 rimanda alla home nuova.
 Aggiunge .nojekyll. Non pubblica nulla e non tocca il branch gh-pages.
 
 Uso: python3 scripts/build_redirect.py
@@ -16,7 +16,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 OUT = ROOT / "dist-redirect"
-NEW = "https://incentiviperte.pages.dev/"
+NEW = "https://incentiviperte.github.io/"
 
 
 def destination(rel):
