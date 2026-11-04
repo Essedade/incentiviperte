@@ -18,7 +18,7 @@ import update
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
 # Data di build dei test, non il calendario di quando gira la suite.
-# Resta prima del 30/10/2026: così LANCIO15 c'è ancora nelle pagine generate qui.
+# Resta prima del 30/10/2026: le scadenze di quel giorno sono ancora aperte.
 TODAY = datetime.date(2026, 10, 13)
 BASE = build.BASE
 
@@ -328,12 +328,13 @@ class Sito(unittest.TestCase):
 
     def test_prezzi_e_titolare(self):
         sponsor = (DIST / "sponsor.html").read_text(encoding="utf-8")
-        for price in ("49 €", "39 €", "69 €", "79 €", "99 €"):
-            self.assertIn(price, sponsor)
-        self.assertIn("Prezzo di lancio: 3 posti, poi 79 €", sponsor)
+        self.assertGreaterEqual(sponsor.count(build.COSTO_SU_RICHIESTA), 3)
+        self.assertIn('href="/contatti"', sponsor)
+        self.assertNotIn("\u20ac", sponsor)
+        self.assertNotIn("Prezzo di lancio", sponsor)
         self.assertIn(f'href="mailto:{build.FPEF_EMAIL}"', sponsor)
         self.assertIn(
-            "Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € al mese)",
+            "Per le sponsorizzazioni FoglioPEF e per il pacchetto entrambi i siti",
             sponsor,
         )
         foglio = sponsor.split("<h3>FoglioPEF</h3>", 1)[1].split("<h3>", 1)[0]
@@ -438,7 +439,7 @@ class Sito(unittest.TestCase):
         scheda = (DIST / "bando" / "smart-start-italia.html").read_text(encoding="utf-8")
         self.assertNotIn("mailto:", scheda.split("<footer>", 1)[0].lower())
         self.assertIn(mailto, scheda.split("<footer>", 1)[1])
-        self.assertIn("49 €", (DIST / "sponsor.html").read_text(encoding="utf-8"))
+        self.assertIn(build.COSTO_SU_RICHIESTA, (DIST / "sponsor.html").read_text(encoding="utf-8"))
 
     def test_accessibilita_e_prestazioni(self):
         css = (DIST / "style.css").read_text(encoding="utf-8")
@@ -974,10 +975,12 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertIn(f'rel="canonical" href="{BASE}check-up"', page)
         self.assertIn("una relazione scritta sui bandi adatti", page)
         self.assertIn(
-            "Base</strong>, 49 €: report di circa 3-4 pagine, entro 5 giorni lavorativi dalla ricezione dei dati completi.",
+            "Base</strong>: report di circa 3-4 pagine, entro 5 giorni lavorativi dalla ricezione dei dati completi.",
             page,
         )
-        self.assertIn("Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi", page)
+        self.assertIn("Completo</strong>: report di 6-10 pagine, entro 7-10 giorni lavorativi", page)
+        self.assertIn(build.COSTO_SU_RICHIESTA, page)
+        self.assertIn('href="/contatti"', page)
         self.assertIn("Livelli del servizio", page)
         for item in build.CHECKUP_EXTRA:
             self.assertIn(item, page)
@@ -1000,8 +1003,9 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         services = [node for node in data["@graph"] if node["@type"] == "Service"]
         self.assertEqual(len(services), 1)
         offers = {item["name"]: item for item in services[0]["offers"]}
-        self.assertEqual(offers["Base"]["price"], "49")
-        self.assertEqual(offers["Completo"]["price"], "79")
+        for offer in offers.values():
+            self.assertNotIn("pri" + "ce", offer)
+            self.assertIn(build.COSTO_SU_RICHIESTA, offer["description"])
         self.assertIn("entro 5 giorni lavorativi", offers["Base"]["description"])
         self.assertIn("3-4 pagine", offers["Base"]["description"])
         self.assertIn(build.CHECKUP_BASE, offers["Base"]["description"])
@@ -1039,11 +1043,10 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
 
     def test_checkup_codice_lancio_e_rimando(self):
         page = (DIST / "check-up.html").read_text(encoding="utf-8")
-        self.assertIn("49 €", page)
-        self.assertIn("79 €", page)
-        self.assertIn("LANCIO15", page)
-        self.assertIn(build.CHECKUP_LANCIO, page)
-        self.assertIn("30/10/2026", page)
+        self.assertIn(build.COSTO_SU_RICHIESTA, page)
+        self.assertNotIn("LANCIO15", page)
+        self.assertNotIn("\u20ac", page)
+        self.assertNotIn("Codice di lancio", page)
         self.assertNotIn("15% di sconto", page)
         self.assertNotIn("Invitalia", page)
         self.assertIsNone(re.search(r"invitalia", build.visible_text(page), re.I))
@@ -1081,35 +1084,16 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
         self.assertNotIn("pages.dev", page)
         self.assertNotIn("essedade.github.io", page)
         self.assertIn("Il Check-up è una verifica di ammissibilità e non garantisce l'ottenimento del contributo.", page)
-        self.assertIn("l'IBAN non è pubblicato sul sito", page)
-        self.assertIn("Dopo la richiesta lo inviamo per email da", page)
+        self.assertIn(build.COSTO_SU_RICHIESTA, page)
+        self.assertIn('id="costo-servizio"', page)
+        self.assertIn('href="/contatti"', page)
+        self.assertNotIn("gumroad.com", page.lower())
+        self.assertNotIn("\u20ac", page)
+        self.assertNotIn("LANCIO15", page)
         self.assertIn("incentiviperte.team@gmail.com", page)
         self.assertIsNone(re.search(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b", page))
         self.assertIsNone(re.search(r"\b[A-Z]{2}\d{2}(?:\s[A-Z0-9]{4}){3,8}\b", page))
-        self.assertIn('<p class="code">LANCIO15</p>', page)
-        self.assertIn(build.CHECKUP_LANCIO, page)
         self.assertIn(">Invia richiesta<", page)
-        self.assertEqual(build.GUMROAD_CHECKUP_BASE_URL, "https://fogliopef.gumroad.com/l/checkup-bandi-base")
-        self.assertEqual(build.GUMROAD_CHECKUP_COMPLETO_URL, "https://fogliopef.gumroad.com/l/checkup-bandi-completo")
-        self.assertEqual(build.CHECKUP_PRODUCT_BASE, "IncentiviPerTe – Check-up Bandi Base")
-        self.assertEqual(build.CHECKUP_PRODUCT_COMPLETO, "IncentiviPerTe – Check-up Bandi Completo")
-        paga = page.split('id="paga-ora"', 1)[1].split("</section>", 1)[0]
-        self.assertIn("Paga ora", paga)
-        self.assertIn("IncentiviPerTe – Check-up Bandi Base", paga)
-        self.assertIn("IncentiviPerTe – Check-up Bandi Completo", paga)
-        base = paga.split("IncentiviPerTe – Check-up Bandi Base", 1)[1].split("IncentiviPerTe – Check-up Bandi Completo", 1)[0]
-        completo = paga.split("IncentiviPerTe – Check-up Bandi Completo", 1)[1]
-        self.assertIn("49 €", base)
-        self.assertIn("79 €", completo)
-        self.assertIn('href="https://fogliopef.gumroad.com/l/checkup-bandi-base"', base)
-        self.assertIn('href="https://fogliopef.gumroad.com/l/checkup-bandi-completo"', completo)
-        self.assertEqual(paga.count("Pagamento sicuro con carta tramite Gumroad"), 2)
-        self.assertEqual(paga.count(">Bonifico istantaneo<"), 2)
-        for subject in (
-            "Richiesta Check-up Base – pagamento con bonifico istantaneo",
-            "Richiesta Check-up Completo – pagamento con bonifico istantaneo",
-        ):
-            self.assertIn(urllib.parse.quote(subject), page)
         self.assertIn(
             'mailto:incentiviperte.team@gmail.com?subject=" + encodeURIComponent("Richiesta Check-up Bandi")',
             page,
@@ -1124,8 +1108,9 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
             self.assertIn('class="bando-checkup"', text, path.name)
             box = text.split('class="bando-checkup"', 1)[1].split("</aside>", 1)[0]
             self.assertIn(phrase, box, path.name)
-            self.assertIn("(da 49 €)", box, path.name)
-            self.assertIn(build.CHECKUP_IVA_NOTE, box, path.name)
+            self.assertIn(build.COSTO_SU_RICHIESTA, box, path.name)
+            self.assertIn('href="/contatti"', box, path.name)
+            self.assertNotIn("\u20ac", box, path.name)
             self.assertIn("Verifica di ammissibilità, non garantisce il contributo.", box, path.name)
             self.assertIn('href="/check-up"', box, path.name)
             self.assertIn(f'rel="canonical" href="https://incentiviperte.github.io/bando/{path.stem}"', text, path.name)
@@ -1134,90 +1119,67 @@ process.stdout.write(JSON.stringify({ today: today, opening: opening }));
             self.assertIsNone(re.search(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b", text), path.name)
         self.assertNotIn('class="bando-checkup"', (DIST / "index.html").read_text(encoding="utf-8"))
 
-    def test_prezzi_finali_senza_piu_iva(self):
-        """I prezzi indicati sono finali: niente «+ IVA» su Check-up e sponsor."""
+    def test_costo_su_richiesta_senza_prezzi_servizio(self):
+        """I servizi non pubblicano importi: il costo si chiede dalla pagina Contatti."""
+        euro = "\u20ac"
+        chiave = "pri" + "ce"
+        pagine = (
+            "check-up.html",
+            "check-up/richiesta.html",
+            "affiancamento.html",
+            "sponsor.html",
+        )
+        for rel in pagine:
+            testo = (DIST / rel).read_text(encoding="utf-8")
+            self.assertIn(build.COSTO_SU_RICHIESTA, testo, rel)
+            self.assertIn('href="/contatti"', testo, rel)
+            self.assertNotIn(euro, testo, rel)
+            self.assertNotIn("LANCIO15", testo, rel)
+            self.assertNotIn("+ IVA", testo, rel)
+            self.assertFalse(build.campo_prezzo(testo), rel)
         page = (DIST / "check-up.html").read_text(encoding="utf-8")
         main = page.split('<main id="main"', 1)[1].split("</main>", 1)[0]
-        self.assertEqual(main.count(build.CHECKUP_IVA_NOTE), 2)
-        livelli = main.split("<h2>Livelli del servizio</h2>", 1)[1].split('<aside class="promo"', 1)[0]
-        self.assertIn(build.CHECKUP_IVA_NOTE, livelli)
-        self.assertIn("Base</strong>, 49 €:", livelli)
-        self.assertIn("Completo</strong>, 79 €:", livelli)
-        self.assertIn("Base · 49 €", main)
-        self.assertIn("Completo · 79 €", main)
-        paga = main.split('id="paga-ora"', 1)[1].split("</section>", 1)[0]
-        self.assertIn(build.CHECKUP_IVA_NOTE, paga)
-        self.assertIn(build.CHECKUP_LANCIO, main.split('id="paga-ora"', 1)[0])
-        self.assertIn("41,65 €", main)
-        self.assertIn("67,15 €", main)
-        self.assertNotIn("+ IVA", main)
-        choices = re.findall(r'<div class="pay-choice">(.*?)</div>', paga, re.S)
-        self.assertEqual(len(choices), 4)
-        card_amounts = []
-        wire_amounts = []
-        for chunk in choices:
-            amount = re.search(r'class="pay-amt">(.*?)</span>', chunk).group(1)
-            if "gumroad.com" in chunk:
-                card_amounts.append(amount)
-                self.assertIn(amount, ("49 €", "79 €"))
-            else:
-                wire_amounts.append(amount)
-                self.assertIn(">Bonifico istantaneo<", chunk)
-                self.assertTrue(amount.endswith("(prezzo finale, nessuna IVA aggiunta)"), amount)
-        self.assertEqual(card_amounts, ["49 €", "79 €"])
-        self.assertEqual(
-            wire_amounts,
-            [
-                "49 € (prezzo finale, nessuna IVA aggiunta)",
-                "79 € (prezzo finale, nessuna IVA aggiunta)",
-            ],
-        )
-        hrefs = []
-        for chunk in choices:
-            if "gumroad.com" in chunk:
-                continue
-            hrefs.extend(re.findall(r'href="(mailto:[^"]+)"', chunk))
-        self.assertEqual(len(hrefs), 2)
-        for href in hrefs:
-            parsed = urllib.parse.urlparse(html.unescape(href))
-            query = urllib.parse.parse_qs(parsed.query)
-            subject = query["subject"][0]
-            body = query["body"][0]
-            self.assertNotIn("+ IVA", subject)
-            self.assertNotIn("+ IVA", body)
-            self.assertNotIn("prestazione occasionale", subject + body)
-            self.assertNotIn("forfettario", subject + body)
-            self.assertRegex(body, r"Importo: (?:49|79) €\n")
-        desc = re.search(r'<meta name="description" content="([^"]*)"', page).group(1)
-        self.assertIn(build.CHECKUP_IVA_NOTE, html.unescape(desc))
-        self.assertNotIn("+ IVA", html.unescape(desc))
+        livelli = main.split("<h2>Livelli del servizio</h2>", 1)[1].split("<h2>Chi lo prepara</h2>", 1)[0]
+        self.assertIn("Base</strong>:", livelli)
+        self.assertIn("Completo</strong>:", livelli)
+        self.assertIn(build.COSTO_SU_RICHIESTA, livelli)
+        costo = main.split('id="costo-servizio"', 1)[1].split("</section>", 1)[0]
+        self.assertIn(build.COSTO_SU_RICHIESTA, costo)
+        self.assertIn('href="/contatti"', costo)
+        desc = html.unescape(re.search(r'<meta name="description" content="([^"]*)"', page).group(1))
+        self.assertIn(build.COSTO_SU_RICHIESTA, desc)
+        self.assertNotIn(euro, desc)
+        self.assertNotIn("+ IVA", desc)
         raw = page.split('<script type="application/ld+json">', 1)[1].split("</script>", 1)[0]
         data = json.loads(raw)
         service = next(node for node in data["@graph"] if node["@type"] == "Service")
-        self.assertIn(build.CHECKUP_IVA_NOTE, service["description"])
-        self.assertNotIn("+ IVA", service["description"])
+        self.assertIn(build.COSTO_SU_RICHIESTA, service["description"])
+        self.assertNotIn(euro, service["description"])
+        self.assertNotIn(chiave, service)
         for offer in service["offers"]:
-            self.assertIn(build.CHECKUP_IVA_NOTE, offer["description"])
-            self.assertNotIn("+ IVA", offer["description"])
-            self.assertNotIn("+", offer["price"])
+            self.assertIn(build.COSTO_SU_RICHIESTA, offer["description"])
+            self.assertNotIn(chiave, offer)
+            self.assertNotIn(euro, offer["description"])
         for path in (DIST / "bando").glob("*.html"):
             box = path.read_text(encoding="utf-8").split('class="bando-checkup"', 1)[1].split("</aside>", 1)[0]
-            self.assertIn("da 49 €", box, path.name)
+            self.assertIn(build.COSTO_SU_RICHIESTA, box, path.name)
+            self.assertNotIn(euro, box, path.name)
             self.assertNotIn("+ IVA", box, path.name)
-            self.assertIn(build.CHECKUP_IVA_NOTE, box, path.name)
-        sponsor = re.sub(r"<[^>]+>", "", (DIST / "sponsor.html").read_text(encoding="utf-8"))
-        for price in ("49 € al mese", "39 € al mese", "69 € al mese", "79 € al mese", "99 € al mese"):
-            self.assertIn(price, sponsor)
+        sponsor = (DIST / "sponsor.html").read_text(encoding="utf-8")
         self.assertNotIn("+ IVA", sponsor)
+        self.assertNotIn(euro, sponsor)
         home = (DIST / "index.html").read_text(encoding="utf-8")
-        self.assertIn("da 49 € al mese", home)
+        sezione = home.split('class="checkup"', 1)[1].split("</section>", 1)[0]
+        self.assertIn(build.COSTO_SU_RICHIESTA, sezione)
+        self.assertNotIn(euro, sezione)
         self.assertNotIn("+ IVA", home)
         for path in DIST.rglob("*.html"):
             text = path.read_text(encoding="utf-8")
+            self.assertFalse(build.campo_prezzo(text), path.as_posix())
             if 'class="spp"' in text:
                 self.assertIn(build.SPONSOR_DA, text, path.as_posix())
-        self.assertNotIn("24 €", page)
-        self.assertNotIn("24 €", sponsor)
+                for pezzo in re.findall(r'<p class="spp">.*?</p>', text):
+                    self.assertNotIn(euro, pezzo, path.as_posix())
 
     def test_niente_piu_iva_prestazione_o_forfettario(self):
         banned = ("+ IVA", "prestazione occasionale", "forfettario")
@@ -1687,9 +1649,9 @@ process.stdout.write(JSON.stringify({
         lazy(home, "verifica-ammissibilita.webp", "verifica-ammissibilita", 800, 600)
         checkup = (DIST / "check-up.html").read_text(encoding="utf-8")
         lazy(checkup, "relazione-scritta.webp", "relazione-scritta", 800, 600)
-        paga = checkup.split('id="paga-ora"', 1)[1].split("</section>", 1)[0]
-        lazy(paga, "verifica-ammissibilita.webp", "verifica-ammissibilita", 800, 600)
-        livelli = checkup.split("<h2>Livelli del servizio</h2>", 1)[1].split('<aside class="promo"', 1)[0]
+        costo = checkup.split('id="costo-servizio"', 1)[1].split("</section>", 1)[0]
+        lazy(costo, "verifica-ammissibilita.webp", "verifica-ammissibilita", 800, 600)
+        livelli = checkup.split("<h2>Livelli del servizio</h2>", 1)[1].split("<h2>Chi lo prepara</h2>", 1)[0]
         self.assertIn("relazione-scritta.webp", livelli)
         about = (DIST / "chi-siamo.html").read_text(encoding="utf-8")
         lazy(about, "metodo-fonti-ufficiali.webp", "metodo-fonti-ufficiali", 800, 600)
@@ -1753,7 +1715,8 @@ process.stdout.write(JSON.stringify({
         self.assertNotIn("presentazione della domanda", page.lower())
         for attr in ('name="description"', 'property="og:description"', 'name="twitter:description"'):
             chunk = page.split(attr, 1)[1].split(">", 1)[0]
-            self.assertIn(build.CHECKUP_IVA_NOTE, html.unescape(chunk))
+            self.assertIn(build.COSTO_SU_RICHIESTA, html.unescape(chunk))
+            self.assertNotIn("\u20ac", html.unescape(chunk))
         self.assertIn('aria-label="Guide"', home)
         self.assertIn('href="/guida/bando-a-sportello"', home)
         self.assertIn('href="/guida/de-minimis"', home)
@@ -1895,14 +1858,11 @@ process.stdout.write(JSON.stringify({
     def test_lancio_e_scheda_scaduta_dopo_il_23_ottobre(self):
         fino = build.checkup_body(datetime.date(2026, 10, 30))
         dopo = build.checkup_body(datetime.date(2026, 10, 31))
-        codice = urllib.parse.quote("Codice di lancio: LANCIO15")
-        self.assertIn('<aside class="promo"', fino)
-        self.assertIn(build.CHECKUP_LANCIO, fino)
-        self.assertIn(codice, fino)
-        self.assertNotIn('<aside class="promo"', dopo)
-        self.assertNotIn(build.CHECKUP_LANCIO, dopo)
-        self.assertNotIn(codice, dopo)
-        self.assertNotIn("LANCIO15", dopo)
+        for pagina in (fino, dopo):
+            self.assertIn(build.COSTO_SU_RICHIESTA, pagina)
+            self.assertNotIn('<aside class="promo"', pagina)
+            self.assertNotIn("LANCIO15", pagina)
+            self.assertNotIn("\u20ac", pagina)
         # Fixture con scadenza 30/10/2026: dal giorno dopo la card è nascosta e dice Scaduto.
         # Una proroga nel catalogo non deve far fallire questo caso.
         slug = "scadenza-30-ottobre"
@@ -1934,68 +1894,26 @@ process.stdout.write(JSON.stringify({
                 self.assertNotIn(" hidden>", visibile, b["id"])
 
     def test_lancio_sulle_pagine_nuove_fino_al_30_ottobre(self):
-        """Il codice sulle pagine nuove vale fino al 30/10/2026, in generazione e nel browser."""
+        """Il codice di lancio non torna, né prima né dopo il 30/10/2026."""
         fino = build.corpo_richiesta(datetime.date(2026, 10, 30))
         dopo = build.corpo_richiesta(datetime.date(2026, 10, 31))
-        self.assertIn(build.LANCIO_JS, fino)
-        self.assertNotIn(build.LANCIO_JS, dopo)
-        self.assertIn(build.LANCIO_JS, (DIST / "check-up.html").read_text(encoding="utf-8"))
-        self.assertIn('<aside class="promo"', fino)
-        self.assertIn('<p class="code">LANCIO15</p>', fino)
-        self.assertIn(build.CHECKUP_LANCIO, fino)
-        self.assertIn("41,65 €", fino)
-        self.assertIn("67,15 €", fino)
-        self.assertNotIn('<aside class="promo"', dopo)
-        self.assertNotIn('<p class="code">LANCIO15</p>', dopo)
-        self.assertNotIn(build.CHECKUP_LANCIO, dopo)
-        self.assertNotIn("41,65 €", dopo)
-        self.assertNotIn("67,15 €", dopo)
+        for corpo in (fino, dopo):
+            self.assertIn(build.COSTO_SU_RICHIESTA, corpo)
+            self.assertIn('href="/contatti"', corpo)
+            self.assertNotIn('<aside class="promo"', corpo)
+            self.assertNotIn("LANCIO15", corpo)
+            self.assertNotIn("\u20ac", corpo)
+        checkup = (DIST / "check-up.html").read_text(encoding="utf-8")
+        self.assertNotIn("LANCIO15", checkup)
+        self.assertNotIn('<aside class="promo"', checkup)
         for name in ("affiancamento.html", "scadenze.html", "avvisi.html"):
             pagina = (DIST / name).read_text(encoding="utf-8")
             self.assertNotIn("LANCIO15", pagina, name)
             self.assertNotIn("41,65", pagina, name)
             self.assertNotIn("67,15", pagina, name)
-        codice = build.LANCIO_JS.removeprefix("<script>").removesuffix("</script>")
-        runner = r"""
-const vm = require("vm");
-const fs = require("fs");
-const code = fs.readFileSync(process.argv[2], "utf8");
-function run(iso) {
-  let removed = false;
-  const promo = { parentNode: { removeChild() { removed = true; } } };
-  const document = {
-    querySelector(sel) { return sel === "aside.promo" && !removed ? promo : null; },
-    querySelectorAll() { return []; }
-  };
-  const sandbox = { document, window: {} };
-  if (iso) sandbox.window.INCENTIVI_OGGI = iso;
-  vm.runInNewContext(code, sandbox);
-  return removed;
-}
-process.stdout.write(JSON.stringify({
-  il30: run("2026-10-30T12:00:00"),
-  il31: run("2026-10-31T12:00:00")
-}));
-"""
-        script_path = DIST / "_lancio.js"
-        runner_path = DIST / "_lancio_runner.js"
-        script_path.write_text(codice, encoding="utf-8")
-        runner_path.write_text(runner, encoding="utf-8")
-        try:
-            import subprocess
-            out = subprocess.run(
-                ["node", str(runner_path), str(script_path)],
-                check=True, capture_output=True, text=True,
-            )
-        finally:
-            script_path.unlink(missing_ok=True)
-            runner_path.unlink(missing_ok=True)
-        esito = json.loads(out.stdout)
-        self.assertIs(esito["il30"], False)
-        self.assertIs(esito["il31"], True)
 
     def test_pagine_affiancamento_richiesta_scadenze_avvisi(self):
-        """Pagine nuove, calendario senza bandi scaduti, prezzi, nota Gumroad, parole vietate."""
+        """Pagine nuove, calendario senza bandi scaduti, costo su richiesta, parole vietate."""
         import tempfile
 
         pagine = {
@@ -2027,23 +1945,18 @@ process.stdout.write(JSON.stringify({
 
         aff = (DIST / "affiancamento.html").read_text(encoding="utf-8")
         for phrase in (
-            "199 €",
-            "149 €",
-            "329 €",
-            "690 € + 4% del contributo effettivamente erogato, tetto 4.000 €",
-            "Rendicontazione 490 €",
-            "1.490 € + 5% del contributo erogato, tetto 8.000 €",
-            "90 € ciascuna",
-            "290 € solo fisso, senza contatti con la banca e senza compenso a risultato",
-            "Check-up Completo 79 €",
-            "Il Check-up già pagato (49 o 79 €) si scala dal prezzo.",
+            build.COSTO_SU_RICHIESTA,
+            'href="/contatti"',
+            "Solo compenso fisso",
+            "Costo su richiesta, senza contatti con la banca e senza compenso a risultato",
+            "Il livello è il Check-up Completo.",
+            "Se hai già chiesto il Check-up, lo consideriamo nel costo del livello scelto.",
             "La parte a risultato si paga solo all'erogazione del contributo.",
             "In alcuni bandi la consulenza non è una spesa ammissibile.",
             "Firma, credenziali e invio della domanda restano del legale rappresentante.",
             "Le attività sono svolte da un team di esperti professionisti con esperienza pluriennale.",
             "Alcuni enti pubblici offrono un accompagnamento gratuito",
             "Nessuna garanzia di ottenere il contributo.",
-            "Solo compenso fisso",
             'href="/check-up/richiesta">Richiedi il Check-up</a>',
         ):
             self.assertIn(phrase, aff, phrase)
@@ -2056,13 +1969,13 @@ process.stdout.write(JSON.stringify({
         self.assertIn('href="/avvisi"', home)
 
         richiesta = (DIST / "check-up" / "richiesta.html").read_text(encoding="utf-8")
-        self.assertIn(build.CHECKUP_IVA_NOTE, richiesta)
-        self.assertEqual(richiesta.count(build.CHECKUP_IVA_NOTE), 1)
-        self.assertIn("49 €", richiesta)
-        self.assertIn("79 €", richiesta)
+        self.assertIn(build.COSTO_SU_RICHIESTA, richiesta)
+        self.assertIn('href="/contatti"', richiesta)
+        self.assertNotIn("\u20ac", richiesta)
+        self.assertNotIn("LANCIO15", richiesta)
         self.assertIn("Nessun dato inviato a terzi.", richiesta)
         self.assertIn("Il Check-up è una verifica di ammissibilità e non garantisce il contributo.", richiesta)
-        self.assertIn("Dopo l'invio ricevi per email il link al pagamento.", richiesta)
+        self.assertIn("Dopo l'invio ti rispondiamo con il costo.", richiesta)
         self.assertIn('href="/privacy"', richiesta)
         consenso = re.search(r'<input[^>]*name="privacy"[^>]*>', richiesta)
         self.assertIsNotNone(consenso)
@@ -2336,12 +2249,10 @@ process.stdout.write(JSON.stringify({
             self.assertIn(f'id="n-scadenze" aria-live="polite">{etichetta}</p>', pagina)
             self.assertEqual(pagina.count("<time "), n)
             checkup = (DIST / "check-up.html").read_text(encoding="utf-8")
-            self.assertIn("LANCIO15", checkup)
-            self.assertIn("41,65 €", checkup)
-            self.assertIn("67,15 €", checkup)
-            self.assertIn("Base 49 €", checkup)
-            self.assertIn("Completo 79 €", checkup)
-            self.assertIn(build.CHECKUP_IVA_NOTE, checkup)
+            self.assertIn(build.COSTO_SU_RICHIESTA, checkup)
+            self.assertNotIn("LANCIO15", checkup)
+            self.assertNotIn("\u20ac", checkup)
+            self.assertNotIn("Codice di lancio", checkup)
 
             env["BUILD_DATE"] = "2026-10-31"
             build.build()
@@ -2352,10 +2263,10 @@ process.stdout.write(JSON.stringify({
                 self.assertNotIn("67,15", html_text, path.as_posix())
             dopo = (DIST / "check-up.html").read_text(encoding="utf-8")
             richiesta = (DIST / "check-up" / "richiesta.html").read_text(encoding="utf-8")
-            for pagina_prezzi in (dopo, richiesta):
-                self.assertIn("49 €", pagina_prezzi)
-                self.assertIn("79 €", pagina_prezzi)
-                self.assertIn(build.CHECKUP_IVA_NOTE, pagina_prezzi)
+            for pagina_costo in (dopo, richiesta):
+                self.assertIn(build.COSTO_SU_RICHIESTA, pagina_costo)
+                self.assertIn('href="/contatti"', pagina_costo)
+                self.assertNotIn("\u20ac", pagina_costo)
             self.assertNotIn("Codice di lancio", dopo)
             self.assertNotIn("Codice di lancio", richiesta)
         finally:
@@ -2458,8 +2369,8 @@ process.stdout.write(JSON.stringify({
         self.assertNotIn("home page", sponsor)
         self.assertNotIn("+ IVA", sponsor)
         self.assertNotIn("pages.dev", sponsor)
-        for prezzo in ("49 €", "39 €", "69 €", "79 €", "99 €"):
-            self.assertIn(prezzo, sponsor)
+        self.assertIn(build.COSTO_SU_RICHIESTA, sponsor)
+        self.assertNotIn("\u20ac", sponsor)
 
         for path in DIST.rglob("*"):
             if not path.is_file() or path.suffix.lower() not in {".html", ".css", ".xml", ".txt", ".svg", ".js", ".ics"}:
@@ -2665,12 +2576,12 @@ process.stdout.write(JSON.stringify({
             checkup = (DIST / "check-up.html").read_text(encoding="utf-8")
             richiesta = (DIST / "check-up" / "richiesta.html").read_text(encoding="utf-8")
             for pagina in (checkup, richiesta):
-                self.assertIn("49 €", pagina)
-                self.assertIn("79 €", pagina)
+                self.assertIn(build.COSTO_SU_RICHIESTA, pagina)
+                self.assertNotIn("\u20ac", pagina)
                 self.assertNotIn("Codice di lancio", pagina)
                 self.assertNotIn('<aside class="promo"', pagina)
-            self.assertIn("Base</strong>, 49 €", checkup)
-            self.assertIn("Completo</strong>, 79 €", checkup)
+            self.assertIn("Base</strong>:", checkup)
+            self.assertIn("Completo</strong>:", checkup)
         finally:
             if old is None:
                 env.pop("BUILD_DATE", None)

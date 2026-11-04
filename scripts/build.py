@@ -30,15 +30,12 @@ FPEF_EMAIL = "fogliopef.team@gmail.com"
 FPEF = "https://fogliopef.github.io"
 FPEF_LI = "https://www.linkedin.com/company/fogliopef"
 FPEF_DESC = "FoglioPEF: modelli Excel per business plan, immobiliare e finanza d'impresa."
-# Pagine prodotto sul negozio Gumroad fogliopef. Sono bozze non pubblicate:
-# unire solo dopo che entrambe sono pubbliche. Unico punto di configurazione.
-# IncentiviPerTe – Check-up Bandi Base (49 €)
+# Pagine prodotto sul negozio Gumroad fogliopef. Non sono collegate in pagina:
+# il costo dei servizi si comunica solo dopo un contatto.
 GUMROAD_CHECKUP_BASE_URL = "https://fogliopef.gumroad.com/l/checkup-bandi-base"
-# IncentiviPerTe – Check-up Bandi Completo (79 €)
 GUMROAD_CHECKUP_COMPLETO_URL = "https://fogliopef.gumroad.com/l/checkup-bandi-completo"
 CHECKUP_PRODUCT_BASE = "IncentiviPerTe – Check-up Bandi Base"
 CHECKUP_PRODUCT_COMPLETO = "IncentiviPerTe – Check-up Bandi Completo"
-CARD_PAY_LABEL = "Pagamento sicuro con carta tramite Gumroad"
 CHECKUP_BASE = "report di circa 3-4 pagine, entro 5 giorni lavorativi dalla ricezione dei dati completi"
 CHECKUP_EXTRA = (
     "requisiti punto per punto",
@@ -53,15 +50,7 @@ CHECKUP_COMPLETO = (
     "report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi, "
     "con tutto il Base più " + ", ".join(CHECKUP_EXTRA[:-1]) + " e " + CHECKUP_EXTRA[-1]
 )
-CHECKUP_IVA_NOTE = (
-    "Con carta su Gumroad, ai clienti privati dell'UE Gumroad può aggiungere l'IVA del loro paese al pagamento."
-)
-CHECKUP_LANCIO = (
-    "Con LANCIO15 fino al 30/10/2026: Base 41,65 €, Completo 67,15 €."
-)
-# Il codice resta in pagina fino al 30/10/2026 compreso. Dal 31/10 la generazione
-# non scrive più LANCIO15. Lo script nel browser copre le build precedenti.
-LANCIO_FINO = datetime.date(2026, 10, 30)
+COSTO_SU_RICHIESTA = "Costo su richiesta"
 ROMA = ZoneInfo("Europe/Rome")
 # Giorno del ritocco SEO. lastmod delle pagine toccate; le pagine legali restano alla data dei dati.
 SEO_LASTMOD = "2026-10-25"
@@ -74,7 +63,7 @@ GUIDE = (
 )
 RNA_AIUTI = "https://www.rna.gov.it/"
 EURLEX_DE_MINIMIS = "https://eur-lex.europa.eu/legal-content/IT/TXT/?uri=CELEX%3A32023R2831"
-SPONSOR_DA = "Da 49 € al mese · prezzo di lancio"
+SPONSOR_DA = COSTO_SU_RICHIESTA
 # Negli elenchi: fino a 3 spazi, dopo il 6°, il 12° e il 18° bando visibile.
 # Lo spazio non è mai l'ultimo elemento e due spazi non sono mai vicini.
 SOGLIE_SPAZIO = (6, 12, 18)
@@ -125,7 +114,7 @@ FAQ = (
     ("Come segnalo un bando o un errore?",
      "Dalla pagina Contatti, con un messaggio alla Pagina LinkedIn IncentiviPerTe o all'indirizzo incentiviperte.team@gmail.com."),
     ("Posso comparire sul sito con il mio studio?",
-     "Sì. Uno spazio su IncentiviPerTe parte da 49 € al mese, prezzo di lancio. Importi, regole ed etichetta Sponsorizzato sono sulla pagina Sponsor."),
+     "Sì. Costo su richiesta. Per conoscerlo usa la pagina Contatti. Regole ed etichetta Sponsorizzato sono sulla pagina Sponsor."),
     ("Che cos'è il Check-up Bandi?",
      "È un controllo personalizzato di quali bandi regionali e nazionali sono adatti alla tua impresa: tutta la Toscana (bandi regionali e delle Camere di Commercio toscane), Umbria, Emilia-Romagna e incentivi nazionali per avviare e far crescere l'impresa. Ricevi una relazione scritta. Per richiederlo usa la pagina Check-up."),
 )
@@ -269,11 +258,6 @@ def is_aperto(b):
     return not b.get("scaduto") and not b.get("in_arrivo")
 
 
-def lancio_attivo(today):
-    """True fino al 30/10/2026 compreso."""
-    return today <= LANCIO_FINO
-
-
 def data_generazione():
     """Data della build: BUILD_DATE oppure oggi in Europe/Rome."""
     raw = os.environ.get("BUILD_DATE", "").strip()
@@ -295,11 +279,18 @@ def lastmod_pagina(path, data_lastmod):
     return max(data_lastmod, SEO_LASTMOD)
 
 
-def checkup_meta():
-    """La nota Gumroad resta parola per parola. Il resto è accorciato: insieme starebbero a 260 caratteri."""
+def invito_costo():
+    """Il costo non è pubblicato: il link è la pagina Contatti già presente."""
     return (
-        "Verifica scritta dei bandi adatti alla tua impresa. 49 € o 79 €. "
-        + CHECKUP_IVA_NOTE
+        f"{COSTO_SU_RICHIESTA}. Per conoscerlo scrivi dalla pagina "
+        f'<a href="{site_href("contatti.html")}">Contatti</a>.'
+    )
+
+
+def checkup_meta():
+    return (
+        "Verifica scritta dei bandi adatti alla tua impresa. "
+        "Costo su richiesta: scrivici dalla pagina Contatti."
     )
 
 
@@ -886,9 +877,9 @@ def bando_checkup_box():
         '<aside class="bando-checkup" aria-label="Check-up per questo bando">'
         "<p>Documenti da preparare, calendario ed errori da evitare per questo bando: "
         "li verifichiamo per la tua impresa con il "
-        f'<a href="{site_href("check-up.html")}">Check-up Bandi</a> '
-        "(da 49 €). Verifica di ammissibilità, non garantisce il contributo.</p>"
-        f"<p>{CHECKUP_IVA_NOTE}</p>"
+        f'<a href="{site_href("check-up.html")}">Check-up Bandi</a>. '
+        f"{invito_costo()} "
+        "Verifica di ammissibilità, non garantisce il contributo.</p>"
         "</aside>"
     )
 
@@ -898,7 +889,7 @@ def checkup_section(pre, con_immagine=False, variante="standard"):
         testo = (
             "<h2 id=\"checkup-title\">Check-up Bandi</h2>"
             "<p>Vuoi sapere quali di questi bandi sono adatti alla tua impresa? "
-            "Con il Check-up Bandi ricevi una relazione scritta: Base 49 €, Completo 79 € (prezzi finali).</p>"
+            f"Con il Check-up Bandi ricevi una relazione scritta. {invito_costo()}</p>"
             f'<p><a class="btn" href="{site_href("check-up.html")}">Scopri il Check-up Bandi</a></p>'
         )
     else:
@@ -1511,8 +1502,8 @@ nav.crumb li+li::before{content:"›";color:var(--m);margin:0 6px}
 .promo .code{font-size:1.25rem;font-weight:800;letter-spacing:.04em;color:var(--bd)}
 .offer{border:2px solid #5c6b82;border-radius:14px;padding:16px;background:#fff;display:flex;flex-direction:column;gap:8px}
 .offer.featured{border-color:var(--b);background:#F4FAF7}
-.price{font-size:18px;margin:0}
-.price strong{font-size:34px;color:var(--b);line-height:1.1}
+.costo{font-size:18px;margin:0}
+.costo strong{font-size:34px;color:var(--b);line-height:1.1}
 .launch{font-weight:800;color:#9b1c1c;margin:0}
 .offer .fine{color:var(--m);font-size:15px;margin:0}
 .offer .btn{margin-top:auto}
@@ -1580,14 +1571,15 @@ footer nav{margin-top:8px}
 
 
 def checkup_service():
+    """Niente campi di prezzo: il costo si comunica solo dopo il contatto."""
     return {
         "@type": "Service",
         "name": "Check-up Bandi",
         "serviceType": "Relazione scritta sui bandi adatti all'impresa",
         "description": (
             "Relazione scritta sui bandi adatti all'impresa. "
-            f"Base, 49 €: {CHECKUP_BASE}. Completo, 79 €: {CHECKUP_COMPLETO}. "
-            f"{CHECKUP_IVA_NOTE}"
+            f"Base: {CHECKUP_BASE}. Completo: {CHECKUP_COMPLETO}. "
+            f"{COSTO_SU_RICHIESTA}."
         ),
         "url": public_url("check-up.html"),
         "provider": org_ld(),
@@ -1595,16 +1587,12 @@ def checkup_service():
             {
                 "@type": "Offer",
                 "name": "Base",
-                "price": "49",
-                "priceCurrency": "EUR",
-                "description": f"Base, 49 €: {CHECKUP_BASE}. {CHECKUP_IVA_NOTE}",
+                "description": f"Base: {CHECKUP_BASE}. {COSTO_SU_RICHIESTA}.",
             },
             {
                 "@type": "Offer",
                 "name": "Completo",
-                "price": "79",
-                "priceCurrency": "EUR",
-                "description": f"Completo, 79 €: {CHECKUP_COMPLETO}. {CHECKUP_IVA_NOTE}",
+                "description": f"Completo: {CHECKUP_COMPLETO}. {COSTO_SU_RICHIESTA}.",
             },
         ],
     }
@@ -1627,65 +1615,16 @@ def mailto_href(subject, body):
     return f"mailto:{EMAIL}?{query}"
 
 
-def bonifico_link(level, product, price, today):
-    subject = f"Richiesta Check-up {level} – pagamento con bonifico istantaneo"
-    body = (
-        f"Livello: {level}\n"
-        f"Prodotto: {product}\n"
-        f"Importo: {price}\n"
-    )
-    if lancio_attivo(today):
-        body += "Codice di lancio: LANCIO15\n"
-    return f'<a class="btn" href="{e(mailto_href(subject, body))}">Bonifico istantaneo</a>'
-
-
-def card_pay_link(url):
-    """Link al prodotto Gumroad. URL vuoto: nessun pulsante, così non si apre una pagina rotta."""
-    url = (url or "").strip()
-    prefix = "https://fogliopef.gumroad.com/l/"
-    if not url:
-        return ""
-    if not url.startswith(prefix) or len(url) <= len(prefix):
-        raise ValueError("URL prodotto Gumroad del Check-up non valido")
-    return ext(url, CARD_PAY_LABEL, "btn outline")
-
-
-def pay_choice(link_html, amount):
+def checkup_costo_section():
     return (
-        '<div class="pay-choice">'
-        f"{link_html}"
-        f'<span class="pay-amt">{e(amount)}</span>'
-        "</div>"
-    )
-
-
-def pay_level(product, price, level, url, today):
-    final = f"{price} (prezzo finale, nessuna IVA aggiunta)"
-    return (
-        '<div class="pay-level">'
-        f"<h3>{e(product)}</h3>"
-        '<div class="pay-actions">'
-        f"{pay_choice(bonifico_link(level, product, price, today), final)}"
-        f"{pay_choice(card_pay_link(url), price)}"
-        "</div></div>"
-    )
-
-
-def checkup_pay_section(today):
-    return (
-        '<section class="paga" aria-labelledby="paga-ora">'
-        '<h2 id="paga-ora">Paga ora</h2>'
+        '<section class="paga" aria-labelledby="costo-servizio">'
+        '<h2 id="costo-servizio">Costo su richiesta</h2>'
         '<div class="with-illu"><div>'
         "<p>Il Check-up è una verifica di ammissibilità e non garantisce l'ottenimento del contributo.</p>"
-        f"<p>{CHECKUP_IVA_NOTE}</p>"
+        f"<p>{invito_costo()}</p>"
         "</div>"
         + sec_img("verifica-ammissibilita", 800, 600)
-        + "</div>"
-        + pay_level(CHECKUP_PRODUCT_BASE, "49 €", "Base", GUMROAD_CHECKUP_BASE_URL, today)
-        + pay_level(CHECKUP_PRODUCT_COMPLETO, "79 €", "Completo", GUMROAD_CHECKUP_COMPLETO_URL, today)
-        + "<p>Bonifico istantaneo: l'IBAN non è pubblicato sul sito. "
-        + f"Dopo la richiesta lo inviamo per email da {mail_link()}.</p>"
-        + "</section>"
+        + "</div></section>"
     )
 
 
@@ -1699,7 +1638,7 @@ def checkup_faq():
         ),
         (
             "Quanto costa?",
-            "Base 49 €, Completo 79 €. Sono prezzi finali.",
+            "Costo su richiesta. Per conoscerlo scrivi dalla pagina Contatti.",
         ),
         (
             "Cosa cambia tra Base e Completo?",
@@ -1714,58 +1653,13 @@ def checkup_faq():
             "Base entro 5 giorni lavorativi, Completo entro 7-10 giorni lavorativi, dalla ricezione dei dati completi.",
         ),
         (
-            "Come si paga?",
-            "Con carta su Gumroad oppure con bonifico istantaneo; l'IBAN viene inviato per email dopo la richiesta.",
+            "Come si richiede?",
+            "Dal modulo in questa pagina oppure dalla pagina Contatti. Il costo si comunica dopo il contatto.",
         ),
     )
 
 
-LANCIO_JS = r"""<script>
-(function () {
-  var ultimo = "2026-10-30";
-  function oggi() {
-    var override = (typeof window !== "undefined" && window.INCENTIVI_OGGI) ? String(window.INCENTIVI_OGGI) : "";
-    var match = /^(\d{4}-\d{2}-\d{2})/.exec(override);
-    if (match) return match[1];
-    try {
-      var fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Rome", year: "numeric", month: "2-digit", day: "2-digit" });
-      var iso = fmt.format(new Date());
-      if (/^\d{4}-\d{2}-\d{2}/.test(iso)) return iso.slice(0, 10);
-    } catch (err) {}
-    var now = new Date();
-    var m = now.getMonth() + 1;
-    var d = now.getDate();
-    return now.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (d < 10 ? "0" : "") + d;
-  }
-  if (oggi() <= ultimo) return;
-  var promo = document.querySelector("aside.promo");
-  if (promo && promo.parentNode) promo.parentNode.removeChild(promo);
-  var links = document.querySelectorAll("a[href]");
-  for (var i = 0; i < links.length; i++) {
-    var href = links[i].getAttribute("href") || "";
-    if (href.indexOf("LANCIO15") === -1) continue;
-    var q = href.split("?");
-    if (q.length < 2) continue;
-    var params = q[1].split("&");
-    var out = [];
-    for (var p = 0; p < params.length; p++) {
-      var kv = params[p].split("=");
-      var key = decodeURIComponent((kv[0] || "").replace(/\+/g, " "));
-      var val = decodeURIComponent((kv.slice(1).join("=") || "").replace(/\+/g, " "));
-      if (key === "body") {
-        val = val.split("\n").filter(function (line) {
-          return line.indexOf("LANCIO15") === -1;
-        }).join("\n");
-      }
-      out.push(encodeURIComponent(key) + "=" + encodeURIComponent(val));
-    }
-    links[i].setAttribute("href", q[0] + "?" + out.join("&"));
-  }
-})();
-</script>"""
-
-
-def checkup_body(today):
+def checkup_body(_today):
     tipi = (
         "Startup", "PMI", "Nuove imprese", "Under 35", "Donne",
         "Professionisti", "Grandi imprese", "Altro",
@@ -1774,31 +1668,23 @@ def checkup_body(today):
     tipo_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in tipi)
     stadio_opts = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in stadi)
     extra = "".join(f"<li>{e(item)}</li>" for item in CHECKUP_EXTRA)
-    if lancio_attivo(today):
-        promo = (
-            '<aside class="promo" aria-label="Codice di lancio">'
-            '<p class="lab">Codice di lancio</p>'
-            '<p class="code">LANCIO15</p>'
-            f"<p>{CHECKUP_LANCIO}</p></aside>\n"
-        )
-    else:
-        promo = ""
     percorso = crumbs([("index.html", "Home"), ("", "Check-up Bandi")], "")
     domande = faq_html(checkup_faq())
     return f"""{percorso}<div class="box">
-<p>Il Check-up Bandi è una verifica scritta dei bandi adatti alla tua impresa: bandi della Regione Toscana e delle Camere di Commercio toscane, dell'Umbria, dell'Emilia-Romagna e incentivi nazionali. Ci mandi i dati dell'impresa e ricevi una relazione scritta sui bandi adatti e cosa serve per partecipare. Base 49 €, relazione di circa 3-4 pagine entro 5 giorni lavorativi. Completo 79 €, 6-10 pagine entro 7-10 giorni lavorativi, con colloquio telefonico di 30 minuti. Prezzi finali.</p>
+<p>Il Check-up Bandi è una verifica scritta dei bandi adatti alla tua impresa: bandi della Regione Toscana e delle Camere di Commercio toscane, dell'Umbria, dell'Emilia-Romagna e incentivi nazionali. Ci mandi i dati dell'impresa e ricevi una relazione scritta sui bandi adatti e cosa serve per partecipare. Il Base è una relazione di circa 3-4 pagine entro 5 giorni lavorativi. Il Completo è di 6-10 pagine entro 7-10 giorni lavorativi, con colloquio telefonico di 30 minuti.</p>
+<p>{invito_costo()}</p>
 <p>Il Check-up è una verifica di ammissibilità e non garantisce l'ottenimento del contributo.</p>
 <h2>Livelli del servizio</h2>
 <div class="with-illu"><div>
 <ul>
-<li><strong>Base</strong>, 49 €: {e(CHECKUP_BASE)}.</li>
-<li><strong>Completo</strong>, 79 €: report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi. Include tutto il Base, più:<ul>{extra}</ul></li>
+<li><strong>Base</strong>: {e(CHECKUP_BASE)}.</li>
+<li><strong>Completo</strong>: report di 6-10 pagine, entro 7-10 giorni lavorativi dalla ricezione dei dati completi. Include tutto il Base, più:<ul>{extra}</ul></li>
 </ul>
-<p>{CHECKUP_IVA_NOTE}</p>
+<p>{invito_costo()}</p>
 </div>
 {sec_img("relazione-scritta", 800, 600)}
 </div>
-{promo}<h2>Chi lo prepara</h2>
+<h2>Chi lo prepara</h2>
 <p>Dietro IncentiviPerTe c'è un team di esperti professionisti con esperienza pluriennale.</p>
 <div class="checkup-split">
 <div>
@@ -1806,10 +1692,10 @@ def checkup_body(today):
 <div><label for="cu-regione">Regione (comprende la provincia)</label><input id="cu-regione" name="regione" type="text" required autocomplete="address-level1"></div>
 <div><label for="cu-tipo">Tipo di impresa</label><select id="cu-tipo" name="tipo" required><option value="">Scegli</option>{tipo_opts}</select></div>
 <div><label for="cu-stadio">Stadio</label><select id="cu-stadio" name="stadio" required><option value="">Scegli</option>{stadio_opts}</select></div>
-<div><label for="cu-importo">Importo indicativo</label><input id="cu-importo" name="importo" type="text" required inputmode="decimal" placeholder="es. 50.000 €"></div>
+<div><label for="cu-importo">Importo indicativo</label><input id="cu-importo" name="importo" type="text" required inputmode="decimal" placeholder="es. 50.000"></div>
 <fieldset><legend>Livello</legend><div class="livelli">
-<label><input type="radio" name="livello" value="Base" required> Base · 49 €</label>
-<label><input type="radio" name="livello" value="Completo"> Completo · 79 €</label>
+<label><input type="radio" name="livello" value="Base" required> Base</label>
+<label><input type="radio" name="livello" value="Completo"> Completo</label>
 </div></fieldset>
 <button type="submit" class="btn">Invia richiesta</button>
 </form>
@@ -1822,11 +1708,10 @@ def checkup_body(today):
 <p id="checkup-copied" role="status" hidden>Testo copiato.</p>
 </div>
 </div>
-{checkup_pay_section(today)}
+{checkup_costo_section()}
 </div>
 </div>
 {domande}
-{LANCIO_JS if lancio_attivo(today) else ""}
 <script>
 (function () {{
   var form = document.getElementById("checkup-form");
@@ -1913,8 +1798,8 @@ def static_pages(today):
     contacts = f'<p class="contact-links">{li_btn}{mail}</p>'
     sponsor_contacts = (
         f'<p class="contact-links">{li_btn}{mail}{fpef_mail}</p>'
-        f"<p>Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti "
-        f"(69 € al mese) scrivi a {fpef_mail}.</p>"
+        f"<p>Per le sponsorizzazioni FoglioPEF e per il pacchetto entrambi i siti "
+        f"scrivi a {fpef_mail}. {COSTO_SU_RICHIESTA}.</p>"
     )
     fpef_space = f'<span class="for">Contatto per FoglioPEF: {fpef_mail}</span>'
     fpef_pack = f'<span class="for">Contatto per entrambi i siti: {fpef_mail}</span>'
@@ -1944,30 +1829,30 @@ def static_pages(today):
             False,
         ),
         "sponsor.html": (
-            "Pubblicità per studi e consulenti – IncentiviPerTe",
-            "Più spazi sponsor in ogni pagina, per studi, consulenti e banche: da 49 € al mese su IncentiviPerTe, 39 € su FoglioPEF, 69 € su entrambi i siti.",
+            "Pubblicità per studi e imprese – IncentiviPerTe",
+            "Spazi sponsor etichettati Sponsorizzato su IncentiviPerTe e FoglioPEF. Costo su richiesta.",
             f"""<div class="box">
-<p>IncentiviPerTe è letto da imprenditori, startup e PMI che cercano finanziamenti. Gli spazi sono per <strong>commercialisti, consulenti di finanza agevolata, banche e software</strong> per le imprese. In ogni pagina ci sono più spazi: fino a tre negli elenchi dei bandi e due in ogni scheda.</p>
+<p>IncentiviPerTe è letto da imprenditori, startup e PMI che cercano finanziamenti. Gli spazi sono per <strong>studi, banche e software</strong> per le imprese. In ogni pagina ci sono più spazi: fino a tre negli elenchi dei bandi e due in ogni scheda.</p>
 {invito}
 {sponsor_contacts}
 <h2>Cosa include lo spazio su IncentiviPerTe</h2>
 <ul><li>Fino a <strong>tre spazi</strong> nella pagina dei bandi, dopo il 6°, il 12° e il 18° bando visibile</li><li>Fino a <strong>tre spazi</strong> nelle pagine regionali (Toscana, Umbria, Emilia-Romagna), nei bandi nazionali e negli elenchi per destinatario</li><li><strong>Due spazi</strong> in ogni scheda di bando</li><li>Etichetta <strong>Sponsorizzato</strong> sempre visibile</li></ul>
-<h2 id="prezzi">Prezzi</h2>
-<p>I prezzi qui sotto sono per uno spazio pubblicitario etichettato Sponsorizzato. Non sono il prezzo dei modelli Excel.</p>
+<h2 id="costo">Costo</h2>
+<p>Il costo di uno spazio pubblicitario etichettato Sponsorizzato si comunica su richiesta. Non è il costo dei modelli Excel. {invito_costo()}</p>
 <div class="offers">
-<div class="offer featured"><h3>IncentiviPerTe</h3><p class="price"><strong>49 €</strong> al mese</p><p class="launch">Prezzo di lancio: 3 posti, poi 79 € al mese</p><p class="fine">Il prezzo sale man mano che si vendono gli spazi: 49 € al mese per i primi 3 sponsor, poi 79 € al mese, poi 99 € al mese. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{ipt_btn}{li_btn}{mail}</div></div>
-<div class="offer"><h3>FoglioPEF</h3><p class="price"><strong>39 €</strong> al mese</p><p class="launch">Spazio su FoglioPEF</p><p class="fine">Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.github.io")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{fpef_space}</div></div>
-<div class="offer"><h3>Entrambi i siti</h3><p class="price"><strong>69 €</strong> al mese</p><p class="launch">Pacchetto entrambi i siti: IncentiviPerTe + FoglioPEF</p><p class="fine">Uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{fpef_btn}{fpef_pack}</div></div>
+<div class="offer featured"><h3>IncentiviPerTe</h3><p class="costo"><strong>Costo su richiesta</strong></p><p class="fine">Uno spazio su IncentiviPerTe, etichettato <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{ipt_btn}{li_btn}{mail}</div></div>
+<div class="offer"><h3>FoglioPEF</h3><p class="costo"><strong>Costo su richiesta</strong></p><p class="fine">Spazio su FoglioPEF. Modelli Excel per immobili e cassa: {ext(FPEF, "fogliopef.github.io")}. Stessa etichetta <strong>Sponsorizzato</strong>.</p><div class="contact-links">{fpef_btn}{fpef_space}</div></div>
+<div class="offer"><h3>Entrambi i siti</h3><p class="costo"><strong>Costo su richiesta</strong></p><p class="fine">Pacchetto entrambi i siti: uno spazio su IncentiviPerTe e uno su FoglioPEF, entrambi etichettati <strong>Sponsorizzato</strong>. Nessun pagamento online: ti rispondiamo con i dettagli.</p><div class="contact-links">{fpef_btn}{fpef_pack}</div></div>
 </div>
 <h2>Regole</h2>
 <ul><li>Ogni contenuto a pagamento è etichettato <strong>Sponsorizzato</strong>.</li><li>Gli sponsor non influenzano quali bandi pubblichiamo né come li descriviamo.</li><li>Nessun tracciamento degli utenti: niente pixel, cookie o script di terze parti.</li></ul>
-<p>Domande? Scrivici a {mail} o in un messaggio alla {ext(LINKEDIN, "nostra pagina LinkedIn")}. Per le sponsorizzazioni FoglioPEF (39 € al mese) e per il pacchetto entrambi i siti (69 € al mese): {fpef_mail}.</p>
+<p>Domande? Scrivici a {mail} o in un messaggio alla {ext(LINKEDIN, "nostra pagina LinkedIn")}. Per le sponsorizzazioni FoglioPEF e per il pacchetto entrambi i siti: {fpef_mail}. {COSTO_SU_RICHIESTA}.</p>
 </div>
 {invito_compatto}""",
             False,
         ),
         "check-up.html": (
-            "Check-up Bandi per imprese: verifica scritta da 49 €",
+            "Check-up Bandi per imprese: costo su richiesta",
             checkup_meta(),
             checkup_body(today),
             False,
@@ -2077,6 +1962,12 @@ def visible_text(text):
     return re.sub(r'\bhref="[^"]*"', "", text, flags=re.I)
 
 
+def campo_prezzo(testo):
+    """Vero se restano i campi di prezzo dei dati strutturati."""
+    chiave = "pri" + "ce"
+    return (chiave + "Currency") in testo or ('"' + chiave + '"') in testo
+
+
 def self_check(written, bandi):
     htmls = [p for p in written if p.endswith(".html")]
     for rel in htmls:
@@ -2139,14 +2030,22 @@ def self_check(written, bandi):
             raise ValueError(f"{name}: manca il riquadro Check-up sul bando")
         if re.search(r'''\b(?:href|src)\s*=\s*["']/incentiviperte/''', text):
             raise ValueError(f"{name}: link assoluto del vecchio percorso GitHub Pages")
+        if campo_prezzo(text):
+            raise ValueError(f"{name}: campo di prezzo nei dati strutturati")
+        for pezzo in re.findall(r'<p class="spp">.*?</p>', text):
+            if "\u20ac" in pezzo or COSTO_SU_RICHIESTA not in pezzo:
+                raise ValueError(f"{name}: lo spazio sponsor riporta un importo")
         for match in re.finditer("Arezzo-Siena", text):
             window = text[max(0, match.start() - 80):match.start()]
             if "<dt>Ente</dt><dd>" not in window:
                 raise ValueError(f"{name}: Arezzo-Siena compare come limite di copertura")
     sponsor = (D / "sponsor.html").read_text(encoding="utf-8")
-    for price in ("49 €", "39 €", "69 €", "79 €", "99 €"):
-        if price not in sponsor:
-            raise ValueError(f"prezzo mancante sulla pagina sponsor: {price}")
+    if sponsor.count(COSTO_SU_RICHIESTA) < 3:
+        raise ValueError("pagina sponsor: manca il costo su richiesta")
+    if "\u20ac" in sponsor:
+        raise ValueError("pagina sponsor: compare un importo del servizio")
+    if 'href="/contatti"' not in sponsor:
+        raise ValueError("pagina sponsor: manca il rimando alla pagina Contatti")
     if f"mailto:{FPEF_EMAIL}" not in sponsor:
         raise ValueError("pagina sponsor: manca il contatto FoglioPEF")
     for title, end in (("FoglioPEF", "<h3>"), ("Entrambi i siti", "<h2>")):
@@ -2171,6 +2070,9 @@ def self_check(written, bandi):
     home = (D / "index.html").read_text(encoding="utf-8")
     if "Check-up Bandi" not in home or 'href="/check-up">Richiedi il Check-up</a>' not in home:
         raise ValueError("home: manca la sezione Check-up Bandi")
+    sezione = home.split('class="checkup"', 1)[1].split("</section>", 1)[0]
+    if COSTO_SU_RICHIESTA not in sezione or "\u20ac" in sezione:
+        raise ValueError("home: la sezione Check-up riporta un importo")
     if 'getAttribute("data-scadenza")' not in home or 'getAttribute("data-apre")' not in home:
         raise ValueError("home: il conto alla rovescia non viene dalle date dei bandi")
     # Una scadenza presente nei dati, non una data fissa: togliere un bando non rompe la build.
@@ -2191,14 +2093,17 @@ def self_check(written, bandi):
         raise ValueError("check-up: compare un IBAN")
     if 'rel="canonical" href="https://incentiviperte.github.io/check-up"' not in checkup:
         raise ValueError("check-up: il canonical non è su github.io")
-    for url in (GUMROAD_CHECKUP_BASE_URL, GUMROAD_CHECKUP_COMPLETO_URL):
-        if f'href="{url}"' not in checkup:
-            raise ValueError("check-up: manca il link al prodotto Gumroad")
+    if COSTO_SU_RICHIESTA not in checkup or 'href="/contatti"' not in checkup:
+        raise ValueError("check-up: manca il costo su richiesta o il rimando ai Contatti")
+    if "\u20ac" in checkup or "gumroad.com" in checkup.lower() or campo_prezzo(checkup):
+        raise ValueError("check-up: importo o pagamento pubblico ancora in pagina")
     for path in (p for p in htmls if p.startswith("bando/")):
         scheda = (D / path).read_text(encoding="utf-8")
         box = scheda.split('class="bando-checkup"', 1)[-1].split("</aside>", 1)[0]
         if "Check-up Bandi" not in box or 'href="/check-up"' not in box:
             raise ValueError(f"{path}: il riquadro Check-up non rimanda a /check-up")
+        if COSTO_SU_RICHIESTA not in box or 'href="/contatti"' not in box or "\u20ac" in box:
+            raise ValueError(f"{path}: il riquadro Check-up riporta ancora un importo")
         if f'rel="canonical" href="{BASE}bando/' not in scheda:
             raise ValueError(f"{path}: canonical fuori da github.io")
     if FPEF_LI not in home:
@@ -2362,7 +2267,19 @@ def home_faq():
         "Le domande vengono esaminate in ordine di arrivo finché ci sono risorse: il bando può chiudere prima della scadenza. "
         f'<a href="{site_href("guida/bando-a-sportello.html")}">Che cos\'è un bando a sportello</a>.'
     )
-    marcate = [(q, e(a)) for q, a in FAQ] + [(sportello[0], sportello_html), (resto[0], resto_html)]
+    marcate = []
+    for q, a in FAQ:
+        if q == "Posso comparire sul sito con il mio studio?":
+            testo = (
+                "Sì. Costo su richiesta. Per conoscerlo scrivi dalla pagina "
+                f'<a href="{site_href("contatti.html")}">Contatti</a>. '
+                "Regole ed etichetta Sponsorizzato sono sulla pagina "
+                f'<a href="{site_href("sponsor.html")}">Sponsor</a>.'
+            )
+        else:
+            testo = e(a)
+        marcate.append((q, testo))
+    marcate += [(sportello[0], sportello_html), (resto[0], resto_html)]
     return plain, marcate
 
 
@@ -3022,8 +2939,8 @@ def ld_pagina(path, title, trail, faq=()):
 def faq_affiancamento():
     return (
         (
-            "Il Check-up già pagato si scala?",
-            "Sì. Il Check-up già pagato (49 o 79 €) si scala dal prezzo del livello scelto.",
+            "Il Check-up già chiesto si considera nel costo?",
+            "Sì. Se hai già chiesto il Check-up, lo consideriamo nel costo del livello scelto. Costo su richiesta.",
         ),
         (
             "Quando si paga la parte a risultato?",
@@ -3061,31 +2978,31 @@ def corpo_affiancamento():
         "quando il livello la comprende.</li>"
         "</ol>"
     )
-    pacchetti = """<h2>Livelli e prezzi</h2>
-<p>Prezzi finali. Il Check-up già pagato (49 o 79 €) si scala dal prezzo.</p>
+    pacchetti = f"""<h2>Livelli</h2>
+<p>{invito_costo()} Se hai già chiesto il Check-up, lo consideriamo nel costo del livello scelto.</p>
 <div class="pacchetti">
 <article class="offer"><h3>Voucher camerali</h3>
 <p>Per i voucher delle Camere di Commercio, fra cui digitale, doppia transizione, fiere, export e creazione d'impresa. Comprende verifica dei requisiti, documenti e domanda.</p>
-<p class="imp">Domanda 199 €. Rendicontazione 149 €. Domanda e rendicontazione insieme 329 €. Solo compenso fisso.</p></article>
+<p class="imp">Costo su richiesta. Solo compenso fisso.</p></article>
 <article class="offer"><h3>Avvio d'impresa</h3>
 <p>Per i bandi di avvio, regionali o nazionali. Comprende verifica dei requisiti, documenti, piano d'impresa, domanda e variazioni previste dal livello. La rendicontazione è a parte.</p>
-<p class="imp">690 € + 4% del contributo effettivamente erogato, tetto 4.000 €. Rendicontazione 490 €.</p></article>
+<p class="imp">Costo su richiesta.</p></article>
 <article class="offer"><h3>Avvio d'impresa plus</h3>
 <p>Per i bandi di avvio più complessi. Comprende le attività dell'Avvio d'impresa, la preparazione a eventuali colloqui e la rendicontazione.</p>
-<p class="imp">1.490 € + 5% del contributo erogato, tetto 8.000 €.</p></article>
+<p class="imp">Costo su richiesta.</p></article>
 <article class="offer"><h3>Fascicolo per banca o confidi</h3>
 <p>Per le misure in cui l'impresa presenta i documenti a una banca o a un confidi. Prepariamo il fascicolo: lo porti tu allo sportello.</p>
-<p class="imp">290 € solo fisso, senza contatti con la banca e senza compenso a risultato.</p></article>
+<p class="imp">Costo su richiesta, senza contatti con la banca e senza compenso a risultato.</p></article>
 <article class="offer"><h3>Agricoltura</h3>
 <p>Solo pre-istruttoria dei requisiti. La domanda non è compresa: la segue il CAA o l'agronomo dell'impresa.</p>
-<p class="imp">Check-up Completo 79 €.</p></article>
+<p class="imp">Costo su richiesta. Il livello è il Check-up Completo.</p></article>
 <article class="offer"><h3>Variazioni extra</h3>
 <p>Ogni richiesta di variazione oltre quelle già comprese nel livello scelto.</p>
-<p class="imp">90 € ciascuna.</p></article>
+<p class="imp">Costo su richiesta.</p></article>
 </div>"""
     condizioni = (
         "<h2>Condizioni</h2><ul>"
-        "<li>Il Check-up già pagato (49 o 79 €) si scala dal prezzo.</li>"
+        "<li>Se hai già chiesto il Check-up, lo consideriamo nel costo del livello scelto. Costo su richiesta.</li>"
         "<li>La parte a risultato si paga solo all'erogazione del contributo. "
         "Riguarda Avvio d'impresa e Avvio d'impresa plus. Voucher, fascicolo e agricoltura restano a compenso fisso.</li>"
         "<li>In alcuni bandi la consulenza non è una spesa ammissibile. "
@@ -3125,7 +3042,7 @@ REGIONI_RICHIESTA = ("Toscana", "Umbria", "Emilia-Romagna", "Altra regione")
 
 
 def meta_richiesta():
-    return "Richiesta del Check-up Bandi, 49 € o 79 €. " + CHECKUP_IVA_NOTE
+    return "Richiesta del Check-up Bandi. Costo su richiesta: compila il modulo in questa pagina."
 
 
 def script_richiesta():
@@ -3177,30 +3094,22 @@ def script_richiesta():
 </script>""".replace("__EMAIL__", EMAIL)
 
 
-def corpo_richiesta(today):
+def corpo_richiesta(_today):
     forme = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in FORME_GIURIDICHE)
     regioni = "".join(f'<option value="{e(x)}">{e(x)}</option>' for x in REGIONI_RICHIESTA)
-    promo = ""
-    if lancio_attivo(today):
-        promo = (
-            '<aside class="promo" aria-label="Codice di lancio">'
-            '<p class="lab">Codice di lancio</p><p class="code">LANCIO15</p>'
-            f"<p>{e(CHECKUP_LANCIO)}</p></aside>"
-        )
     percorso = crumbs(
         [("index.html", "Home"), ("check-up.html", "Check-up"), ("", "Richiesta")],
         "",
     )
     return f"""{percorso}<h1>Richiedi il Check-up</h1><div class="box">
 <p>Il Check-up è una verifica di ammissibilità e non garantisce il contributo. Indica quali bandi aperti, tra quelli seguiti dal sito, sono adatti all'impresa e che cosa serve per partecipare.</p>
-<h2>Prezzi</h2>
+<h2>Costo</h2>
+<p>{invito_costo()}</p>
 <ul>
-<li><strong>Base</strong>, 49 €: {e(CHECKUP_BASE)}.</li>
-<li><strong>Completo</strong>, 79 €: {e(CHECKUP_COMPLETO)}.</li>
+<li><strong>Base</strong>: {e(CHECKUP_BASE)}.</li>
+<li><strong>Completo</strong>: {e(CHECKUP_COMPLETO)}.</li>
 </ul>
-<p>{CHECKUP_IVA_NOTE}</p>
-{promo}
-<p>Nessun dato inviato a terzi. Il pulsante apre il programma di posta sul tuo dispositivo, con oggetto e testo già compilati: i dati non passano da un server. Dopo l'invio ricevi per email il link al pagamento.</p>
+<p>Nessun dato inviato a terzi. Il pulsante apre il programma di posta sul tuo dispositivo, con oggetto e testo già compilati: i dati non passano da un server. Dopo l'invio ti rispondiamo con il costo.</p>
 <form id="richiesta-form" class="checkup-form" method="post" action="#">
 <div><label for="rq-ragione">Ragione sociale o nome del progetto</label><input id="rq-ragione" name="ragione" type="text" required autocomplete="organization"></div>
 <div><label for="rq-forma">Forma giuridica</label><select id="rq-forma" name="forma" required><option value="">Scegli</option>{forme}</select></div>
@@ -3213,14 +3122,14 @@ def corpo_richiesta(today):
 <fieldset><legend>Dimensione</legend>
 <div class="coppia">
 <div><label for="rq-addetti">Numero di addetti</label><input id="rq-addetti" name="addetti" type="text" required inputmode="numeric"></div>
-<div><label for="rq-fatturato">Fatturato indicativo</label><input id="rq-fatturato" name="fatturato" type="text" required placeholder="es. 180.000 €"></div>
+<div><label for="rq-fatturato">Fatturato indicativo</label><input id="rq-fatturato" name="fatturato" type="text" required placeholder="es. 180.000"></div>
 </div>
 </fieldset>
-<div><label for="rq-investimento">Investimento previsto e importo</label><input id="rq-investimento" name="investimento" type="text" required placeholder="es. macchinari, 40.000 €"></div>
+<div><label for="rq-investimento">Investimento previsto e importo</label><input id="rq-investimento" name="investimento" type="text" required placeholder="es. macchinari, 40.000"></div>
 <div><label for="rq-bando">Bando di interesse, se già lo conosci (facoltativo)</label><input id="rq-bando" name="bando" type="text"></div>
 <fieldset><legend>Livello del Check-up</legend><div class="livelli">
-<label><input type="radio" name="livello" value="Base" required> Base 49 €</label>
-<label><input type="radio" name="livello" value="Completo"> Completo 79 €</label>
+<label><input type="radio" name="livello" value="Base" required> Base</label>
+<label><input type="radio" name="livello" value="Completo"> Completo</label>
 </div></fieldset>
 <div><label for="rq-email">Email</label><input id="rq-email" name="email" type="email" required autocomplete="email"></div>
 <div class="consensi"><label><input type="checkbox" name="privacy" value="sì" required><span>Ho letto l'<a href="{site_href("privacy.html")}">informativa privacy</a> e acconsento al trattamento dei dati per questa richiesta.</span></label></div>
@@ -3236,8 +3145,7 @@ def corpo_richiesta(today):
 </div>
 <noscript><p class="note">Senza JavaScript il modulo non compone il messaggio. Scrivi gli stessi dati a {mail_link()}.</p></noscript>
 </div>
-{script_richiesta()}
-{LANCIO_JS if lancio_attivo(today) else ""}"""
+{script_richiesta()}"""
 
 
 def riga_scadenza(b):
@@ -3422,10 +3330,10 @@ def corpo_avvisi(azione):
 
 
 def pagine_servizio(bandi, today, azione):
-    titolo_a = "Affiancamento ai bandi: livelli e prezzi"
+    titolo_a = "Affiancamento ai bandi: livelli e costo"
     desc_a = (
         "Aiuto per la domanda di bando: voucher, avvio d'impresa, fascicolo e pre-istruttoria agricola. "
-        "Prezzi finali, senza garanzia di esito."
+        "Costo su richiesta, senza garanzia di esito."
     )
     faq_a = faq_affiancamento()
     titolo_r = "Richiedi il Check-up Bandi"
@@ -3504,20 +3412,8 @@ def pagine_servizio(bandi, today, azione):
 def controlla_servizi(bandi):
     aff = (D / "affiancamento.html").read_text(encoding="utf-8")
     for phrase in (
-        "199 €",
-        "149 €",
-        "329 €",
-        "690 €",
-        "4%",
-        "4.000 €",
-        "490 €",
-        "1.490 €",
-        "5%",
-        "8.000 €",
-        "90 €",
-        "290 €",
-        "79 €",
-        "Il Check-up già pagato (49 o 79 €) si scala dal prezzo.",
+        COSTO_SU_RICHIESTA,
+        'href="/contatti"',
         "La parte a risultato si paga solo all'erogazione del contributo.",
         "In alcuni bandi la consulenza non è una spesa ammissibile.",
         "Firma, credenziali e invio della domanda restano del legale rappresentante.",
@@ -3531,8 +3427,10 @@ def controlla_servizi(bandi):
         if phrase not in aff:
             raise ValueError(f"affiancamento: manca {phrase}")
     richiesta = (D / "check-up" / "richiesta.html").read_text(encoding="utf-8")
-    if CHECKUP_IVA_NOTE not in richiesta:
-        raise ValueError("richiesta Check-up: manca la nota Gumroad")
+    if COSTO_SU_RICHIESTA not in richiesta or 'href="/contatti"' not in richiesta:
+        raise ValueError("richiesta Check-up: manca il costo su richiesta")
+    if "\u20ac" in aff or "\u20ac" in richiesta:
+        raise ValueError("servizio: compare un importo")
     if "Nessun dato inviato a terzi." not in richiesta:
         raise ValueError("richiesta Check-up: manca l'avviso sui dati")
     if "non garantisce il contributo" not in richiesta:
